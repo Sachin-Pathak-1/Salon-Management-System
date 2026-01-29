@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import './CustomerDetails.css';
+import './Gobal.css';
 
 export default function CustomerDetails() {
   const navigate = useNavigate();
