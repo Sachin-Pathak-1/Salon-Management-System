@@ -17,7 +17,7 @@ const Recent = [
   { profile: "/image.png", name: "Bob Brown", activity: "Updated profile information", time: "1 day ago" },
 ];
 
-export function Dashboard() {
+export function Dashboard({ services }) {
   return (
     <Layout>
       <div className="dashboard">
@@ -46,7 +46,7 @@ export function Dashboard() {
               <h3 className="section-title">At a Glance</h3>
               <ul>
                 <li>35 Posts</li>
-                <li>21 Pages</li>
+                <li>{services?.length || 0} Services</li>
                 <li>18 Comments</li>
               </ul>
             </div>
@@ -110,8 +110,8 @@ export function Dashboard() {
             ))}
           </div>
         </div>
-      </div>
         <Footer />
+      </div>
     </Layout>
   );
 }
