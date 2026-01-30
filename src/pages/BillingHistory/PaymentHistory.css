@@ -1,0 +1,117 @@
+.payment-page {
+  max-width: 1100px;   
+  width: 100%;
+  margin: 0 auto;      
+  padding: 40px 0;
+  font-family: "Inter", sans-serif;
+}
+
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+
+.payment-header h2 {
+  margin: 0;
+  font-size: 26px;
+  color: #0f172a;
+}
+
+.payment-header p {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.invoice-btn {
+  padding: 10px 18px;
+  border: 1px solid #c7d2fe;
+  background: #ffffff;
+  color: #4f46e5;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* TABLE WRAPPER */
+.payment-table {
+  width: 100%;
+  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+
+/* HEAD + ROW */
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 90px 2.8fr 1.4fr 1.4fr 1fr 1.2fr;
+  padding: 18px 24px; /* more breathing space */
+  align-items: center;
+}
+
+.table-head {
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.table-row {
+  font-size: 14px;
+  color: #1e293b;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ID */
+.id {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* AMOUNT */
+.amount {
+  font-weight: 600;
+}
+
+/* STATUS */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* STATUS COLORS */
+.status.paid {
+  color: #22c55e;
+}
+.status.paid .dot {
+  background: #22c55e;
+}
+
+.status.due {
+  color: #f59e0b;
+}
+.status.due .dot {
+  background: #f59e0b;
+}
+
+.status.cancel {
+  color: #ef4444;
+}
+.status.cancel .dot {
+  background: #ef4444;
+}
