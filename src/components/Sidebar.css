@@ -1,0 +1,93 @@
+/* Sidebar */
+.sidebar {
+  width: 270px;
+  background: #ffffff;
+  padding: 25px 20px;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* User Box */
+.user-box {
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  background: #6366f1;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin: 0 auto 10px;
+}
+
+.user-box h4 {
+  font-size: 15px;
+  margin: 0;
+  color: #111827;
+}
+
+.user-box p {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Wallet Box */
+.wallet-box {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.wallet-title {
+  font-size: 11px;
+  color: #6b7280;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.wallet-box h3 {
+  font-size: 18px;
+  margin: 4px 0;
+  color: #111827;
+}
+
+.wallet-box span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Menu */
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.menu li:hover {
+  background: #f3f4f6;
+}
+
+.menu li.active {
+  color: #6366f1;
+  background: #eef2ff;
+  font-weight: 600;
+}
