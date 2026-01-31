@@ -2,8 +2,10 @@
 
 .landing-page {
   min-height: 100vh;
-  background-color: #c3cfe2;
+  background-color: var(--background);
+  color: var(--text);
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Hero Section */
@@ -27,7 +29,7 @@
 .hero-title {
   font-size: 52px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   line-height: 1.2;
 }
 
@@ -64,9 +66,9 @@
 }
 
 .btn-hero.primary {
-  background-color: var(--primary-dark);
+  background-color: var(--primary);
   color: white;
-  border: 1px solid white;
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 .btn-hero.primary:hover {
@@ -74,7 +76,7 @@
 }
 
 .btn-hero.secondary {
-  background: white;
+  background: var(--gray-100);
   color: var(--primary);
   border: 2px solid var(--primary);
 }
@@ -82,7 +84,7 @@
 .btn-hero.secondary:hover {
   background: var(--primary);
   color: white;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 
 .btn-hero.large {
@@ -103,7 +105,7 @@
   font-weight: 800;
   text-align: center;
   margin-bottom: 60px;
-  color: var(--gray-900);
+  color: var(--text);
 }
 
 .features-grid {
@@ -113,13 +115,14 @@
 }
 
 .feature-card {
-  background: white;
+  background: var(--gray-100);
   padding: 40px;
   border-radius: 16px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
+  color: var(--text);
 }
 
 .feature-card:hover {
@@ -135,7 +138,7 @@
 .feature-card h3 {
   font-size: 20px;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   margin-bottom: 12px;
 }
 
@@ -147,7 +150,8 @@
 
 /* Stats Section */
 .stats-section {
-  background: white;
+  background: var(--gray-100);
+  color: var(--text);
   padding: 80px 60px;
   max-width: 1400px;
   margin: 0 auto;
@@ -160,13 +164,14 @@
 .stat-item {
   padding: 30px;
   border-radius: 16px;
-  background-color: #e5e7eb;
+  background-color: var(--gray-200);
+  color: var(--text);
 }
 
 .stat-number {
   font-size: 44px;
   font-weight: 800;
-  color: black;
+  color: var(--text);
   margin: 0 0 12px 0;
 }
 
@@ -181,7 +186,7 @@
 .cta-section {
   padding: 100px 60px;
   text-align: center;
-  background-color: var(--primary-dark);
+  background-color: var(--primary);
   max-width: 1400px;
   margin: 0 auto;
   border-radius: 20px;
@@ -204,10 +209,11 @@
 
 /* Footer */
 .landing-footer {
-  background: var(--gray-900);
-  color: white;
+  background: var(--gray-200);
+  color: var(--text);
   padding: 60px;
   margin-top: 100px;
+  border-top: 1px solid var(--border-light);
 }
 
 .footer-content {
@@ -223,12 +229,13 @@
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 16px;
-  color: white;
+  color: var(--text);
 }
 
 .footer-section p {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text);
   line-height: 1.6;
+  opacity: 0.8;
 }
 
 .footer-section ul {
@@ -241,13 +248,15 @@
 }
 
 .footer-section a {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text);
   text-decoration: none;
   transition: color 0.3s;
+  opacity: 0.8;
 }
 
 .footer-section a:hover {
-  color: white;
+  color: var(--primary);
+  opacity: 1;
 }
 
 .social-links {
@@ -260,11 +269,13 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--primary);
+  opacity: 0.2;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
+  color: var(--text);
 }
 
 .social-link:hover {
@@ -274,9 +285,10 @@
 
 .footer-bottom {
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-light);
   padding-top: 30px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text);
+  opacity: 0.6;
 }
 
 /* Responsive */

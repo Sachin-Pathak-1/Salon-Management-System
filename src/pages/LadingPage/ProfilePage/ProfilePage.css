@@ -2,7 +2,7 @@
 
 .profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--background);
   padding-bottom: 60px;
 }
 
@@ -13,7 +13,7 @@
 
 /* Profile Header */
 .profile-header {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -23,7 +23,7 @@
 
 .profile-banner {
   height: 200px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   position: relative;
 }
 
@@ -39,13 +39,13 @@
   width: 140px;
   height: 140px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 64px;
   color: white;
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+  box-shadow: var(--card-shadow-lg);
   margin-top: -70px;
 }
 
@@ -57,12 +57,12 @@
 .profile-details h1 {
   font-size: 32px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 8px 0;
 }
 
 .profile-email {
-  color: var(--gray-600);
+  color: var(--gray-700);
   font-size: 16px;
   margin: 0 0 4px 0;
   font-weight: 500;
@@ -78,14 +78,14 @@
 }
 
 .profile-joined {
-  color: var(--gray-500);
+  color: var(--gray-700);
   font-size: 13px;
   margin: 4px 0 0 0;
 }
 
 .edit-profile-btn {
   padding: 12px 28px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -93,13 +93,13 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(24,146,247,0.18);
   align-self: center;
 }
 
 .edit-profile-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 25px rgba(24,146,247,0.22);
 }
 
 /* Profile Content */
@@ -114,10 +114,10 @@
 
 /* Sidebar */
 .profile-sidebar {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   height: fit-content;
   position: sticky;
   top: 100px;
@@ -140,12 +140,12 @@
 }
 
 .nav-item:hover {
-  background: var(--gray-100);
+  background: var(--hover-bg);
   color: var(--primary);
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   color: white;
 }
 
@@ -157,16 +157,16 @@
 }
 
 .profile-section {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
 }
 
 .profile-section h2 {
   font-size: 22px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 24px 0;
 }
 
@@ -178,17 +178,17 @@
 }
 
 .overview-card {
-  background: linear-gradient(135deg, #f0f4f8 0%, #e5e7eb 100%);
+  background: var(--gray-100);
   padding: 24px;
   border-radius: 12px;
   text-align: center;
   transition: all 0.3s;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
 }
 
 .overview-card:hover {
   transform: translateY(-5px);
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: var(--hover-bg);
 }
 
 .card-icon {
@@ -222,13 +222,13 @@
   flex-direction: column;
   gap: 8px;
   padding-bottom: 16px;
-  border-bottom: 2px solid var(--gray-100);
+  border-bottom: 2px solid var(--border-light);
 }
 
 .info-item label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--gray-500);
+  color: var(--gray-700);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -236,7 +236,7 @@
 .info-item p {
   font-size: 16px;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0;
 }
 
@@ -252,13 +252,13 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: linear-gradient(135deg, #f0f4f8 0%, #f8fafc 100%);
+  background: var(--gray-100);
   border-radius: 12px;
   transition: all 0.3s;
 }
 
 .activity-item:hover {
-  background: linear-gradient(135deg, #dbeafe 0%, #f0f4f8 100%);
+  background: var(--hover-bg);
   transform: translateX(4px);
 }
 
@@ -274,13 +274,13 @@
 .activity-title {
   margin: 0;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   font-size: 14px;
 }
 
 .activity-time {
   margin: 4px 0 0 0;
-  color: var(--gray-500);
+  color: var(--gray-700);
   font-size: 12px;
 }
 
