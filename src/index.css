@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@tailwind utilities;
 
 /* Hide native scrollbars while preserving scroll behavior */
 html, body {
