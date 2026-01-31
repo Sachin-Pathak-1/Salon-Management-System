@@ -2,8 +2,10 @@
 
 .customer-details {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--background);
   padding: 40px 20px;
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .details-container {
@@ -13,8 +15,8 @@
 
 .btn-back {
   padding: 10px 20px;
-  background: white;
-  border: 2px solid var(--gray-200);
+  background: var(--gray-100);
+  border: 2px solid var(--border-light);
   border-radius: 10px;
   color: var(--primary);
   font-weight: 700;
@@ -24,7 +26,7 @@
 }
 
 .btn-back:hover {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: var(--gray-200);
   border-color: var(--primary);
 }
 
@@ -37,11 +39,12 @@
 
 /* Profile Card */
 .profile-card {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   padding: 40px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
+  border: 1px solid var(--border-light);
 }
 
 .avatar-large {
@@ -53,7 +56,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--primary);
   border-radius: 50%;
   color: white;
 }
@@ -61,12 +64,12 @@
 .profile-card h1 {
   font-size: 28px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 8px 0;
 }
 
 .customer-role {
-  color: var(--gray-600);
+  color: var(--text);
   margin: 0 0 20px 0;
   font-size: 14px;
 }
@@ -74,8 +77,8 @@
 .status-badge-large {
   display: inline-block;
   padding: 8px 16px;
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--gray-200);
+  color: var(--text);
   border-radius: 8px;
   font-weight: 700;
   font-size: 12px;

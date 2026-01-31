@@ -2,8 +2,10 @@
 
 .customer-list {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--background);
   padding: 40px 20px;
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .customer-container {
@@ -15,29 +17,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--gray-100);
   padding: 32px 40px;
   border-radius: 16px;
   margin-bottom: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
 }
 
 .list-header h1 {
   font-size: 32px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 8px 0;
 }
 
 .list-header p {
-  color: var(--gray-600);
+  color: var(--text);
   margin: 0;
   font-size: 14px;
+  opacity: 0.7;
 }
 
 .btn-add {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 10px;
@@ -48,11 +52,12 @@
 
 .btn-add:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(24, 146, 247, 0.4);
+  opacity: 0.9;
 }
 
 .list-table-wrapper {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -64,24 +69,26 @@
 }
 
 .list-table thead {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  background: var(--gray-200);
 }
 
 .list-table th {
   padding: 16px 20px;
   text-align: left;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
+  opacity: 0.8;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--gray-200);
+  border-bottom: 2px solid var(--border-light);
 }
 
 .list-table td {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--gray-200);
-  color: var(--gray-700);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text);
+  opacity: 0.85;
   font-size: 14px;
 }
 
@@ -90,7 +97,7 @@
 }
 
 .list-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--hover-bg);
 }
 
 .badge {
@@ -103,18 +110,18 @@
 }
 
 .badge-active {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(16,185,129,0.14);
+  color: var(--text);
 }
 
 .badge-inactive {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(220,38,38,0.12);
+  color: var(--text);
 }
 
 .btn-view {
   padding: 6px 12px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -126,7 +133,7 @@
 
 .btn-view:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 @media (max-width: 768px) {

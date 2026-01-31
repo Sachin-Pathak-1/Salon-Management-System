@@ -75,25 +75,25 @@ export function ActivityPage({ isLoggedIn }) {
 
         {/* Stats Summary */}
         <div className="activity-stats">
-          <div className="stat-card">
+          <div className="summary-card">
             <div className="stat-icon">📊</div>
             <h3>This Month</h3>
             <p className="stat-value">34</p>
             <small>activities</small>
           </div>
-          <div className="stat-card">
+          <div className="summary-card">
             <div className="stat-icon">⭐</div>
             <h3>Rating</h3>
             <p className="stat-value">4.9/5</p>
             <small>average rating</small>
           </div>
-          <div className="stat-card">
+          <div className="summary-card">
             <div className="stat-icon">✅</div>
             <h3>Completed</h3>
             <p className="stat-value">98%</p>
             <small>success rate</small>
           </div>
-          <div className="stat-card">
+          <div className="summary-card">
             <div className="stat-icon">👥</div>
             <h3>Clients</h3>
             <p className="stat-value">156</p>

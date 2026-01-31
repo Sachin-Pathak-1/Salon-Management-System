@@ -2,8 +2,12 @@
   max-width: 1100px;   
   width: 100%;
   margin: 0 auto;      
-  padding: 40px 0;
+  padding: 40px 16px;
   font-family: "Inter", sans-serif;
+  background: var(--background);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 
@@ -18,32 +22,39 @@
 .payment-header h2 {
   margin: 0;
   font-size: 26px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .payment-header p {
   margin-top: 6px;
-  color: #64748b;
+  color: var(--gray-700);
   font-size: 14px;
 }
 
 .invoice-btn {
   padding: 10px 18px;
-  border: 1px solid #c7d2fe;
-  background: #ffffff;
-  color: #4f46e5;
+  border: 2px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.invoice-btn:hover {
+  background: var(--primary);
+  color: white;
 }
 
 /* TABLE WRAPPER */
 .payment-table {
   width: 100%;
   margin-top: 20px;
-  background: #ffffff;
+  background: var(--gray-100);
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
+  transition: background-color 0.3s ease;
 }
 
 
@@ -57,21 +68,22 @@
 }
 
 .table-head {
-  background: #f8fafc;
+  background: var(--gray-200);
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .table-row {
   font-size: 14px;
-  color: #1e293b;
-  border-top: 1px solid #e5e7eb;
+  color: var(--text);
+  border-top: 1px solid var(--border-light);
 }
 
 /* ID */
 .id {
-  color: #6366f1;
+  color: var(--primary);
   font-weight: 600;
 }
 

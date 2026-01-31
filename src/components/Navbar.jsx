@@ -1,10 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
 export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const navigate = useNavigate();
+
+  // Apply theme to root element
+  const applyTheme = (newTheme) => {
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    setTheme(newTheme);
+  };
+
+  useEffect(() => {
+    applyTheme(theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -29,14 +46,21 @@ export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser 
         {/* Center Navigation */}
         <div className="navbar-center">
           <Link to="/" className="nav-link">Home</Link>
-          <Link to="/services" className="nav-link">Services</Link>
+          <Link to="/lpservices" className="nav-link">Services</Link>
           <Link to="/about" className="nav-link">About</Link>
           <Link to="/contact" className="nav-link">Contact</Link>
           <Link to="/dashboard" className="nav-link">Dashboard</Link>
         </div>
 
-        {/* Right Side - Auth Buttons */}
+        {/* Right Side - Auth Buttons + Theme Toggle */}
         <div className="navbar-right">
+          <button
+            className="theme-toggle-btn"
+            onClick={() => applyTheme(theme === 'light' ? 'dark' : 'light')}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
           {!isLoggedIn ? (
             <Link to="/login" className="nav-btn login-btn">
               Login
@@ -72,7 +96,7 @@ export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser 
 
                   <button
                     className="dropdown-item"
-                    onClick={() => handleProfileMenuClick('/profile')}
+                    onClick={() => handleProfileMenuClick('/profilepage')}
                   >
                     <span className="dropdown-icon"></span>
                     View Profile

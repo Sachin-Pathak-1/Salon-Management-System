@@ -3,16 +3,16 @@
   left: 20px;
   top: 120px;
   width: 200px;
-  background: #1f2937;
-  color: white;
+  background: var(--gray-100);
+  color: var(--text);
   border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: var(--card-shadow-lg);
   transition: width 0.3s ease;
   z-index: 100;
-  height:70%;
-  overflow-y: scroll;
-  scrollbar-width: none;
+  height: 70%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-light);
 }
 
 /* COLLAPSED MODE */
@@ -20,9 +20,9 @@
 .sidebar.collapsed {
   width: 60px;
 }
-.sidebar a{
-    justify-content: center;
 
+.sidebar a {
+  justify-content: center;
 }
 
 /* TOGGLE BUTTON */
@@ -31,10 +31,17 @@
   width: 100%;
   background: none;
   border: none;
-  color: white;
+  color: var(--text);
   font-size: 20px;
   cursor: pointer;
-  margin-bottom: 15px;
+  padding: 12px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.toggle-btn:hover {
+  background: var(--hover-bg);
+  border-radius: 8px;
 }
 
 /* MENU */
@@ -43,6 +50,25 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+  padding: 0 12px 12px 12px;
+}
+
+.sidebar ul::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar ul::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar ul::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
 }
 
 .sidebar li {
@@ -55,13 +81,15 @@
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
-  color: white;
+  color: var(--text);
   text-decoration: none;
   font-weight: 500;
+  transition: all 0.3s;
 }
 
 .sidebar a:hover {
-  background: #374151;
+  background: var(--hover-bg);
+  color: var(--primary);
 }
 
 /* ICON */
@@ -70,4 +98,5 @@
   font-size: 18px;
   width: 22px;
   text-align: center;
+  flex-shrink: 0;
 }

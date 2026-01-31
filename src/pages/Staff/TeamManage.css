@@ -1,9 +1,11 @@
 .tm-wrapper {
   padding: 24px;
-  /* background: #f8f9fd; */
+  background: var(--background);
+  color: var(--text);
   min-height: 100vh;
-  width: 85%;
-  margin: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .tm-header {
@@ -16,28 +18,35 @@
 .tm-header h1 {
   margin: 0;
   font-size: 26px;
-  color: #1e293b;
+  color: var(--text);
 }
 
 .tm-header p {
   margin-top: 4px;
-  color: #64748b;
+  color: var(--text);
+  opacity: 0.7;
 }
 
 .tm-invite-btn {
-  background: green;
+  background: var(--primary);
   color: white;
   border: none;
   padding: 12px 18px;
   border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tm-invite-btn:hover {
+  opacity: 0.9;
 }
 
 .tm-table-box {
-  background: white;
+  background: var(--gray-100);
   border-radius: 8px;
   overflow: hidden;
+  border: 1px solid var(--border-light);
 }
 
 table {
@@ -46,21 +55,23 @@ table {
 }
 
 thead {
-  background: #f8fafc;
+  background: var(--gray-200);
 }
 
 th {
   text-align: left;
   font-size: 12px;
   letter-spacing: 1px;
-  color: #94a3b8;
+  color: var(--text);
+  opacity: 0.7;
   padding: 16px;
 }
 
 td {
   padding: 18px 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-light);
   vertical-align: middle;
+  color: var(--text);
 }
 
 .tm-user {
@@ -72,12 +83,13 @@ td {
 .tm-user h4 {
   margin: 0;
   font-size: 15px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .tm-user span {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text);
+  opacity: 0.7;
 }
 
 .avatar {
@@ -98,15 +110,15 @@ td {
 .gray { background: #94a3b8; }
 
 .tm-permission {
-  color: #334155;
+  color: var(--gray-700);
 }
 
 select {
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #c7d2fe;
-  background: white;
-  color: #334155;
+  border: 1px solid var(--border-light);
+  background: var(--gray-100);
+  color: var(--text);
 }
 
 .tm-actions {
@@ -114,12 +126,14 @@ select {
 }
 
 .edit {
-  color: navy;
+  color: var(--primary);
   margin-right: 12px;
   cursor: pointer;
 }
 
 .remove {
-  color: #ef4444;
+  color: var(--danger);
   cursor: pointer;
 }
+
+/* avatar color fallbacks use hard-coded hues but are fine across themes */

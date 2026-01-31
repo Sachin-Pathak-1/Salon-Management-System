@@ -2,7 +2,7 @@
 
 .activity-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--background);
   padding: 40px 20px;
 }
 
@@ -16,11 +16,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--gray-100);
   padding: 32px 40px;
   border-radius: 16px;
   margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   flex-wrap: wrap;
   gap: 24px;
 }
@@ -28,12 +28,12 @@
 .activity-header h1 {
   font-size: 32px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 8px 0;
 }
 
 .activity-header p {
-  color: var(--gray-600);
+  color: var(--gray-700);
   margin: 0;
   font-size: 14px;
   font-weight: 500;
@@ -47,14 +47,15 @@
 
 .filter-btn {
   padding: 10px 20px;
-  border: 2px solid var(--gray-200);
-  background: white;
+  border: 2px solid var(--border-light);
+  background: var(--gray-100);
   border-radius: 10px;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.3s;
   text-transform: capitalize;
+  color: var(--text);
 }
 
 .filter-btn:hover {
@@ -63,7 +64,7 @@
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   color: white;
   border-color: var(--primary);
 }
@@ -77,20 +78,20 @@
 }
 
 .activity-card {
-  background: white;
+  background: var(--gray-100);
   border-radius: 12px;
   padding: 24px;
   display: flex;
   align-items: center;
   gap: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   transition: all 0.3s;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
 }
 
 .activity-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow-lg);
 }
 
 .activity-left {
@@ -106,7 +107,7 @@
   justify-content: center;
   font-size: 24px;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow);
 }
 
 .activity-middle {
@@ -116,12 +117,12 @@
 .activity-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0 0 6px 0;
 }
 
 .activity-description {
-  color: var(--gray-600);
+  color: var(--gray-700);
   font-size: 14px;
   margin: 0;
 }
@@ -136,7 +137,7 @@
 
 .activity-category-badge {
   padding: 6px 12px;
-  border: 2px solid;
+  border: 2px solid var(--border-light);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
@@ -145,7 +146,7 @@
 }
 
 .activity-timestamp {
-  color: var(--gray-500);
+  color: var(--gray-700);
   font-size: 12px;
   font-weight: 600;
 }
@@ -158,18 +159,30 @@
 }
 
 .stat-card {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   padding: 28px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   transition: all 0.3s;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
+  color: var(--text);
+}
+
+.summary-card {
+  background: var(--gray-100);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s;
+  border: 1px solid var(--border-light);
+  color: var(--text);
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow-lg);
 }
 
 .stat-icon {
@@ -180,7 +193,7 @@
 .stat-card h3 {
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-700);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 8px 0;
@@ -189,7 +202,7 @@
 .stat-value {
   font-size: 32px;
   font-weight: 800;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -197,7 +210,7 @@
 }
 
 .stat-card small {
-  color: var(--gray-600);
+  color: var(--gray-700);
   font-size: 12px;
   font-weight: 500;
 }
