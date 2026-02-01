@@ -45,19 +45,19 @@ export function Services({ services, setServices }) {
 
   return (
 
-    <div className="min-h-screen w-full bg-[var(--background)] px-6 md:px-10 py-10">
+    <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
 
       <div className="max-w-7xl mx-auto">
 
         {/* TITLE */}
-        <h1 className="text-center text-4xl font-bold text-[var(--text)]">
+        <h1 className="text-center text-4xl font-bold text-(--text)">
           Services
         </h1>
 
         <div className="h-3" />
 
         {/* SUBTITLE */}
-        <p className="text-center text-[var(--text)] opacity-80 max-w-2xl mx-auto">
+        <p className="text-center text-(--text) opacity-80 max-w-2xl mx-auto">
           We provide a wide range of professional services designed to help your
           business grow, improve efficiency, and achieve long-term success.
         </p>
@@ -72,18 +72,18 @@ export function Services({ services, setServices }) {
             placeholder="Search service..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-[var(--background)]
-                       text-[var(--text)]
-                       border border-[var(--border-light)]
+            className="bg-(--background)
+                       text-(--text)
+                       border border-(--border-light)
                        px-4 py-3 rounded-xl w-64 outline-none"
           />
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-[var(--background)]
-                       text-[var(--text)]
-                       border border-[var(--border-light)]
+            className="bg-(--background)
+                       text-(--text)
+                       border border-(--border-light)
                        px-4 py-3 rounded-xl w-48 outline-none"
           >
             <option value="all">All</option>
@@ -93,8 +93,8 @@ export function Services({ services, setServices }) {
 
           <button
             onClick={() => setShowModal(true)}
-            className="bg-[var(--primary)]
-                       hover:bg-[var(--secondary)]
+            className="bg-(--primary)
+                       hover:bg-(--secondary)
                        text-white font-semibold
                        px-6 py-3 rounded-xl"
           >
@@ -108,7 +108,7 @@ export function Services({ services, setServices }) {
         {/* GRID */}
         <div
           className="grid
-          [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]
+          grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
           gap-10
           w-full"
         >
@@ -118,8 +118,8 @@ export function Services({ services, setServices }) {
             <div
               key={service.id}
               className="service-card
-                         bg-[var(--gray-100)]
-                         border border-[var(--border-light)]
+                         bg-(--gray-100)
+                         border border-(--border-light)
                          rounded-xl
                          p-8"
             >
@@ -129,7 +129,7 @@ export function Services({ services, setServices }) {
                 className="service-number
                            w-12 h-12
                            rounded-full
-                           bg-[var(--primary)]
+                           bg-(--primary)
                            text-white
                            flex items-center justify-center
                            font-bold
@@ -139,12 +139,12 @@ export function Services({ services, setServices }) {
               </div>
 
               {/* TITLE */}
-              <h3 className="text-center font-semibold text-lg text-[var(--text)]">
+              <h3 className="text-center font-semibold text-lg text-(--text)">
                 {service.name}
               </h3>
 
               {/* DESCRIPTION */}
-              <p className="text-center text-[var(--text)] opacity-80 mt-2">
+              <p className="text-center text-(--text) opacity-80 mt-2">
                 {service.description}
               </p>
 
@@ -153,11 +153,11 @@ export function Services({ services, setServices }) {
 
                 <button
                   onClick={() => handleEdit(service)}
-                  className="bg-[var(--primary)]
-                             hover:bg-[var(--secondary)]
+                  className="bg-(--primary)
+                             hover:bg-(--secondary)
                              text-white
                              px-6 py-2
-                             min-w-[90px]
+                             min-w-22.5
                              rounded-lg
                              font-semibold"
                 >
@@ -170,7 +170,7 @@ export function Services({ services, setServices }) {
                              hover:bg-[#d1d5db]
                              text-blue-600
                              px-6 py-2
-                             min-w-[90px]
+                             min-w-22.5
                              rounded-lg
                              font-semibold"
                 >
@@ -194,14 +194,14 @@ export function Services({ services, setServices }) {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
           <div
-            className="bg-[var(--gray-100)]
-                       w-[380px]
+            className="bg-(--gray-100)
+                       w-95
                        p-8
                        rounded-xl
-                       border border-[var(--border-light)]"
+                       border border-(--border-light)"
           >
 
-            <h2 className="text-xl font-bold text-[var(--text)] mb-6">
+            <h2 className="text-xl font-bold text-(--text) mb-6">
               {editId ? "Edit Service" : "Add Service"}
             </h2>
 
@@ -219,9 +219,9 @@ export function Services({ services, setServices }) {
                 required
                 className="w-full mb-4 p-3
                            rounded-lg
-                           bg-[var(--background)]
-                           border border-[var(--border-light)]
-                           text-[var(--text)]"
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text)"
               />
 
               <textarea
@@ -232,9 +232,9 @@ export function Services({ services, setServices }) {
                 rows={4}
                 className="w-full mb-6 p-3
                            rounded-lg
-                           bg-[var(--background)]
-                           border border-[var(--border-light)]
-                           text-[var(--text)] resize-none"
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text) resize-none"
               />
 
               <div className="flex justify-end gap-4">
@@ -247,8 +247,8 @@ export function Services({ services, setServices }) {
                   }}
                   className="px-5 py-2
                              rounded-lg
-                             border border-[var(--primary)]
-                             text-[var(--primary)]"
+                             border border-(--primary)
+                             text-(--primary)"
                 >
                   Cancel
                 </button>
@@ -257,8 +257,8 @@ export function Services({ services, setServices }) {
                   type="submit"
                   className="px-6 py-2
                              rounded-lg
-                             bg-[var(--primary)]
-                             hover:bg-[var(--secondary)]
+                             bg-(--primary)
+                             hover:bg-(--secondary)
                              text-white font-semibold"
                 >
                   Save

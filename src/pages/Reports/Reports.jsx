@@ -61,9 +61,9 @@ export function Reports({ services, setServices }) {
 
   return (
 
-    <div className="min-h-screen w-full bg-[var(--background)] px-6 md:px-10 py-10">
+    <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
 
-      <div className="max-w-7xl mx-auto text-[var(--text)]">
+      <div className="max-w-7xl mx-auto text-(--text)">
 
         {/* HEADER */}
         <div className="mb-10">
@@ -78,8 +78,8 @@ export function Reports({ services, setServices }) {
 
         {/* TABLE CARD */}
         <div
-          className="bg-[var(--gray-100)]
-                     border border-[var(--border-light)]
+          className="bg-(--gray-100)
+                     border border-(--border-light)
                      rounded-xl
                      p-6"
         >
@@ -90,9 +90,9 @@ export function Reports({ services, setServices }) {
             <div className="flex gap-3">
 
               <select
-                className="bg-[var(--background)]
-                           text-[var(--text)]
-                           border border-[var(--border-light)]
+                className="bg-(--background)
+                           text-(--text)
+                           border border-(--border-light)
                            px-4 py-2 rounded-xl"
               >
                 <option>Bulk Action</option>
@@ -102,9 +102,9 @@ export function Reports({ services, setServices }) {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="bg-[var(--background)]
-                           text-[var(--text)]
-                           border border-[var(--border-light)]
+                className="bg-(--background)
+                           text-(--text)
+                           border border-(--border-light)
                            px-4 py-2 rounded-xl"
               >
                 <option>All</option>
@@ -124,16 +124,16 @@ export function Reports({ services, setServices }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-64
-                           bg-[var(--background)]
-                           text-[var(--text)]
-                           border border-[var(--border-light)]
+                           bg-(--background)
+                           text-(--text)
+                           border border-(--border-light)
                            px-4 py-2 rounded-xl outline-none"
               />
 
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-[var(--primary)]
-                           hover:bg-[var(--secondary)]
+                className="bg-(--primary)
+                           hover:bg-(--secondary)
                            text-white font-semibold
                            px-5 py-2 rounded-xl"
               >
@@ -145,101 +145,105 @@ export function Reports({ services, setServices }) {
           </div>
 
           {/* TABLE */}
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
 
-            <thead>
-              <tr className="border-b border-[var(--border-light)] opacity-70">
-                <th className="text-left p-3">ID</th>
-                <th className="text-left p-3">Service Name</th>
-                <th className="text-left p-3">Description</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-left p-3">Actions</th>
-              </tr>
-            </thead>
+            <table className="w-full text-sm min-w-225">
 
-            <tbody>
-
-              {services.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center p-6 opacity-60">
-                    No services found
-                  </td>
+              <thead>
+                <tr className="border-b border-(--border-light) opacity-70">
+                  <th className="text-left p-3">ID</th>
+                  <th className="text-left p-3">Service Name</th>
+                  <th className="text-left p-3">Description</th>
+                  <th className="text-left p-3">Status</th>
+                  <th className="text-left p-3">Actions</th>
                 </tr>
-              )}
+              </thead>
 
-              {services
-                .filter((s) =>
-                  s.name.toLowerCase().includes(search.toLowerCase())
-                )
-                .filter((s) => filter === "All" || s.status === filter)
-                .map((s) => (
+              <tbody>
 
-                  <tr
-                    key={s.id}
-                    className="border-b border-[var(--border-light)]
-                               hover:bg-black/5 transition"
-                  >
-
-                    <td className="p-3">#{s.id}</td>
-                    <td className="p-3">{s.name}</td>
-                    <td className="p-3 opacity-80">{s.description}</td>
-
-                    {/* STATUS */}
-                    <td className="p-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium
-                        ${
-                          (s.status || "Active") === "Active"
-                            ? "bg-emerald-500/20 text-emerald-500"
-                            : (s.status || "Active") === "Low"
-                            ? "bg-amber-500/20 text-amber-500"
-                            : "bg-red-500/20 text-red-500"
-                        }`}
-                      >
-                        {s.status || "Active"}
-                      </span>
+                {services.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="text-center p-6 opacity-60">
+                      No services found
                     </td>
+                  </tr>
+                )}
 
-                    {/* ACTIONS */}
-                    <td className="p-3">
-                      <div className="flex gap-3">
+                {services
+                  .filter((s) =>
+                    s.name.toLowerCase().includes(search.toLowerCase())
+                  )
+                  .filter((s) => filter === "All" || s.status === filter)
+                  .map((s) => (
 
-                        <button
-                          onClick={() => handleEdit(s)}
-                          className="bg-[var(--primary)]
-                                     hover:bg-[var(--secondary)]
+                    <tr
+                      key={s.id}
+                      className="border-b border-(--border-light)
+                                 hover:bg-black/5 transition"
+                    >
+
+                      <td className="p-3">#{s.id}</td>
+                      <td className="p-3">{s.name}</td>
+                      <td className="p-3 opacity-80">{s.description}</td>
+
+                      {/* STATUS */}
+                      <td className="p-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium
+                          ${
+                            (s.status || "Active") === "Active"
+                              ? "bg-emerald-500/20 text-emerald-500"
+                              : (s.status || "Active") === "Low"
+                              ? "bg-amber-500/20 text-amber-500"
+                              : "bg-red-500/20 text-red-500"
+                          }`}
+                        >
+                          {s.status || "Active"}
+                        </span>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="p-3">
+                        <div className="flex gap-3">
+
+                          <button
+                            onClick={() => handleEdit(s)}
+                            className="bg-(--primary)
+                                     hover:bg-(--secondary)
                                      text-white
                                      px-6 py-2
                                      rounded-lg
-                                     min-w-[90px]
+                                     min-w-22.5
                                      font-semibold"
-                        >
-                          Edit
-                        </button>
+                          >
+                            Edit
+                          </button>
 
-                        <button
-                          onClick={() => handleDelete(s.id)}
-                          className="bg-[#e5e7eb]
+                          <button
+                            onClick={() => handleDelete(s.id)}
+                            className="bg-[#e5e7eb]
                                      hover:bg-[#d1d5db]
                                      text-blue-600
                                      px-6 py-2
                                      rounded-lg
-                                     min-w-[90px]
+                                     min-w-22.5
                                      font-semibold"
-                        >
-                          Delete
-                        </button>
+                          >
+                            Delete
+                          </button>
 
-                      </div>
-                    </td>
+                        </div>
+                      </td>
 
-                  </tr>
+                    </tr>
 
-                ))}
+                  ))}
 
-            </tbody>
+              </tbody>
 
-          </table>
+            </table>
+
+          </div>
 
         </div>
 
@@ -247,17 +251,17 @@ export function Reports({ services, setServices }) {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
 
           <div
-            className="bg-[var(--gray-100)]
-                       w-[380px]
+            className="bg-(--gray-100)
+                       w-95
                        p-8
                        rounded-xl
-                       border border-[var(--border-light)]"
+                       border border-(--border-light)"
           >
 
-            <h2 className="text-xl font-bold text-[var(--text)] mb-6">
+            <h2 className="text-xl font-bold text-(--text) mb-6">
               {editId ? "Edit Service" : "Add Service"}
             </h2>
 
@@ -275,9 +279,9 @@ export function Reports({ services, setServices }) {
                 required
                 className="w-full mb-4 p-3
                            rounded-lg
-                           bg-[var(--background)]
-                           border border-[var(--border-light)]
-                           text-[var(--text)]"
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text)"
               />
 
               <textarea
@@ -288,9 +292,9 @@ export function Reports({ services, setServices }) {
                 rows={4}
                 className="w-full mb-6 p-3
                            rounded-lg
-                           bg-[var(--background)]
-                           border border-[var(--border-light)]
-                           text-[var(--text)] resize-none"
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text) resize-none"
               />
 
               <select
@@ -298,9 +302,9 @@ export function Reports({ services, setServices }) {
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full mb-6 p-3
                            rounded-lg
-                           bg-[var(--background)]
-                           border border-[var(--border-light)]
-                           text-[var(--text)]"
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text)"
               >
                 <option>Active</option>
                 <option>Low</option>
@@ -317,8 +321,8 @@ export function Reports({ services, setServices }) {
                   }}
                   className="px-5 py-2
                              rounded-lg
-                             border border-[var(--primary)]
-                             text-[var(--primary)]"
+                             border border-(--primary)
+                             text-(--primary)"
                 >
                   Cancel
                 </button>
@@ -327,8 +331,8 @@ export function Reports({ services, setServices }) {
                   type="submit"
                   className="px-6 py-2
                              rounded-lg
-                             bg-[var(--primary)]
-                             hover:bg-[var(--secondary)]
+                             bg-(--primary)
+                             hover:bg-(--secondary)
                              text-white font-semibold"
                 >
                   Save
