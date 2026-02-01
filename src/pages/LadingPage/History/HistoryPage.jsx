@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import './HistoryPage.css';
-import '.././harshal.css'
+ 
 
 export function HistoryPage({ isLoggedIn }) {
   const navigate = useNavigate();

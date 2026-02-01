@@ -1,6 +1,6 @@
 import './CustomerDetails.css';
 import { useNavigate } from 'react-router-dom';
-import '.././harshal.css'
+ 
 
 export function CustomerDetails() {
   const navigate = useNavigate();
