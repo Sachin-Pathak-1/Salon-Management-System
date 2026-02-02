@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
-
+import React from "react"
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 

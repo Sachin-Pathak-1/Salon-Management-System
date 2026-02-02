@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import './Home.css';
+import React from "react"
+
  
 
 export function Home() {
