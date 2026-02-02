@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export function About() {
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text)]  px-5 py-10 md:py-16 transition-colors duration-300 ">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] px-5 py-10 md:py-16 transition-colors duration-300">
       <div className="max-w-4xl mx-auto">
 
         {/* Back Link */}
@@ -19,7 +19,7 @@ export function About() {
         </h1>
 
         {/* Content Box */}
-        <div className="bg-white w-full max-w-4xl mx-auto rounded-2xl shadow-lg px-6 py-8 md:px-12 md:py-14 space-y-8 md:space-y-12 dark:bg-gray-900 dark:text-slate-300">
+        <div className="bg-white dark:bg-gray-800 w-full max-w-4xl mx-auto rounded-2xl shadow-lg px-6 py-8 md:px-12 md:py-14 space-y-8 md:space-y-12">
 
           {/* Our Mission */}
           <section>

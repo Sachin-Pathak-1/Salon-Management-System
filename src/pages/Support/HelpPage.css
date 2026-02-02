@@ -1,0 +1,193 @@
+/* Help Page Layout */
+.help-page {
+  display: flex;
+  min-height: 100vh;
+  width: 85%;
+  margin: auto;
+  background: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Main Content */
+.help-content {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+/* Header Section */
+.help-header {
+  margin-bottom: 40px;
+}
+
+.help-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.help-header p {
+  font-size: 16px;
+  color: var(--text);
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* Search Bar */
+.help-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 20px;
+  border: 1px solid var(--border-light);
+  border-radius: 50px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--gray-100);
+  max-width: 500px;
+}
+
+.search-input::placeholder {
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(24, 146, 247, 0.1);
+}
+
+.search-btn {
+  padding: 12px 20px;
+  background-color: var(--gray-200);
+  border: 1px solid var(--border-light);
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.search-btn:hover {
+  background-color: var(--gray-100);
+}
+
+/* Topics Grid */
+.help-topics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.topic-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background-color: var(--gray-100);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* .topic-icon {
+  font-size: 40px;
+  min-width: 60px;
+  text-align: center;
+  line-height: 1;
+} */
+
+.topic-body {
+  flex: 1;
+}
+
+.topic-body h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 10px 0;
+}
+
+.topic-body p {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.topic-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.topic-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+
+/* Contact Section */
+.help-contact {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background-color: #f8f9ff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  margin-bottom: 40px;
+}
+
+.contact-icon {
+  font-size: 40px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.contact-body {
+  flex: 1;
+}
+
+.contact-body h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.contact-btn {
+  padding: 10px 24px;
+  background-color: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.contact-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Footer */
+.help-footer {
+  text-align: center;
+  padding: 20px 0;
+  border-top: 1px solid #e5e5e5;
+  background-color: #666;
+  color: #999;
+  font-size: 13px;
+}
