@@ -5,6 +5,7 @@ import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 
 import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
+import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
 import { ProfilePage } from "./pages/LadingPage/ProfilePage/ProfilePage.jsx";
 import Profile from "./pages/Profile/Profile.jsx"
 import { ActivityPage } from "./pages/LadingPage/Activity/ActivityPage.jsx";
@@ -115,6 +116,16 @@ function App() {
               path="/login"
               element={
                 <LoginPage
+                  isLoggedIn={isLoggedIn}
+                  setIsLoggedIn={setIsLoggedIn}
+                  setCurrentUser={setCurrentUser}
+                />
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <SignupPage
                   isLoggedIn={isLoggedIn}
                   setIsLoggedIn={setIsLoggedIn}
                   setCurrentUser={setCurrentUser}

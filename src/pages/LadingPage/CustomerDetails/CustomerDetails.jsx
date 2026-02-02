@@ -1,10 +1,8 @@
-import './CustomerDetails.css';
 import { useNavigate } from 'react-router-dom';
- 
 
 export function CustomerDetails() {
   const navigate = useNavigate();
-  
+
   const customerData = {
     id: 1,
     name: 'John Smith',
@@ -27,91 +25,115 @@ export function CustomerDetails() {
   };
 
   return (
-    <div className="customer-details">
-      <div className="details-container">
-        <button className="btn-back" onClick={() => navigate('/customers')}>← Back to Customers</button>
+    <div className="min-h-screen bg-[var(--background)] px-5 py-10 text-[var(--text)] transition-colors duration-300">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-        <div className="details-grid">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/customers')}
+          className="inline-block mb-6 px-5 py-2 bg-gray-100 border-2 border-[var(--border-light)] rounded-lg text-[var(--primary)] font-bold hover:bg-gray-200 hover:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition"
+        >
+          ← Back to Customers
+        </button>
+
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
           {/* Profile Section */}
-          <div className="profile-card">
-            <div className="avatar-large">{customerData.avatar}</div>
-            <h1>{customerData.name}</h1>
-            <p className="customer-role">{customerData.role} at {customerData.company}</p>
-            <div className="status-badge-large">{customerData.status}</div>
-            <div className="contact-info">
-              <div className="contact-item">
-                <span className="label">Email</span>
-                <p>{customerData.email}</p>
+          <div className="bg-gray-100 border border-[var(--border-light)] rounded-2xl p-10 shadow text-center space-y-6">
+            <div className="text-6xl w-28 h-28 flex items-center justify-center bg-[var(--primary)] text-white rounded-full mx-auto">
+              {customerData.avatar}
+            </div>
+            <h1 className="text-2xl font-extrabold text-[var(--text)]">{customerData.name}</h1>
+            <p className="text-sm text-[var(--text)]">{customerData.role} at {customerData.company}</p>
+            <div className="inline-block px-4 py-2 bg-gray-200 text-[var(--text)] rounded-md font-bold text-xs uppercase">
+              {customerData.status}
+            </div>
+            <div className="flex flex-col gap-4 mt-4 text-left">
+              <div className="border-b border-gray-200 pb-2">
+                <span className="block text-xs font-bold text-gray-600 uppercase tracking-wide">Email</span>
+                <p className="text-gray-900 font-semibold">{customerData.email}</p>
               </div>
-              <div className="contact-item">
-                <span className="label">Phone</span>
-                <p>{customerData.phone}</p>
+              <div className="border-b border-gray-200 pb-2">
+                <span className="block text-xs font-bold text-gray-600 uppercase tracking-wide">Phone</span>
+                <p className="text-gray-900 font-semibold">{customerData.phone}</p>
               </div>
-              <div className="contact-item">
-                <span className="label">Member Since</span>
-                <p>{customerData.joinDate}</p>
+              <div className="border-b border-gray-200 pb-2">
+                <span className="block text-xs font-bold text-gray-600 uppercase tracking-wide">Member Since</span>
+                <p className="text-gray-900 font-semibold">{customerData.joinDate}</p>
               </div>
             </div>
           </div>
 
           {/* Stats Section */}
-          <div className="stats-section">
-            <h2>Account Overview</h2>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-value">${(parseInt(customerData.totalSpent.replace(/\$|,/g, '')) / 1000).toFixed(1)}K</div>
-                <div className="stat-label">Total Spent</div>
+          <div className="bg-white rounded-2xl p-8 shadow">
+            <h2 className="text-lg font-extrabold text-gray-900 mb-6">Account Overview</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-5 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition">
+                <div className="text-2xl font-extrabold text-[var(--primary)] mb-1">
+                  ${(parseInt(customerData.totalSpent.replace(/\$|,/g, '')) / 1000).toFixed(1)}K
+                </div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Total Spent</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-value">{customerData.services}</div>
-                <div className="stat-label">Active Services</div>
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-5 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition">
+                <div className="text-2xl font-extrabold text-[var(--primary)] mb-1">{customerData.services}</div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Active Services</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-value">{customerData.orders.length}</div>
-                <div className="stat-label">Total Orders</div>
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-5 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition">
+                <div className="text-2xl font-extrabold text-[var(--primary)] mb-1">{customerData.orders.length}</div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Total Orders</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-value">4.8</div>
-                <div className="stat-label">Rating</div>
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-5 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition">
+                <div className="text-2xl font-extrabold text-[var(--primary)] mb-1">4.8</div>
+                <div className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Rating</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Address Section */}
-        <div className="info-section">
-          <h2>Address</h2>
-          <p className="full-width">{customerData.address}</p>
+        <div className="bg-white rounded-2xl p-8 shadow mb-8">
+          <h2 className="text-lg font-extrabold text-gray-900 mb-4">Address</h2>
+          <p className="text-gray-700 leading-relaxed">{customerData.address}</p>
         </div>
 
         {/* Orders Section */}
-        <div className="orders-section">
-          <h2>Recent Orders</h2>
-          <div className="orders-table-wrapper">
-            <table className="orders-table">
-              <thead>
+        <div className="bg-white rounded-2xl p-8 shadow">
+          <h2 className="text-lg font-extrabold text-gray-900 mb-6">Recent Orders</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gradient-to-br from-gray-100 to-gray-200">
                 <tr>
-                  <th>Order ID</th>
-                  <th>Service Name</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200">Order ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200">Service Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {customerData.orders.map(order => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>{order.name}</td>
-                    <td>{order.date}</td>
-                    <td>{order.amount}</td>
-                    <td><span className={`order-badge order-badge-${order.status.toLowerCase().replace(' ', '-')}`}>{order.status}</span></td>
+                  <tr key={order.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 border-b border-gray-200 text-gray-700">#{order.id}</td>
+                    <td className="px-4 py-3 border-b border-gray-200 text-gray-700">{order.name}</td>
+                    <td className="px-4 py-3 border-b border-gray-200 text-gray-700">{order.date}</td>
+                    <td className="px-4 py-3 border-b border-gray-200 text-gray-700">{order.amount}</td>
+                    <td className="px-4 py-3 border-b border-gray-200">
+                      <span className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                        order.status === 'Completed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+
       </div>
     </div>
   );
