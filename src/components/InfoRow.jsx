@@ -3,7 +3,7 @@ const InfoRow = ({ label, value, locked }) => {
     <div className="info-row">
       <span className="label">{label}</span>
       <div className="value">{value}</div>
-      <span className="icon">{locked ? "🔒" : "›"}</span>
+      <span className="icon">{locked ? "🔒" : " "}</span>
     </div>
   );
 };
