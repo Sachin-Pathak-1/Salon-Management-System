@@ -1,6 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import './HistoryPage.css';
- 
 
 export function HistoryPage({ isLoggedIn }) {
   const navigate = useNavigate();
@@ -25,75 +23,104 @@ export function HistoryPage({ isLoggedIn }) {
     { id: 12, date: '2025-01-08', action: 'New Service Added', details: 'Added "Mobile App Development"', status: 'info' },
   ];
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      completed: '✅',
-      'in-progress': '⏳',
-      cancelled: '❌',
-      info: 'ℹ️'
-    };
-    return icons[status] || '•';
+  const statusStyles = {
+    completed: 'bg-emerald-500 border-emerald-500 text-emerald-500',
+    'in-progress': 'bg-amber-500 border-amber-500 text-amber-500',
+    cancelled: 'bg-red-500 border-red-500 text-red-500',
+    info: 'bg-blue-500 border-blue-500 text-blue-500',
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      completed: '#10b981',
-      'in-progress': '#f59e0b',
-      cancelled: '#ef4444',
-      info: '#3b82f6'
-    };
-    return colors[status] || '#6b7280';
+  const statusIcon = {
+    completed: '✅',
+    'in-progress': '⏳',
+    cancelled: '❌',
+    info: 'ℹ️',
   };
 
-  // Group history by month
   const groupedHistory = {};
   history.forEach(item => {
     const month = new Date(item.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-    if (!groupedHistory[month]) {
-      groupedHistory[month] = [];
-    }
+    groupedHistory[month] = groupedHistory[month] || [];
     groupedHistory[month].push(item);
   });
 
   return (
-    <div className="history-page">
-      <div className="history-container">
-        <div className="history-header">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 px-5 py-10">
+      <div className="max-w-5xl mx-auto">
+
+        {/* Header */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row gap-6 justify-between">
           <div>
-            <h1>History</h1>
-            <p>View your complete transaction and activity history</p>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+              History
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              View your complete transaction and activity history
+            </p>
           </div>
-          <div className="history-actions">
-            <button className="action-btn">📥 Export</button>
-            <button className="action-btn">🔍 Search</button>
+
+          <div className="flex gap-3">
+            {['📥 Export', '🔍 Search'].map((btn, i) => (
+              <button
+                key={i}
+                className="px-5 py-2 rounded-lg font-bold text-sm border
+                  border-slate-200 dark:border-slate-700
+                  bg-slate-100 dark:bg-slate-800
+                  hover:border-blue-500 hover:text-blue-500 transition"
+              >
+                {btn}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Timeline */}
-        <div className="timeline">
+        <div className="space-y-10">
           {Object.entries(groupedHistory).map(([month, items]) => (
-            <div key={month} className="timeline-section">
-              <div className="timeline-month">{month}</div>
-              <div className="timeline-items">
-                {items.map((item) => (
-                  <div key={item.id} className="timeline-item">
-                    <div className="timeline-marker" style={{ background: getStatusColor(item.status) }}>
-                      {getStatusIcon(item.status)}
+            <div key={month} className="flex flex-col md:flex-row gap-8">
+              <div className="min-w-[150px] font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">
+                {month}
+              </div>
+
+              <div className="flex-1 border-l-2 border-slate-200 dark:border-slate-700 pl-6 space-y-5">
+                {items.map(item => (
+                  <div key={item.id} className="relative">
+
+                    {/* Marker */}
+                    <div
+                      className={`absolute -left-[38px] w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${statusStyles[item.status]}`}
+                    >
+                      {statusIcon[item.status]}
                     </div>
-                    <div className="timeline-content">
-                      <div className="history-date">
-                        {new Date(item.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+
+                    {/* Card */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow hover:-translate-y-1 transition grid md:grid-cols-[1fr_auto] gap-4">
+                      <div>
+                        <p className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
+                          {new Date(item.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                        <h3 className="font-bold text-slate-900 dark:text-white mt-1">
+                          {item.action}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {item.details}
+                        </p>
                       </div>
-                      <div className="history-item">
-                        <h3 className="history-action">{item.action}</h3>
-                        <p className="history-details">{item.details}</p>
-                      </div>
-                      <div className="history-status">
-                        <span className="status-badge" style={{ borderColor: getStatusColor(item.status), color: getStatusColor(item.status) }}>
+
+                      <div className="flex items-center">
+                        <span
+                          className={`px-3 py-1 text-xs font-bold rounded-lg border capitalize
+                            ${statusStyles[item.status]} bg-transparent`}
+                        >
                           {item.status}
                         </span>
                       </div>
                     </div>
+
                   </div>
                 ))}
               </div>
@@ -101,36 +128,39 @@ export function HistoryPage({ isLoggedIn }) {
           ))}
         </div>
 
-        {/* Summary Stats */}
-        <div className="history-summary">
-          <h2>Summary Statistics</h2>
-          <div className="summary-cards">
-            <div className="summary-card">
-              <div className="summary-icon">✅</div>
-              <h4>Completed</h4>
-              <p className="summary-value">7</p>
-              <small>services</small>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">⏳</div>
-              <h4>In Progress</h4>
-              <p className="summary-value">2</p>
-              <small>active services</small>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">❌</div>
-              <h4>Cancelled</h4>
-              <p className="summary-value">1</p>
-              <small>services</small>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">💰</div>
-              <h4>Total Earned</h4>
-              <p className="summary-value">$650</p>
-              <small>from completed</small>
-            </div>
+        {/* Summary */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">
+            Summary Statistics
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {[
+              ['✅', 'Completed', '7', 'services'],
+              ['⏳', 'In Progress', '2', 'active services'],
+              ['❌', 'Cancelled', '1', 'services'],
+              ['💰', 'Total Earned', '$650', 'from completed'],
+            ].map(([icon, title, value, label], i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800
+                  rounded-2xl p-7 text-center shadow hover:-translate-y-1 transition"
+              >
+                <div className="text-4xl mb-2">{icon}</div>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                  {title}
+                </h4>
+                <p className="text-3xl font-extrabold text-blue-500">
+                  {value}
+                </p>
+                <small className="text-slate-500 dark:text-slate-400">
+                  {label}
+                </small>
+              </div>
+            ))}
           </div>
         </div>
+
       </div>
     </div>
   );
