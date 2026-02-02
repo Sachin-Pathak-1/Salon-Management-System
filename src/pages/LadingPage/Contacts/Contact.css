@@ -1,7 +1,9 @@
 .contact-page {
   min-height: 100vh;
-  background-color: #c3cfe2;
+  background-color: var(--background);
+  color: var(--text);
   padding: 60px 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .back-link {
@@ -22,14 +24,14 @@
 .contact-container h1 {
   font-size: 40px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin-bottom: 10px;
   text-align: center;
 }
 
 .contact-intro {
   text-align: center;
-  color: var(--gray-600);
+  color: var(--text);
   font-size: 18px;
   margin-bottom: 40px;
 }
@@ -41,15 +43,17 @@
 }
 
 .contact-info {
-  background: white;
+  background: var(--gray-100);
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  border: 1px solid var(--border-light);
 }
 
 .contact-info h3 {
   font-size: 24px;
-  color: var(--gray-900);
+  color: var(--text);
   margin-bottom: 25px;
 }
 
@@ -65,16 +69,18 @@
 }
 
 .info-item p {
-  color: var(--gray-700);
+  color: var(--text);
   font-size: 15px;
   line-height: 1.6;
 }
 
 .contact-form {
-  background: white;
+  background: var(--gray-100);
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  border: 1px solid var(--border-light);
 }
 
 .success-message {
@@ -94,7 +100,7 @@
 .form-group label {
   display: block;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   margin-bottom: 8px;
   font-size: 14px;
 }
@@ -120,13 +126,14 @@
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background-color: #1e40af;
+  background-color: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .submit-btn:hover {

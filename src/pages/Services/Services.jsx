@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./Services.css";
 
 export function Services({ services, setServices }) {
 
@@ -11,6 +10,8 @@ export function Services({ services, setServices }) {
   const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
 
+  // ------------------------
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -21,10 +22,7 @@ export function Services({ services, setServices }) {
         )
       );
     } else {
-      setServices([
-        ...services,
-        { id: Date.now(), name, description }
-      ]);
+      setServices([...services, { id: Date.now(), name, description }]);
     }
 
     setName("");
@@ -40,87 +38,141 @@ export function Services({ services, setServices }) {
     setEditId(service.id);
     setName(service.name);
     setDescription(service.description);
+    setShowModal(true);
   };
 
+  // ------------------------
+
   return (
-    <div className="services-page">
 
-      <h1 className="services-title">Services</h1>
+    <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
 
-      <p className="services-subtitle">
-        We provide a wide range of professional services designed to help your
-        business grow, improve efficiency, and achieve long-term success.
-      </p>
+      <div className="max-w-7xl mx-auto">
 
-      <div className="services-divider"></div>
+        {/* TITLE */}
+        <h1 className="text-center text-4xl font-bold text-(--text)">
+          Services
+        </h1>
 
-      {/* Controls */}
-      <div className="services-controls">
+        <div className="h-3" />
 
-        <input
-          type="text"
-          placeholder="Search service..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        {/* SUBTITLE */}
+        <p className="text-center text-(--text) opacity-80 max-w-2xl mx-auto">
+          We provide a wide range of professional services designed to help your
+          business grow, improve efficiency, and achieve long-term success.
+        </p>
 
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+        <div className="h-8" />
+
+        {/* CONTROLS */}
+        <div className="flex flex-wrap justify-center gap-4">
+
+          <input
+            type="text"
+            placeholder="Search service..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-(--background)
+                       text-(--text)
+                       border border-(--border-light)
+                       px-4 py-3 rounded-xl w-64 outline-none"
+          />
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="bg-(--background)
+                       text-(--text)
+                       border border-(--border-light)
+                       px-4 py-3 rounded-xl w-48 outline-none"
+          >
+            <option value="all">All</option>
+            <option value="short">Short Name</option>
+            <option value="long">Long Name</option>
+          </select>
+
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-(--primary)
+                       hover:bg-(--secondary)
+                       text-white font-semibold
+                       px-6 py-3 rounded-xl"
+          >
+            + Add Service
+          </button>
+
+        </div>
+
+        <div className="h-12" />
+
+        {/* GRID */}
+        <div
+          className="grid
+          grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
+          gap-10
+          w-full"
         >
-          <option value="all">All</option>
-          <option value="short">Short Name</option>
-          <option value="long">Long Name</option>
-        </select>
 
-        <button
-          className="btn-primary"
-          onClick={() => setShowModal(true)}
-        >
-          + Add Service
-        </button>
+          {services.map((service, index) => (
 
-      </div>
+            <div
+              key={service.id}
+              className="service-card
+                         bg-(--gray-100)
+                         border border-(--border-light)
+                         rounded-xl
+                         p-8"
+            >
 
-      {/* Grid */}
-      <div className="services-grid">
-
-        {services
-          .filter((s) =>
-            s.name.toLowerCase().includes(search.toLowerCase())
-          )
-          .filter((s) => {
-            if (filter === "short") return s.name.length <= 6;
-            if (filter === "long") return s.name.length > 6;
-            return true;
-          })
-          .map((service, index) => (
-
-            <div key={service.id} className="service-card">
-
-              <div className="service-number">
+              {/* NUMBER */}
+              <div
+                className="service-number
+                           w-12 h-12
+                           rounded-full
+                           bg-(--primary)
+                           text-white
+                           flex items-center justify-center
+                           font-bold
+                           mx-auto mb-4"
+              >
                 {index + 1}
               </div>
 
-              <h3>{service.name}</h3>
+              {/* TITLE */}
+              <h3 className="text-center font-semibold text-lg text-(--text)">
+                {service.name}
+              </h3>
 
-              <p>{service.description}</p>
+              {/* DESCRIPTION */}
+              <p className="text-center text-(--text) opacity-80 mt-2">
+                {service.description}
+              </p>
 
-              <div className="service-actions">
+              {/* ACTIONS */}
+              <div className="flex justify-center gap-4 mt-6">
 
                 <button
-                  className="btn-edit"
-                  onClick={() => {
-                    handleEdit(service);
-                    setShowModal(true);
-                  }}
+                  onClick={() => handleEdit(service)}
+                  className="bg-(--primary)
+                             hover:bg-(--secondary)
+                             text-white
+                             px-6 py-2
+                             min-w-22.5
+                             rounded-lg
+                             font-semibold"
                 >
                   Edit
                 </button>
 
                 <button
-                  className="btn-delete"
                   onClick={() => handleDelete(service.id)}
+                  className="bg-[#e5e7eb]
+                             hover:bg-[#d1d5db]
+                             text-blue-600
+                             px-6 py-2
+                             min-w-22.5
+                             rounded-lg
+                             font-semibold"
                 >
                   Delete
                 </button>
@@ -129,17 +181,27 @@ export function Services({ services, setServices }) {
 
             </div>
 
-        ))}
+          ))}
+
+        </div>
+
+        <div className="h-16" />
 
       </div>
 
-      {/* Modal */}
+      {/* MODAL */}
       {showModal && (
-        <div className="modal-overlay">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
-          <div className="modal-box">
+          <div
+            className="bg-(--gray-100)
+                       w-95
+                       p-8
+                       rounded-xl
+                       border border-(--border-light)"
+          >
 
-            <h2>
+            <h2 className="text-xl font-bold text-(--text) mb-6">
               {editId ? "Edit Service" : "Add Service"}
             </h2>
 
@@ -155,6 +217,11 @@ export function Services({ services, setServices }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="w-full mb-4 p-3
+                           rounded-lg
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text)"
               />
 
               <textarea
@@ -162,22 +229,38 @@ export function Services({ services, setServices }) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+                rows={4}
+                className="w-full mb-6 p-3
+                           rounded-lg
+                           bg-(--background)
+                           border border-(--border-light)
+                           text-(--text) resize-none"
               />
 
-              <div className="modal-actions">
+              <div className="flex justify-end gap-4">
 
                 <button
                   type="button"
-                  className="btn-cancel"
                   onClick={() => {
                     setShowModal(false);
                     setEditId(null);
                   }}
+                  className="px-5 py-2
+                             rounded-lg
+                             border border-(--primary)
+                             text-(--primary)"
                 >
                   Cancel
                 </button>
 
-                <button type="submit" className="btn-primary">
+                <button
+                  type="submit"
+                  className="px-6 py-2
+                             rounded-lg
+                             bg-(--primary)
+                             hover:bg-(--secondary)
+                             text-white font-semibold"
+                >
                   Save
                 </button>
 

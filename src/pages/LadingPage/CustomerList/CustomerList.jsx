@@ -1,6 +1,6 @@
 import './CustomerList.css';
 import { useState } from 'react';
-import '.././harshal.css'
+ 
 import { useNavigate } from 'react-router-dom';
 
 export function CustomerList() {

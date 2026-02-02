@@ -2,11 +2,13 @@
 
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--background);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .login-container {
@@ -20,7 +22,7 @@
 
 /* Left Side */
 .login-left {
-  color: white;
+  color: var(--text);
 }
 
 .login-title {
@@ -32,8 +34,9 @@
 
 .login-subtitle {
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text);
   line-height: 1.6;
+  opacity: 0.9;
 }
 
 /* Right Side - Form */
@@ -42,10 +45,12 @@
 }
 
 .login-form-wrapper {
-  background: white;
+  background: var(--gray-100);
   border-radius: 16px;
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  border: 1px solid var(--border-light);
 }
 
 .login-header {
@@ -55,14 +60,15 @@
 .login-header h2 {
   font-size: 28px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text);
   margin-bottom: 8px;
 }
 
 .login-header p {
-  color: var(--gray-600);
+  color: var(--text);
   font-size: 14px;
   font-weight: 500;
+  opacity: 0.7;
 }
 
 /* Error Message */
@@ -104,18 +110,19 @@
 
 .form-group label {
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   font-size: 14px;
 }
 
 .form-group input {
   padding: 12px 16px;
-  border: 2px solid var(--gray-200);
+  border: 2px solid var(--border-light);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
-  background: white;
+  background: var(--gray-100);
+  color: var(--text);
 }
 
 .form-group input:focus {
@@ -147,7 +154,7 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: var(--gray-700);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -170,7 +177,7 @@
 /* Buttons */
 .btn-submit {
   padding: 14px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 10px;
@@ -197,7 +204,8 @@
   align-items: center;
   gap: 12px;
   margin: 24px 0;
-  color: var(--gray-500);
+  color: var(--text);
+  opacity: 0.5;
 }
 
 .divider::before,
@@ -212,9 +220,9 @@
 .btn-demo {
   width: 100%;
   padding: 12px 24px;
-  background: white;
+  background: var(--gray-100);
   color: var(--primary);
-  border: 2px solid var(--gray-200);
+  border: 2px solid var(--border-light);
   border-radius: 10px;
   font-weight: 700;
   font-size: 14px;
@@ -225,7 +233,8 @@
 
 .btn-demo:hover {
   border-color: var(--primary);
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: var(--primary);
+  color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
@@ -240,8 +249,9 @@
 
 .btn-social {
   padding: 10px 16px;
-  border: 2px solid var(--gray-200);
-  background: white;
+  border: 2px solid var(--border-light);
+  background: var(--gray-100);
+  color: var(--text);
   border-radius: 10px;
   font-weight: 700;
   font-size: 13px;
@@ -254,8 +264,9 @@
 }
 
 .btn-social:hover {
-  border-color: var(--gray-400);
-  background: var(--gray-50);
+  border-color: var(--primary);
+  background: var(--gray-200);
+  color: var(--primary);
 }
 
 .btn-social span {
@@ -265,10 +276,11 @@
 /* Signup Link */
 .signup-link {
   text-align: center;
-  color: var(--gray-600);
+  color: var(--text);
   font-size: 14px;
   margin: 24px 0;
   font-weight: 500;
+  opacity: 0.7;
 }
 
 .signup-link a {

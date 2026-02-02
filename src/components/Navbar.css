@@ -1,12 +1,14 @@
 /* Navbar Styles */
 
 .navbar {
-  background-color: white;
+  background-color: var(--background);
+  color: var(--text);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .navbar-container {
@@ -26,8 +28,9 @@
 
 .logo-text {
   letter-spacing: -0.5px;
-    font-size: 20px;
-    font-weight: 800;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
 }
 
 /* Center Navigation */
@@ -77,6 +80,27 @@
   min-width: fit-content;
 }
 
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: none;
+  border: 2px solid var(--primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--primary);
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--primary);
+  color: var(--background);
+  transform: scale(1.1);
+}
+
 .nav-btn {
   padding: 10px 24px;
   border: none;
@@ -90,15 +114,14 @@
 }
 
 .login-btn {
-  background-color: #1e40af;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .login-btn:hover {
   background-color: var(--secondary);
-  color: black;
-  border: 1px solid black;
+  color: white;
 }
 
 /* Profile Container */
@@ -107,7 +130,7 @@
 }
 
 .profile-btn {
-  background-color: #e5e7eb;
+  background-color: var(--gray-100);
   border: 2px solid var(--gray-200);
   padding: 8px 16px;
   border-radius: 12px;
@@ -117,13 +140,13 @@
   gap: 12px;
   font-weight: 700;
   font-size: 14px;
-  color: var(--gray-700);
-
+  color: var(--text);
+  transition: all 0.3s ease;
 }
 
 .profile-btn:hover {
   border-color: var(--primary);
-  background-color: #bfdbfe;
+  background-color: var(--gray-200);
   color: var(--primary);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
@@ -132,7 +155,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #1e40af;
+  background-color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,12 +175,13 @@
   top: 100%;
   right: 0;
   margin-top: 12px;
-  background: white;
+  background: var(--background);
+  color: var(--text);
   border-radius: 14px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   min-width: 280px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-light);
   animation: slideDown 0.3s ease;
   z-index: 1000;
 }
@@ -175,8 +199,8 @@
 
 .dropdown-header {
   padding: 16px 16px;
-  background: linear-gradient(135deg, #f0f4f8 0%, #e5e7eb 100%);
-  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-200);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .dropdown-user-info {
@@ -189,7 +213,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,20 +224,20 @@
 
 .dropdown-name {
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text);
   margin: 0;
   font-size: 14px;
 }
 
 .dropdown-email {
-  color: var(--gray-600);
+  color: var(--gray-700);
   margin: 4px 0 0 0;
   font-size: 12px;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: var(--gray-200);
+  background: var(--border-light);
 }
 
 .dropdown-item {
@@ -223,7 +247,7 @@
   background: none;
   text-align: left;
   cursor: pointer;
-  color: var(--gray-700);
+  color: var(--text);
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -233,7 +257,7 @@
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+  background: var(--gray-100);
   color: var(--primary);
   padding-left: 20px;
 }
@@ -244,11 +268,11 @@
 }
 
 .logout-item {
-  color: var(--red-600);
+  color: var(--accent);
 }
 
 .logout-item:hover {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
+  background: var(--gray-100);
 }
 
 /* Responsive */

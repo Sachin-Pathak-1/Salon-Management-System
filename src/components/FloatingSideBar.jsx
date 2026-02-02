@@ -94,6 +94,13 @@ export function FloatingSideBar() {
           </Link>
         </li>
 
+        <li>
+          <Link to="/settings">
+            <span className="icon">⚙️</span>
+            {!collapsed && "Settings"}
+          </Link>
+        </li>
+
       </ul>
 
     </div>

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import './ProfilePage.css';
-import '.././harshal.css'
+ 
 
 export function ProfilePage({ currentUser, isLoggedIn }) {
   const navigate = useNavigate();
