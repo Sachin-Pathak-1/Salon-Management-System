@@ -12,12 +12,28 @@ export function Reports({ services, setServices }) {
   const [desc, setDesc] = useState("");
   const [status, setStatus] = useState("Active");
 
+  /* ---------------- ID GENERATOR (LOCALSTORAGE) ---------------- */
+  const generateId = () => {
+    const lastId = Number(localStorage.getItem("lastServiceId")) || 100;
+    const newId = lastId + 1;
+    localStorage.setItem("lastServiceId", newId);
+    return newId;
+  };
+
   /* ESC closes modal */
   useEffect(() => {
     const close = (e) => e.key === "Escape" && setShowModal(false);
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, []);
+
+  /* RESET FORM */
+  const resetForm = () => {
+    setName("");
+    setDesc("");
+    setStatus("Active");
+    setEditId(null);
+  };
 
   /* ADD / UPDATE */
   const handleSubmit = (e) => {
@@ -34,14 +50,17 @@ export function Reports({ services, setServices }) {
     } else {
       setServices([
         ...services,
-        { id: Date.now(), name, description: desc, status }
+        {
+          id: generateId(),
+          name,
+          description: desc,
+          status
+        }
       ]);
     }
 
-    setName("");
-    setDesc("");
-    setStatus("Active");
-    setEditId(null);
+    resetForm();
+    setShowModal(false);
   };
 
   /* EDIT */
@@ -70,7 +89,6 @@ export function Reports({ services, setServices }) {
           <h1 className="text-4xl font-bold mb-2">
             Service Reports
           </h1>
-
           <p className="opacity-80">
             Manage and monitor all services
           </p>
@@ -87,33 +105,20 @@ export function Reports({ services, setServices }) {
           {/* TOOLS */}
           <div className="flex justify-between items-center mb-6">
 
-            <div className="flex gap-3">
-
-              <select
-                className="bg-(--background)
-                           text-(--text)
-                           border border-(--border-light)
-                           px-4 py-2 rounded-xl"
-              >
-                <option>Bulk Action</option>
-                <option>Delete Selected</option>
-              </select>
-
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="bg-(--background)
-                           text-(--text)
-                           border border-(--border-light)
-                           px-4 py-2 rounded-xl"
-              >
-                <option>All</option>
-                <option>Active</option>
-                <option>Low</option>
-                <option>Inactive</option>
-              </select>
-
-            </div>
+            {/* FILTER */}
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-(--background)
+                         text-(--text)
+                         border border-(--border-light)
+                         px-4 py-2 rounded-xl"
+            >
+              <option>All</option>
+              <option>Active</option>
+              <option>Low</option>
+              <option>Inactive</option>
+            </select>
 
             {/* SEARCH + ADD */}
             <div className="flex gap-3">
@@ -131,7 +136,10 @@ export function Reports({ services, setServices }) {
               />
 
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
                 className="bg-(--primary)
                            hover:bg-(--secondary)
                            text-white font-semibold
@@ -147,13 +155,15 @@ export function Reports({ services, setServices }) {
           {/* TABLE */}
           <div className="overflow-x-auto">
 
-            <table className="w-full text-sm min-w-225">
+            <table className="w-full text-sm min-w-56.25">
 
               <thead>
                 <tr className="border-b border-(--border-light) opacity-70">
                   <th className="text-left p-3">ID</th>
                   <th className="text-left p-3">Service Name</th>
-                  <th className="text-left p-3">Description</th>
+                  <th className="text-left p-3 max-md:hidden md:table-cell">
+                    Description
+                  </th>
                   <th className="text-left p-3">Status</th>
                   <th className="text-left p-3">Actions</th>
                 </tr>
@@ -184,7 +194,10 @@ export function Reports({ services, setServices }) {
 
                       <td className="p-3">#{s.id}</td>
                       <td className="p-3">{s.name}</td>
-                      <td className="p-3 opacity-80">{s.description}</td>
+
+                      <td className="p-3 opacity-80 max-md:hidden md:table-cell">
+                        {s.description}
+                      </td>
 
                       {/* STATUS */}
                       <td className="p-3">
@@ -251,7 +264,7 @@ export function Reports({ services, setServices }) {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
           <div
             className="bg-(--gray-100)
@@ -265,12 +278,7 @@ export function Reports({ services, setServices }) {
               {editId ? "Edit Service" : "Add Service"}
             </h2>
 
-            <form
-              onSubmit={(e) => {
-                handleSubmit(e);
-                setShowModal(false);
-              }}
-            >
+            <form onSubmit={handleSubmit}>
 
               <input
                 placeholder="Service Name"
@@ -316,8 +324,8 @@ export function Reports({ services, setServices }) {
                 <button
                   type="button"
                   onClick={() => {
+                    resetForm();
                     setShowModal(false);
-                    setEditId(null);
                   }}
                   className="px-5 py-2
                              rounded-lg
