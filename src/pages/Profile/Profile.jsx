@@ -18,26 +18,26 @@ const Profile = ({ currentUser }) => {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen w-[85%] mx-auto bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+    <div className="min-h-screen max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-6 lg:px-10 transition-colors font-sans">
 
-      <main className="flex-1 p-7">
+      <main className="py-8">
 
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg mb-6">
+        {/* HEADER */}
+        <header className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-8">
           <div className="h-40 bg-gradient-to-br from-blue-500 to-blue-700" />
 
-          <div className="flex flex-col md:flex-row gap-5 items-start md:items-center px-6 pb-7 pt-5">
-            <div className="-mt-12 w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-extrabold text-3xl flex items-center justify-center shadow">
+          <div className="flex flex-col md:flex-row gap-6 items-start md:items-center px-6 pb-8 pt-5">
+            <div className="-mt-14 w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-extrabold text-3xl flex items-center justify-center shadow-lg">
               {initials}
             </div>
 
             <div className="flex-1">
-              <h1 className="text-xl font-extrabold mb-1">
+              <h1 className="text-2xl font-bold tracking-tight mb-1">
                 {user.name}
               </h1>
               <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                 {user.email} •{" "}
-                <span className="text-blue-500 font-bold">
+                <span className="text-blue-500 font-semibold">
                   {user.role}
                 </span>
               </div>
@@ -46,41 +46,39 @@ const Profile = ({ currentUser }) => {
               </div>
             </div>
 
-            <div className="w-full md:w-auto">
-              <button className="bg-gradient-to-br from-blue-500 to-blue-700 text-white px-4 py-2 rounded-lg font-bold">
-                Edit Profile
-              </button>
-            </div>
+            <button className="bg-gradient-to-br from-blue-500 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow hover:opacity-90 transition">
+              Edit Profile
+            </button>
           </div>
         </header>
 
-        {/* Grid */}
-        <section className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-5">
+        {/* MAIN GRID */}
+        <section className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
 
-          {/* Content */}
-          <section className="flex flex-col gap-5">
+          {/* CONTENT */}
+          <section className="flex flex-col gap-6">
 
-            {/* Overview */}
-            <div id="overview" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow">
-              <h2 className="text-lg font-extrabold mb-3">
+            {/* OVERVIEW */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+              <h2 className="text-lg font-semibold mb-4">
                 Account Overview
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  ["📊", "Total Activities", "1,234"],
+                  ["📊", "Total Appointments", "30"],
                   ["⚡", "Active Services", "12"],
-                  ["✅", "Completed", "890"],
+                  ["✅", "Completed", "10"],
                 ].map(([icon, label, value]) => (
                   <div
                     key={label}
-                    className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center"
+                    className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-center ring-1 ring-gray-200 dark:ring-gray-700"
                   >
-                    <div className="text-xl">{icon}</div>
-                    <div className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                    <div className="text-xl mb-1">{icon}</div>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                       {label}
                     </div>
-                    <div className="text-lg font-extrabold text-blue-500">
+                    <div className="text-lg font-bold text-blue-500">
                       {value}
                     </div>
                   </div>
@@ -88,9 +86,9 @@ const Profile = ({ currentUser }) => {
               </div>
             </div>
 
-            {/* Personal Info */}
-            <div id="personal" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow">
-              <h2 className="text-lg font-extrabold mb-3">
+            {/* PERSONAL INFO */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+              <h2 className="text-lg font-semibold mb-4">
                 Personal Information
               </h2>
 
@@ -104,13 +102,13 @@ const Profile = ({ currentUser }) => {
               </div>
             </div>
 
-            {/* Activity */}
-            <div id="activity" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow">
-              <h2 className="text-lg font-extrabold mb-3">
+            {/* ACTIVITY */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+              <h2 className="text-lg font-semibold mb-4">
                 Recent Activity
               </h2>
 
-              <ul className="flex flex-col gap-3">
+              <ul className="flex flex-col gap-4">
                 {[
                   ["✅", "Service Completed", "2 hours ago"],
                   ["📝", "Created New Service", "1 day ago"],
@@ -118,16 +116,16 @@ const Profile = ({ currentUser }) => {
                 ].map(([icon, title, time]) => (
                   <li
                     key={title}
-                    className="flex gap-3 items-center bg-gray-50 dark:bg-gray-900 rounded-lg p-3"
+                    className="flex gap-4 items-center bg-gray-50 dark:bg-gray-900 rounded-xl p-4"
                   >
                     <span className="w-11 h-11 rounded-full flex items-center justify-center bg-blue-100 dark:bg-gray-700 text-blue-600 text-lg">
                       {icon}
                     </span>
-                    <div className="flex flex-col">
-                      <span className="font-bold">{title}</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                    <div>
+                      <div className="font-medium">{title}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {time}
-                      </span>
+                      </div>
                     </div>
                   </li>
                 ))}
