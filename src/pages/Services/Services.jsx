@@ -1,178 +1,206 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const API_URL = "http://localhost:5000/api/services";
 
 export function Services({ services, setServices }) {
 
+  /* SERVICE FORM */
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [duration, setDuration] = useState("");
+  const [category, setCategory] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [editId, setEditId] = useState(null);
 
+  /* SEARCH */
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
 
-  // ------------------------
+  /* BOOKING FORM */
+  const [showBooking, setShowBooking] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+  const [custName, setCustName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
 
-  const handleSubmit = (e) => {
+  /* FETCH SERVICES */
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    setServices(data);
+  };
+
+  /* ADD / UPDATE SERVICE */
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const payload = {
+      name,
+      description,
+      price,
+      duration,
+      category,
+      imageUrl
+    };
+
     if (editId) {
-      setServices(
-        services.map((s) =>
-          s.id === editId ? { ...s, name, description } : s
-        )
-      );
+      await fetch(`${API_URL}/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
     } else {
-      setServices([...services, { id: Date.now(), name, description }]);
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
     }
 
+    fetchServices();
+    resetForm();
+    setShowModal(false);
+  };
+
+  const resetForm = () => {
     setName("");
     setDescription("");
+    setPrice("");
+    setDuration("");
+    setCategory("");
+    setImageUrl("");
     setEditId(null);
   };
 
-  const handleDelete = (id) => {
-    setServices(services.filter((s) => s.id !== id));
+  /* DELETE */
+  const handleDelete = async (id) => {
+    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    fetchServices();
   };
 
-  const handleEdit = (service) => {
-    setEditId(service.id);
-    setName(service.name);
-    setDescription(service.description);
+  /* EDIT */
+  const handleEdit = (s) => {
+    setEditId(s._id);
+    setName(s.name);
+    setDescription(s.description);
+    setPrice(s.price || "");
+    setDuration(s.duration || "");
+    setCategory(s.category || "");
+    setImageUrl(s.imageUrl || "");
     setShowModal(true);
   };
 
-  // ------------------------
+  /* BOOK NOW */
+  const handleBookNow = (service) => {
+    setSelectedService(service);
+    setShowBooking(true);
+  };
+
+  const submitBooking = (e) => {
+    e.preventDefault();
+    alert("Appointment booked successfully!");
+    setShowBooking(false);
+    setCustName("");
+    setPhone("");
+    setDate("");
+    setTime("");
+  };
+
+  const filteredServices = services.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
 
     <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
-
       <div className="max-w-7xl mx-auto">
 
-        {/* TITLE */}
-        <h1 className="text-center text-4xl font-bold text-(--text)">
-          Services
+        <h1 className="text-center text-4xl font-bold">
+          Beauty & Wellness Services
         </h1>
 
-        <div className="h-3" />
-
-        {/* SUBTITLE */}
-        <p className="text-center text-(--text) opacity-80 max-w-2xl mx-auto">
-          We provide a wide range of professional services designed to help your
-          business grow, improve efficiency, and achieve long-term success.
+        <p className="text-center opacity-80 max-w-2xl mx-auto mt-3">
+          Explore our professional salon services and premium treatments.
         </p>
 
-        <div className="h-8" />
-
-        {/* CONTROLS */}
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex justify-center gap-4 mt-8">
 
           <input
-            type="text"
             placeholder="Search service..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-(--background)
-                       text-(--text)
-                       border border-(--border-light)
-                       px-4 py-3 rounded-xl w-64 outline-none"
+            className="border px-4 py-3 rounded-xl w-64"
           />
-
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="bg-(--background)
-                       text-(--text)
-                       border border-(--border-light)
-                       px-4 py-3 rounded-xl w-48 outline-none"
-          >
-            <option value="all">All</option>
-            <option value="short">Short Name</option>
-            <option value="long">Long Name</option>
-          </select>
 
           <button
             onClick={() => setShowModal(true)}
-            className="bg-(--primary)
-                       hover:bg-(--secondary)
-                       text-white font-semibold
-                       px-6 py-3 rounded-xl"
+            className="bg-(--primary) text-white px-6 py-3 rounded-xl"
           >
             + Add Service
           </button>
 
         </div>
 
-        <div className="h-12" />
-
         {/* GRID */}
-        <div
-          className="grid
-          grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
-          gap-10
-          w-full"
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-10 mt-12">
 
-          {services.map((service, index) => (
+          {filteredServices.map((s, index) => (
 
-            <div
-              key={service.id}
-              className="service-card
-                         bg-(--gray-100)
-                         border border-(--border-light)
-                         rounded-xl
-                         p-8"
-            >
+            <div key={s._id}
+              className="bg-(--gray-100) border rounded-xl p-8">
 
-              {/* NUMBER */}
-              <div
-                className="service-number
-                           w-12 h-12
-                           rounded-full
-                           bg-(--primary)
-                           text-white
-                           flex items-center justify-center
-                           font-bold
-                           mx-auto mb-4"
-              >
+              <div className="w-12 h-12 rounded-full bg-(--primary)
+                              text-white flex items-center justify-center mx-auto mb-4">
                 {index + 1}
               </div>
 
-              {/* TITLE */}
-              <h3 className="text-center font-semibold text-lg text-(--text)">
-                {service.name}
-              </h3>
+              {s.imageUrl && (
+                <img
+                  src={s.imageUrl}
+                  alt={s.name}
+                  className="w-full h-40 object-cover rounded-lg mb-4"
+                />
+              )}
 
-              {/* DESCRIPTION */}
-              <p className="text-center text-(--text) opacity-80 mt-2">
-                {service.description}
+              <h3 className="text-center font-semibold">{s.name}</h3>
+
+              <p className="text-center opacity-80 mt-2">
+                {s.description}
               </p>
 
-              {/* ACTIONS */}
+              <p className="text-center mt-2">
+                💰 ₹{s.price || "N/A"} | ⏱ {s.duration || "N/A"} mins
+              </p>
+
+              <p className="text-center text-sm opacity-70">
+                Category: {s.category || "General"}
+              </p>
+
               <div className="flex justify-center gap-4 mt-6">
 
                 <button
-                  onClick={() => handleEdit(service)}
-                  className="bg-(--primary)
-                             hover:bg-(--secondary)
-                             text-white
-                             px-6 py-2
-                             min-w-22.5
-                             rounded-lg
-                             font-semibold"
+                  onClick={() => handleBookNow(s)}
+                  className="bg-emerald-500 text-white px-6 py-2 rounded-lg"
+                >
+                  Book Now
+                </button>
+
+                <button
+                  onClick={() => handleEdit(s)}
+                  className="bg-(--primary) text-white px-6 py-2 rounded-lg"
                 >
                   Edit
                 </button>
 
                 <button
-                  onClick={() => handleDelete(service.id)}
-                  className="bg-[#e5e7eb]
-                             hover:bg-[#d1d5db]
-                             text-blue-600
-                             px-6 py-2
-                             min-w-22.5
-                             rounded-lg
-                             font-semibold"
+                  onClick={() => handleDelete(s._id)}
+                  className="bg-[#e5e7eb] text-blue-600 px-6 py-2 rounded-lg"
                 >
                   Delete
                 </button>
@@ -185,83 +213,130 @@ export function Services({ services, setServices }) {
 
         </div>
 
-        <div className="h-16" />
-
       </div>
 
-      {/* MODAL */}
+      {/* SERVICE MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
 
-          <div
-            className="bg-(--gray-100)
-                       w-95
-                       p-8
-                       rounded-xl
-                       border border-(--border-light)"
-          >
+          <div className="bg-(--gray-100) w-95 p-8 rounded-xl">
 
-            <h2 className="text-xl font-bold text-(--text) mb-6">
+            <h2 className="text-xl font-bold mb-4">
               {editId ? "Edit Service" : "Add Service"}
             </h2>
 
-            <form
-              onSubmit={(e) => {
-                handleSubmit(e);
-                setShowModal(false);
-              }}
-            >
+            <form onSubmit={handleSubmit}>
+
+              <input value={name} onChange={e => setName(e.target.value)}
+                placeholder="Service Name"
+                className="w-full mb-3 p-3 border rounded-lg" />
+
+              <textarea value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Description"
+                className="w-full mb-3 p-3 border rounded-lg" />
+
+              <input value={price}
+                onChange={e => setPrice(e.target.value)}
+                placeholder="Price"
+                className="w-full mb-3 p-3 border rounded-lg" />
+
+              <input value={duration}
+                onChange={e => setDuration(e.target.value)}
+                placeholder="Duration (minutes)"
+                className="w-full mb-3 p-3 border rounded-lg" />
+
+              <input value={category}
+                onChange={e => setCategory(e.target.value)}
+                placeholder="Category"
+                className="w-full mb-3 p-3 border rounded-lg" />
+
+              <input value={imageUrl}
+                onChange={e => setImageUrl(e.target.value)}
+                placeholder="Image URL"
+                className="w-full mb-4 p-3 border rounded-lg" />
+
+              <div className="flex justify-end gap-4">
+
+                <button type="button"
+                  onClick={() => { resetForm(); setShowModal(false); }}
+                  className="border px-5 py-2 rounded-lg">
+                  Cancel
+                </button>
+
+                <button type="submit"
+                  className="bg-(--primary) text-white px-6 py-2 rounded-lg">
+                  Save
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* BOOKING MODAL */}
+      {showBooking && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+
+          <div className="bg-(--gray-100) w-95 p-8 rounded-xl">
+
+            <h2 className="text-xl font-bold mb-4">
+              Book: {selectedService?.name}
+            </h2>
+
+            <form onSubmit={submitBooking}>
 
               <input
-                placeholder="Service Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Your Name"
+                value={custName}
+                onChange={e => setCustName(e.target.value)}
                 required
-                className="w-full mb-4 p-3
-                           rounded-lg
-                           bg-(--background)
-                           border border-(--border-light)
-                           text-(--text)"
+                className="w-full mb-3 p-3 border rounded-lg"
               />
 
-              <textarea
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+              <input
+                placeholder="Phone Number"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
                 required
-                rows={4}
-                className="w-full mb-6 p-3
-                           rounded-lg
-                           bg-(--background)
-                           border border-(--border-light)
-                           text-(--text) resize-none"
+                className="w-full mb-3 p-3 border rounded-lg"
+              />
+
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                required
+                className="w-full mb-3 p-3 border rounded-lg"
+              />
+
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                required
+                className="w-full mb-6 p-3 border rounded-lg"
               />
 
               <div className="flex justify-end gap-4">
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditId(null);
-                  }}
-                  className="px-5 py-2
-                             rounded-lg
-                             border border-(--primary)
-                             text-(--primary)"
+                  onClick={() => setShowBooking(false)}
+                  className="border px-5 py-2 rounded-lg"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="px-6 py-2
-                             rounded-lg
-                             bg-(--primary)
-                             hover:bg-(--secondary)
-                             text-white font-semibold"
+                  className="bg-emerald-500 text-white px-6 py-2 rounded-lg"
                 >
-                  Save
+                  Confirm Booking
                 </button>
 
               </div>
