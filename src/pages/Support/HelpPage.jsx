@@ -71,7 +71,7 @@ export function HelpPage() {
 
         {/* Footer */}
         <div className="help-footer">
-          <p>© 2024 ServiceHub. All rights reserved.</p>
+          <p>© 2024 Blissful Beauty Salon. All rights reserved.</p>
         </div>
       </div>
     </div>

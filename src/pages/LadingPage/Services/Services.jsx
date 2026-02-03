@@ -4,12 +4,12 @@ import './Services.css';
 
 export function LPServices() {
   const services = [
-    { id: 1, name: 'Web Development', description: 'Custom web applications and websites' },
-    { id: 2, name: 'Mobile App Development', description: 'Native and cross-platform mobile apps' },
-    { id: 3, name: 'Cloud Solutions', description: 'Scalable cloud infrastructure and solutions' },
-    { id: 4, name: 'AI & Machine Learning', description: 'Intelligent solutions powered by AI/ML' },
-    { id: 5, name: 'DevOps', description: 'Continuous integration and deployment' },
-    { id: 6, name: 'Consulting', description: 'Technical and business consulting' },
+    { id: 1, name: 'Haircuts', description: 'Professional haircuts and styling for all hair types' },
+    { id: 2, name: 'Massages', description: 'Relaxing massages to rejuvenate your body and mind' },
+    { id: 3, name: 'Facials', description: 'Rejuvenating facials for healthy, glowing skin' },
+    { id: 4, name: 'Manicure/Pedicure', description: 'Beautiful nails with our expert nail care services' },
+    { id: 5, name: 'Hair Coloring', description: 'Expert hair coloring and highlighting services' },
+    { id: 6, name: 'Spa Treatments', description: 'Luxurious spa treatments for ultimate relaxation' },
   ];
 
   return (

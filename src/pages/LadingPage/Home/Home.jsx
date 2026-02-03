@@ -11,10 +11,10 @@ export function Home() {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            Welcome to <span className="highlight">Service Management System</span>
+            Welcome to <span className="highlight">Blissful Beauty Salon</span>
           </h1>
           <p className="hero-subtitle">
-            Manage your services efficiently with our comprehensive platform
+            Indulge in luxury and beauty with our premium salon services
           </p>
           <div className="hero-buttons">
             <Link to="/dashboard" className="btn-hero primary">
@@ -33,15 +33,15 @@ export function Home() {
       <section className="stats-section">
         <div className="stat-item">
           <h3 className="stat-number">10K+</h3>
-          <p className="stat-label">Active Users</p>
+          <p className="stat-label">Happy Customers</p>
         </div>
         <div className="stat-item">
           <h3 className="stat-number">98%</h3>
-          <p className="stat-label">Uptime</p>
+          <p className="stat-label">Satisfaction Rate</p>
         </div>
         <div className="stat-item">
           <h3 className="stat-number">5M+</h3>
-          <p className="stat-label">Tasks Completed</p>
+          <p className="stat-label">Treatments Completed</p>
         </div>
         <div className="stat-item">
           <h3 className="stat-number">24/7</h3>
@@ -52,7 +52,7 @@ export function Home() {
       {/* CTA Section */}
       <section className="cta-section">
         <h2>Ready to Get Started?</h2>
-        <p>Join thousands of users managing their services with ServiceHub</p>
+        <p>Join thousands of clients pampering themselves with Blissful Beauty Salon</p>
         <Link to="/login" className="btn-hero primary large">
           Sign Up Now
         </Link>
@@ -62,8 +62,8 @@ export function Home() {
       <footer className="landing-footer">
         <div className="footer-content">
           <div className="footer-section">
-            <h4>ServiceHub</h4>
-            <p>The complete service management platform</p>
+            <h4>Blissful Beauty Salon</h4>
+            <p>Your premier destination for beauty and wellness</p>
           </div>
           <div className="footer-section">
             <h4>Quick Links</h4>
@@ -93,7 +93,7 @@ export function Home() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2026 ServiceHub. All rights reserved.</p>
+          <p>&copy; 2026 Blissful Beauty Salon. All rights reserved.</p>
         </div>
       </footer>
     </div>

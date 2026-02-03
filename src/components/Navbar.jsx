@@ -42,7 +42,7 @@ export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser 
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          <span className="logo-text">Service Management System</span>
+          <span className="logo-text">Blissful Beauty Salon</span>
         </Link>
 
         {/* Center Navigation */}

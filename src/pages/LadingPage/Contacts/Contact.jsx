@@ -17,118 +17,128 @@ export function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text px-5 py-14 flex flex-col items-center justify-center">
-      <Link
-        to="/"
-        className="inline-block mb-8 text-blue-600 font-bold hover:underline"
-      >
-        ← Back to Home
-      </Link>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text)]">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[var(--primary)]/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-[var(--secondary)]/10 blur-3xl" />
+        </div>
 
-      <div className="max-w-5xl mx-auto ">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-3">
-          Contact Us
-        </h1>
-        <p className="text-center text-lg mb-10">
-          We'd love to hear from you. Send us a message!
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-          {/* Contact Info */}
-          <div className="bg-gray-100 border border-gray-200 rounded-xl p-8 shadow justify-self-center md:justify-self-start">
-            <h3 className="text-2xl font-bold mb-6">Get in Touch</h3>
-
-            <div className="space-y-5">
-              <div>
-                <strong className="block text-blue-600 mb-1">Address</strong>
-                <p className="text-sm leading-relaxed">
-                  123 Business Street, Suite 100<br />
-                  New York, NY 10001
-                </p>
-              </div>
-
-              <div>
-                <strong className="block text-blue-600 mb-1">Email</strong>
-                <p className="text-sm">info@servicehub.com</p>
-              </div>
-
-              <div>
-                <strong className="block text-blue-600 mb-1">Phone</strong>
-                <p className="text-sm">+91 (555) 123-4567</p>
-              </div>
-
-              <div>
-                <strong className="block text-blue-600 mb-1">Hours</strong>
-                <p className="text-sm leading-relaxed">
-                  Monday - Friday: 9AM - 6PM<br />
-                  Saturday - Sunday: Closed
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-gray-100 border border-gray-200 rounded-xl p-8 shadow justify-self-center md:justify-self-end w-full"
+        <div className="max-w-6xl mx-auto px-5 py-10 md:py-14">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 mb-8 text-[var(--primary)] font-semibold hover:underline"
           >
-            {submitted && (
-              <div className="mb-5 rounded-lg bg-emerald-100 text-emerald-700 font-semibold text-center py-3">
-                ✓ Thank you! We'll get back to you soon.
+            <span className="text-lg">←</span>
+            Back to Home
+          </Link>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-[var(--text)]">
+                Book Your Visit or Say Hello
+              </h1>
+              <p className="mt-4 text-lg text-[var(--gray-700)]">
+                Questions about services, pricing, or availability? Our team is here to help.
+              </p>
+
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-[var(--primary)]">Call us</p>
+                  <p className="mt-2 text-sm text-[var(--gray-700)]">+91 (555) 123-4567</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-[var(--primary)]">Email</p>
+                  <p className="mt-2 text-sm text-[var(--gray-700)]">info@blissfulbeautysalon.com</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-[var(--primary)]">Address</p>
+                  <p className="mt-2 text-sm text-[var(--gray-700)]">
+                    123 Business Street, Suite 100
+                    <br />
+                    New York, NY 10001
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-[var(--primary)]">Hours</p>
+                  <p className="mt-2 text-sm text-[var(--gray-700)]">
+                    Mon–Fri: 9AM–8PM
+                    <br />
+                    Sat: 8AM–6PM • Sun: 10AM–5PM
+                  </p>
+                </div>
               </div>
-            )}
-
-            <div className="mb-5 justify-self-center md:justify-self-start">
-              <label className="block font-bold text-sm mb-2">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                placeholder="Your Name"
-                className="w-full px-3 py-3 rounded-lg border-2 border-gray-200 text-sm
-                           focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
-              />
             </div>
 
-            <div className="mb-5 justify-self-center md:justify-self-start">
-              <label className="block font-bold text-sm mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                placeholder="your@email.com"
-                className="w-full px-3 py-3 rounded-lg border-2 border-gray-200 text-sm
-                           focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
-              />
-            </div>
-
-            <div className="mb-6 justify-self-center md:justify-self-start">
-              <label className="block font-bold text-sm mb-2">Message</label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                required
-                rows="5"
-                placeholder="Your message here..."
-                className="w-full px-3 py-3 rounded-lg border-2 border-gray-200 text-sm resize-none
-                           focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-lg bg-blue-600 text-white font-bold text-base
-                         transition hover:shadow-xl hover:shadow-blue-600/30"
+            <form
+              onSubmit={handleSubmit}
+              className="bg-[var(--gray-100)] border border-[var(--border-light)] rounded-2xl p-8 md:p-10 shadow-lg"
             >
-              Send Message
-            </button>
-          </form>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-[var(--text)]">Send a Message</h2>
+                <p className="text-sm text-[var(--gray-700)] mt-2">
+                  Tell us what you need and we’ll get back shortly.
+                </p>
+              </div>
+
+              {submitted && (
+                <div className="mb-5 rounded-lg bg-[color:var(--success)]/15 text-[var(--success)] font-semibold text-center py-3 border border-[color:var(--success)]/30">
+                  Thank you! We'll get back to you soon.
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-sm mb-2 text-[var(--text)]">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Your Name"
+                    className="w-full px-4 py-3 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] text-sm
+                               focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-sm mb-2 text-[var(--text)]">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-3 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] text-sm
+                               focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block font-semibold text-sm mb-2 text-[var(--text)]">Message</label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  rows="6"
+                  placeholder="Your message here..."
+                  className="w-full px-4 py-3 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] text-sm resize-none
+                             focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="mt-6 w-full py-3 rounded-lg bg-[var(--primary)] text-white font-semibold text-base transition hover:opacity-95"
+              >
+                Send Message
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
