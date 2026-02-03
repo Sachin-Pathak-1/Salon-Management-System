@@ -1,39 +1,41 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors"); // ✅ ADD THIS
+const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
 
-
-// ✅ FIX CORS (very important)
+// ---------------------
+// MIDDLEWARE
 app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
 }));
 
-// allow json body
 app.use(express.json());
 
-
-// ✅ MongoDB connection
+// ---------------------
+// MONGODB CONNECTION
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.log(err));
+  .catch(err => console.error("Mongo Error:", err));
 
-
-// test route
+// ---------------------
+// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend + MongoDB working ✅");
 });
 
-
-// routes
+// ---------------------
+// ROUTES
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/user", require("./routes/userRoutes"));
+app.use("/api/services", require("./routes/serviceRoutes"));
 
+// ---------------------
+// SERVER START
+const PORT = process.env.PORT || 5000;
 
-// start server
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
