@@ -1,10 +1,11 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
-
+import React from "react"
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 
 import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
+import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
 import { ProfilePage } from "./pages/LadingPage/ProfilePage/ProfilePage.jsx";
 import Profile from "./pages/Profile/Profile.jsx"
 import { ActivityPage } from "./pages/LadingPage/Activity/ActivityPage.jsx";
@@ -50,39 +51,7 @@ function App() {
     location.pathname.startsWith(route)
   );
 
-  const [services, setServices] = useState([
-    {
-      id: 1,
-      name: "Web Development",
-      description: "Building fast, responsive, and scalable websites tailored to your business needs."
-    },
-    {
-      id: 2,
-      name: "Mobile App Development",
-      description: "Creating user-friendly mobile applications for Android and iOS platforms."
-    },
-    {
-      id: 3,
-      name: "UI/UX Design",
-      description: "Designing intuitive and visually appealing user interfaces and experiences."
-    },
-    {
-      id: 4,
-      name: "Digital Marketing",
-      description: "Helping your business grow online through SEO, social media, and paid ads."
-    },
-    {
-      id: 5,
-      name: "SEO Optimization",
-      description: "Improving your website ranking and visibility on search engines."
-    },
-    {
-      id: 6,
-      name: "IT Consulting",
-      description: "Providing expert advice to optimize and modernize your IT infrastructure."
-    }
-  ]);
-
+  const [services, setServices] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -115,6 +84,16 @@ function App() {
               path="/login"
               element={
                 <LoginPage
+                  isLoggedIn={isLoggedIn}
+                  setIsLoggedIn={setIsLoggedIn}
+                  setCurrentUser={setCurrentUser}
+                />
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <SignupPage
                   isLoggedIn={isLoggedIn}
                   setIsLoggedIn={setIsLoggedIn}
                   setCurrentUser={setCurrentUser}

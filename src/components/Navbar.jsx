@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import React from "react"
+
 import './Navbar.css';
 
 export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser }) {
