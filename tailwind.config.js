@@ -7,6 +7,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'heading': ['Playfair Display', 'serif'],
+        'body': ['Montserrat', 'sans-serif'],
+      },
       colors: {
         background: "var(--background)",
         text: "var(--text)",
