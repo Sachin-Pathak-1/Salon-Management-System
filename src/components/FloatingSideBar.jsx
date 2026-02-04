@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./FloatingSideBar.css";
 
-export function FloatingSideBar() {
+export function FloatingSideBar({ dashboardLink }) {
 
   // persist collapsed state across route changes until user toggles
   const [collapsed, setCollapsed] = useState(() => {
@@ -32,7 +32,7 @@ export function FloatingSideBar() {
       <ul>
 
         <li>
-          <Link to="/dashboard">
+          <Link to={dashboardLink}>
             <span className="icon">🏠</span>
             {!collapsed && "Dashboard"}
           </Link>

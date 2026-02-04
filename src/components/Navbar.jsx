@@ -4,7 +4,7 @@ import React from "react"
 
 import './Navbar.css';
 
-export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser }) {
+export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser, dashboardLink }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -28,6 +28,8 @@ export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
     setShowProfileMenu(false);
     navigate('/');
   };
@@ -51,7 +53,7 @@ export function Navbar({ isLoggedIn, setIsLoggedIn, currentUser, setCurrentUser 
           <Link to="/lpservices" className="nav-link">Services</Link>
           <Link to="/about" className="nav-link">About</Link>
           <Link to="/contact" className="nav-link">Contact</Link>
-          <Link to="/dashboard" className="nav-link">Dashboard</Link>
+          <Link to={dashboardLink} className="nav-link">Dashboard</Link>
         </div>
 
         {/* Right Side - Auth Buttons + Theme Toggle */}

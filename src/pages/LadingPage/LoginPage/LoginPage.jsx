@@ -50,6 +50,7 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
       // 4️⃣ STORE USER
       setCurrentUser(user);
       setIsLoggedIn(true);
+      localStorage.setItem("currentUser", JSON.stringify(user));
 
       // ✅ ROLE BASED REDIRECT
       if (user.role === "admin") {

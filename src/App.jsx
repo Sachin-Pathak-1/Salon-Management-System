@@ -1,5 +1,5 @@
-import { Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import React from "react"
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
@@ -57,6 +57,35 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("currentUser");
+      if (token && storedUser) {
+        setIsLoggedIn(true);
+        setCurrentUser(JSON.parse(storedUser));
+      }
+    } catch (e) {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+    }
+  }, []);
+
+  const resolveDashboardPath = (user) =>
+    user?.role === "admin" ? "/dashboard" : "/staff-dashboard";
+
+  const dashboardLink = isLoggedIn && currentUser ? resolveDashboardPath(currentUser) : "/login";
+
+  const RequireRole = ({ role, children }) => {
+    if (!isLoggedIn || !currentUser) {
+      return <Navigate to="/login" replace />;
+    }
+    if (role && currentUser.role !== role) {
+      return <Navigate to={resolveDashboardPath(currentUser)} replace />;
+    }
+    return children;
+  };
+
   return (
     <>
       <Navbar
@@ -64,11 +93,18 @@ function App() {
         setIsLoggedIn={setIsLoggedIn}
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
+        dashboardLink={dashboardLink}
       />
 
       <div style={{ display: "flex" }}>
 
-        {showSidebar && <FloatingSideBar />}
+        {showSidebar && (
+          <FloatingSideBar
+            dashboardLink={dashboardLink}
+            isLoggedIn={isLoggedIn}
+            currentUser={currentUser}
+          />
+        )}
 
         <div style={{ flex: 1 }}>
 
@@ -104,8 +140,22 @@ function App() {
             />
 
             {/* SYSTEM */}
-            <Route path="/dashboard" element={<Dashboard services={services} />} />
-            <Route path="/staff-dashboard" element={<StaffDashboard />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireRole role="admin">
+                  <Dashboard services={services} />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff-dashboard"
+              element={
+                <RequireRole role="staff">
+                  <StaffDashboard />
+                </RequireRole>
+              }
+            />
 
             <Route
               path="/services"
