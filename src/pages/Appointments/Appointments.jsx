@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+import './Appointments.css'
+
 export default function AdminAppointments() {
   const [appointments, setAppointments] = useState([
     {
@@ -43,13 +45,13 @@ export default function AdminAppointments() {
   const getStatusColor = (status) => {
     switch (status) {
       case "Pending":
-        return "bg-yellow-100 text-yellow-900";
+        return "pending";
       case "Confirmed":
-        return "bg-emerald-100 text-emerald-900";
+        return "confirmed";
       case "Completed":
-        return "bg-emerald-100 text-emerald-900";
+        return "completed";
       case "Cancelled":
-        return "bg-red-100 text-red-900";
+        return "cancelled";
       default:
         return "";
     }
@@ -64,20 +66,17 @@ export default function AdminAppointments() {
   };
 
   return (
-    <div className="flex min-h-screen w-5/6 mx-auto">
-      <main className="flex-1 p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold">Appointments</h1>
-          <p className="text-gray-600 mt-2">Manage all appointments</p>
+    <div className="admin-layout">
+    
+      <main className="admin-main-content">
+        <div className="admin-header">
+          <h1>Appointments</h1>
+          <p>Manage all appointments</p>
         </div>
-        <div className="bg-gray-100 rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex gap-4 mb-6">
-            <input
-              type="text"
-              placeholder="Search appointments..."
-              className="flex-1 px-4 py-2 border border-gray-200 rounded text-sm bg-gray-100"
-            />
-            <select className="min-w-40 px-4 py-2 border border-gray-200 rounded text-sm bg-gray-100">
+        <div className="admin-content">
+          <div className="appointments-controls">
+            <input type="text" placeholder="Search appointments..." className="search-input" />
+            <select className="filter-select">
               <option value="">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Confirmed">Confirmed</option>
@@ -86,39 +85,39 @@ export default function AdminAppointments() {
             </select>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="appointments-table">
+            <table>
               <thead>
-                <tr className="bg-gray-200 border-b border-gray-200">
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">ID</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">User Name</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Email</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Date</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Time</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Service</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Status</th>
-                  <th className="px-4 py-4 text-left font-semibold text-gray-800 opacity-80 text-sm">Actions</th>
+                <tr>
+                  <th>ID</th>
+                  <th>User Name</th>
+                  <th>Email</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {appointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-200 border-b border-gray-200">
-                    <td className="px-4 py-4 text-gray-800 text-sm">#{appointment.id}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">{appointment.userName}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">{appointment.email}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">{appointment.date}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">{appointment.time}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">{appointment.service}</td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}>
+                  <tr key={appointment.id}>
+                    <td>#{appointment.id}</td>
+                    <td>{appointment.userName}</td>
+                    <td>{appointment.email}</td>
+                    <td>{appointment.date}</td>
+                    <td>{appointment.time}</td>
+                    <td>{appointment.service}</td>
+                    <td>
+                      <span className={`status ${getStatusColor(appointment.status)}`}>
                         {appointment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-gray-800 text-sm">
+                    <td>
                       <select
                         value={appointment.status}
                         onChange={(e) => handleStatusChange(appointment.id, e.target.value)}
-                        className="px-2 py-1 border border-gray-200 rounded text-sm cursor-pointer bg-gray-100"
+                        className="status-select"
                       >
                         <option value="Pending">Pending</option>
                         <option value="Confirmed">Confirmed</option>
