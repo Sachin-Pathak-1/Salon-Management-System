@@ -33,6 +33,7 @@ app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/services", require("./routes/serviceRoutes"));
 app.use("/api/salons", require("./routes/salonRoutes"));
+app.use("/api/staff", require("./routes/staffRoutes"));
 
 // ---------------------
 // SERVER START

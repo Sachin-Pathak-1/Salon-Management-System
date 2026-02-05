@@ -1,3 +1,5 @@
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const express = require("express");
 const Salon = require("../models/Salon");
 
@@ -6,7 +8,7 @@ const router = express.Router();
 /* ============================
    ADD SALON
 ============================ */
-router.post("/add", async (req, res) => {
+router.post("/add", auth, admin, async (req, res) => {
   try {
     const {
       name,
@@ -33,7 +35,8 @@ router.post("/add", async (req, res) => {
       ownerName,
       openingTime,
       closingTime,
-      logo
+      logo,
+      adminId: req.userId
     });
 
     res.status(201).json({
@@ -49,9 +52,9 @@ router.post("/add", async (req, res) => {
 /* ============================
    GET ALL SALONS
 ============================ */
-router.get("/get", async (req, res) => {
+router.get("/get", auth, admin, async (req, res) => {
   try {
-        const salons = await Salon.findById(req.salonId);
+        const salons = await Salon.find({ adminId: req.userId });
         res.json({
           name: salons.name,
           address: salons.address,
@@ -72,7 +75,7 @@ router.get("/get", async (req, res) => {
 /* ============================
    UPDATE SALON
 ============================ */
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, admin, async (req, res) => {
   try {
     const salon = await Salon.findByIdAndUpdate(
       req.params.id,
@@ -93,7 +96,7 @@ router.put("/:id", async (req, res) => {
 /* ============================
    DELETE SALON
 ============================ */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, admin, async (req, res) => {
   try {
     await Salon.findByIdAndDelete(req.params.id);
     res.json({ message: "Salon deleted" });

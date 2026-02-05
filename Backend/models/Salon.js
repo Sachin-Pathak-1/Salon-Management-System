@@ -10,7 +10,15 @@ const salonSchema = new mongoose.Schema(
     ownerName: String,
     openingTime: String,
     closingTime: String,
-    logo: String
+
+    logo: String,
+
+    // 🔗 OWNER ADMIN
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    }
   },
   { timestamps: true }
 );
