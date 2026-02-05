@@ -49,9 +49,24 @@ router.post("/add", async (req, res) => {
 /* ============================
    GET ALL SALONS
 ============================ */
-router.get("/", async (req, res) => {
-  const salons = await Salon.find();
-  res.json(salons);
+router.get("/get", async (req, res) => {
+  try {
+        const salons = await Salon.findById(req.salonId);
+        res.json({
+          name: salons.name,
+          address: salons.address,
+          contact: salons.contact,
+
+          email: salons.email,
+          ownerName: salons.ownerName,
+          openingTime: salons.openingTime,
+          closingTime: salons.closingTime,
+          logo: salons.logo
+        });
+  }
+  catch(err ){
+    res.status(500).json({ message: "Server error"});
+  }
 });
 
 /* ============================
