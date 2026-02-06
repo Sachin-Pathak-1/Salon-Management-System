@@ -3,7 +3,7 @@ export default function TeamManage() {
     <div className="p-6 bg-[var(--gray-100)] border border-[var(--border-light)] rounded-lg shadow-md w-[85%] mx-auto mt-7 text-[var(--text)]">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">Team Manage</h1>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Staff Manage</h1>
           <p className="text-[var(--gray-700)]">You can add and remove team member as you want.</p>
         </div>
         <button className="bg-[var(--primary)] hover:opacity-95 text-white px-4 py-2 rounded-md font-medium">

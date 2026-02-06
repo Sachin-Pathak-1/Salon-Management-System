@@ -35,7 +35,7 @@ router.post("/add", auth, admin, async (req, res) => {
       role: "staff",
       contact,
       adminId: req.userId,
-      salonId: req.body.salonId
+      salonId: req.body.salonId,
       gender,
       dob,
       address,
