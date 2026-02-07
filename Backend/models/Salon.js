@@ -8,12 +8,44 @@ const salonSchema = new mongoose.Schema(
 
     email: String,
     ownerName: String,
+
     openingTime: String,
     closingTime: String,
 
     logo: String,
 
-    // 🔗 OWNER ADMIN
+    order: {
+      type: Number,
+      default: 0
+    },
+
+    /* ============================
+       NEW FIELDS
+    ============================ */
+
+    // open | closed | temporarily-closed
+    status: {
+      type: String,
+      enum: ["open", "closed", "temporarily-closed"],
+      default: "open"
+    },
+
+    // yyyy-mm-dd format dates
+    holidays: {
+      type: [String],
+      default: []
+    },
+
+    // Primary salon flag
+    isPrimary: {
+      type: Boolean,
+      default: false
+    },
+
+    /* ============================
+       OWNER ADMIN
+    ============================ */
+
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

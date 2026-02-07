@@ -14,9 +14,20 @@ const userSchema = new mongoose.Schema({
     default: "staff"
   },
 
+  // 🔥 DRAG ORDER
+  order: {
+    type: Number,
+    default: 0
+  },
+
+  // 🔥 MANAGER FLAG
+  isManager: {
+    type: Boolean,
+    default: false
+  },
+
   contact: String,
 
-  // 🔗 Relations
   adminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
@@ -27,19 +38,13 @@ const userSchema = new mongoose.Schema({
     ref: "Salon"
   },
 
-  /* ===== STAFF EXTRA DETAILS ===== */
-
   gender: String,
-
   dob: String,
-
   address: String,
 
-  designation: String,      // Hair Stylist, Makeup Artist
-
-  experience: Number,       // years
-
-  specialization: String,   // Hair, Makeup, Skin, Nails
+  designation: String,
+  experience: Number,
+  specialization: String,
 
   shift: {
     type: String,

@@ -5,11 +5,20 @@ const Salon = require("../models/Salon");
 
 const router = express.Router();
 
+/* ======================================================
+   HELPER → CHECK IF TODAY IS HOLIDAY
+====================================================== */
+function isTodayHoliday(holidays = []) {
+  const today = new Date().toISOString().slice(0, 10);
+  return holidays.includes(today);
+}
+
 /* ============================
    ADD SALON
 ============================ */
 router.post("/add", auth, admin, async (req, res) => {
   try {
+
     const {
       name,
       address,
@@ -18,7 +27,10 @@ router.post("/add", auth, admin, async (req, res) => {
       ownerName,
       openingTime,
       closingTime,
-      logo
+      logo,
+      holidays,
+      status,
+      isPrimary
     } = req.body;
 
     if (!name || !address || !contact) {
@@ -26,6 +38,21 @@ router.post("/add", auth, admin, async (req, res) => {
         message: "Name, address and contact required"
       });
     }
+
+    // Only one primary salon
+    if (isPrimary === true) {
+      await Salon.updateMany(
+        { adminId: req.userId },
+        { isPrimary: false }
+      );
+    }
+
+    // Get next order
+    const last = await Salon.find({ adminId: req.userId })
+      .sort({ order: -1 })
+      .limit(1);
+
+    const nextOrder = last.length ? last[0].order + 1 : 0;
 
     const salon = await Salon.create({
       name,
@@ -36,7 +63,11 @@ router.post("/add", auth, admin, async (req, res) => {
       openingTime,
       closingTime,
       logo,
-      adminId: req.userId
+      holidays: holidays || [],
+      status: status || "open",
+      isPrimary: isPrimary || false,
+      adminId: req.userId,
+      order: nextOrder
     });
 
     res.status(201).json({
@@ -45,28 +76,98 @@ router.post("/add", auth, admin, async (req, res) => {
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* ============================
-   GET ALL SALONS
+   GET SALONS
 ============================ */
-router.get("/", async (req, res) => {
+router.get("/get", auth, admin, async (req, res) => {
   try {
-    const salons = await Salon.find().sort({ createdAt: -1 });
+
+    let salons = await Salon
+      .find({ adminId: req.userId })
+      .sort({ isPrimary: -1, order: 1 });
+
+    // Auto close on holidays
+    for (let salon of salons) {
+      if (isTodayHoliday(salon.holidays)) {
+        if (salon.status !== "temporarily-closed") {
+          salon.status = "temporarily-closed";
+          await salon.save();
+        }
+      }
+    }
+
     res.json(salons);
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// Backward-compatible alias
-router.get("/get", async (req, res) => {
+/* ============================
+   REORDER SALONS
+============================ */
+router.put("/reorder", auth, admin, async (req, res) => {
   try {
-    const salons = await Salon.find().sort({ createdAt: -1 });
-    res.json(salons);
+
+    const bulk = req.body.order.map(o => ({
+      updateOne: {
+        filter: { _id: o.id, adminId: req.userId },
+        update: { order: o.order, isPrimary: false }
+      }
+    }));
+
+    await Salon.bulkWrite(bulk);
+
+    // Primary always first
+    await Salon.updateMany(
+      { adminId: req.userId, isPrimary: true },
+      { order: -1 }
+    );
+
+    res.json({ message: "Order saved" });
+
   } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   EMERGENCY CLOSE ALL
+============================ */
+router.put("/emergency/close-all", auth, admin, async (req, res) => {
+  try {
+    await Salon.updateMany(
+      { adminId: req.userId },
+      { status: "temporarily-closed" }
+    );
+
+    res.json({ message: "All salons temporarily closed" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   REOPEN ALL
+============================ */
+router.put("/emergency/open-all", auth, admin, async (req, res) => {
+  try {
+    await Salon.updateMany(
+      { adminId: req.userId },
+      { status: "open" }
+    );
+
+    res.json({ message: "All salons reopened" });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -76,18 +177,28 @@ router.get("/get", async (req, res) => {
 ============================ */
 router.put("/:id", auth, admin, async (req, res) => {
   try {
-    const salon = await Salon.findByIdAndUpdate(
-      req.params.id,
+
+    if (req.body.isPrimary === true) {
+      await Salon.updateMany(
+        { adminId: req.userId },
+        { isPrimary: false }
+      );
+    }
+
+    const salon = await Salon.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.userId },
       req.body,
       { new: true }
     );
 
-    res.json({
-      message: "Salon updated",
-      salon
-    });
+    if (!salon) {
+      return res.status(404).json({ message: "Salon not found" });
+    }
 
-  } catch {
+    res.json({ message: "Salon updated", salon });
+
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -97,9 +208,20 @@ router.put("/:id", auth, admin, async (req, res) => {
 ============================ */
 router.delete("/:id", auth, admin, async (req, res) => {
   try {
-    await Salon.findByIdAndDelete(req.params.id);
+
+    const salon = await Salon.findOneAndDelete({
+      _id: req.params.id,
+      adminId: req.userId
+    });
+
+    if (!salon) {
+      return res.status(404).json({ message: "Salon not found" });
+    }
+
     res.json({ message: "Salon deleted" });
-  } catch {
+
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -1,301 +1,452 @@
 import { useEffect, useState } from "react";
 import { Footer } from "../components/Footer";
-import { Link } from "react-router-dom";
+import api from "../api";
+
+/* ======================================================
+   SETTINGS PAGE
+====================================================== */
 
 export function Settings() {
-    const API_URL = "http://localhost:5000/api/salons/get";
-    const [theme, setTheme] = useState(() => {
-        const saved = typeof window !== 'undefined' && localStorage.getItem('theme');
-        if (saved) return saved;
-        return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+  /* ================= THEME ================= */
+
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme(t => (t === "light" ? "dark" : "light"));
+
+  /* ================= TOAST ================= */
+
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  /* ================= STATE ================= */
+
+  const emptyForm = {
+    name: "",
+    ownerName: "",
+    contact: "",
+    email: "",
+    openingTime: "",
+    closingTime: "",
+    address: "",
+    holidays: "",
+    logo: "",
+    status: "open",
+    isPrimary: false
+  };
+
+  const [salons, setSalons] = useState([]);
+  const [form, setForm] = useState(emptyForm);
+
+  const [showForm, setShowForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const [editingId, setEditingId] = useState(null);
+  const [selected, setSelected] = useState(null);
+
+  const [dragIndex, setDragIndex] = useState(null);
+
+  /* ================= LOAD SALONS ================= */
+
+  useEffect(() => {
+    fetchSalons();
+  }, []);
+
+  const fetchSalons = async () => {
+    const res = await api.get("/salons/get");
+    let list = res.data || [];
+
+    // ensure primary salon always first
+    list.sort((a, b) => b.isPrimary - a.isPrimary || a.order - b.order);
+
+    setSalons(list);
+  };
+
+  /* ================= DRAG & SAVE ORDER ================= */
+
+  const handleDrop = async (index) => {
+    const updated = [...salons];
+    const dragged = updated.splice(dragIndex, 1)[0];
+    updated.splice(index, 0, dragged);
+
+    setSalons(updated);
+
+    const orderPayload = updated.map((s, i) => ({
+      id: s._id,
+      order: i
+    }));
+
+    await api.put("/salons/reorder", {
+      order: orderPayload
     });
-    const [salons, setSalons] = useState([]);
-    const [salonLoading, setSalonLoading] = useState(true);
-    const [salonError, setSalonError] = useState("");
 
-    useEffect(() => {
-        if (typeof document !== 'undefined') {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-        }
-    }, [theme]);
+    showToast("Order saved");
+  };
 
-    useEffect(() => {
-        const fetchSalons = async () => {
-            try {
-                setSalonLoading(true);
-                setSalonError("");
-                const res = await fetch(API_URL);
-                if (!res.ok) {
-                    throw new Error("Failed to load salons");
-                }
-                const data = await res.json();
-                setSalons(Array.isArray(data) ? data : (data ? [data] : []));
-            } catch (err) {
-                setSalonError("Failed to load salon details");
-                setSalons([]);
-            } finally {
-                setSalonLoading(false);
-            }
-        };
+  /* ================= EMERGENCY ================= */
 
-        fetchSalons();
-    }, []);
+  const emergencyCloseAll = async () => {
+    if (!window.confirm("Close ALL salons?")) return;
+    await api.put("/salons/emergency/close-all");
+    showToast("All salons closed");
+    fetchSalons();
+  };
 
-    const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+  const reopenAll = async () => {
+    if (!window.confirm("Reopen ALL salons?")) return;
+    await api.put("/salons/emergency/open-all");
+    showToast("All salons opened");
+    fetchSalons();
+  };
 
-    return (
-            <div className="min-h-screen w-full px-4 py-10">
-                <div className="max-w-5xl mx-auto">
-                    <header className="mb-8">
-                        <h1 className="text-3xl md:text-4xl font-bold text-[var(--text)]">Settings</h1>
-                        <p className="text-sm text-[var(--gray-700)] mt-2">Manage your store preferences, appearance and account settings.</p>
-                    </header>
-                    <section className="mb-6 bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-semibold text-[var(--text)]">Salon Details</h2>
-                            <p className="text-sm text-[var(--gray-700)] mt-1">
-                                View or manage your salon information like ID, name, address and contact.
-                            </p>
-                        </div>
-                        <Link to="/salondetails">
-                        <button
-                            type="button"
-                            className="px-5 py-2 rounded bg-[var(--primary)] text-white font-semibold hover:opacity-95">
-                            Add Salon
-                        </button>
-                        </Link>
-                    </section>
-                    <section className="mb-6 bg-[var(--gray-100)] p-6 rounded-2xl border border-[var(--border-light)] shadow-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                            <div>
-                                <h2 className="text-xl font-semibold text-[var(--text)]">Salon Details</h2>
-                                <p className="text-sm text-[var(--gray-700)] mt-1">A quick snapshot of your salon profile.</p>
-                            </div>
-                            <Link
-                                to="/salondetails"
-                                className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold hover:opacity-95"
-                            >
-                                Edit Details
-                            </Link>
-                        </div>
-                        {salonLoading && (
-                            <p className="text-sm text-[var(--gray-700)]">Loading salon details...</p>
-                        )}
-                        {!salonLoading && salonError && (
-                            <p className="text-sm text-[var(--danger)]">{salonError}</p>
-                        )}
-                        {!salonLoading && !salonError && salons.length === 0 && (
-                            <div className="rounded-xl border border-dashed border-[var(--border-light)] p-6 text-center bg-[var(--background)]">
-                                <p className="text-sm text-[var(--gray-700)]">No salons found yet.</p>
-                                <Link to="/salondetails" className="mt-3 inline-flex text-sm font-semibold text-[var(--primary)] hover:underline">
-                                    Add your first salon
-                                </Link>
-                            </div>
-                        )}
-                        {!salonLoading && !salonError && salons.length > 0 && (
-                            <div className="space-y-8">
-                                {salons.map((salon) => (
-                                    <div
-                                        key={salon._id}
-                                        className="relative overflow-hidden rounded-3xl border border-[var(--border-light)] bg-[var(--background)] shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
-                                    >
-                                        <div className="absolute inset-0 pointer-events-none">
-                                            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-[color:var(--primary)]/10 blur-3xl"></div>
-                                            <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-[color:var(--secondary)]/10 blur-3xl"></div>
-                                        </div>
+  /* ================= SAVE SALON ================= */
 
-                                        <div className="relative p-6">
-                                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                                <div className="min-w-0">
-                                                    <p className="text-xs uppercase tracking-[0.25em] text-[var(--gray-700)]">Salon Profile</p>
-                                                    <h3 className="mt-1 text-2xl font-semibold text-[var(--text)] truncate">
-                                                        {salon.name || "Unnamed Salon"}
-                                                    </h3>
-                                                    <p className="mt-2 text-sm text-[var(--gray-700)]">
-                                                        {salon.address || "Address not set"}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="text-right">
-                                                        <p className="text-xs text-[var(--gray-700)]">Status</p>
-                                                        <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-[var(--border-light)] bg-[var(--background)] px-3 py-1 text-xs font-semibold text-[var(--primary)]">
-                                                            <span className="h-2 w-2 rounded-full bg-[var(--primary)]"></span>
-                                                            Active
-                                                        </div>
-                                                    </div>
-                                                    {salon.logo ? (
-                                                        <img
-                                                            src={salon.logo}
-                                                            alt="Salon logo"
-                                                            className="w-20 h-20 rounded-2xl object-cover border border-[var(--border-light)] shadow-sm"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-20 h-20 rounded-2xl bg-[var(--hover-bg)] flex items-center justify-center text-xs font-semibold text-[var(--gray-700)] border border-[var(--border-light)]">
-                                                            Upload Logo
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+  const saveSalon = async () => {
 
-                                            <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-                                                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)]/70 p-4">
-                                                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--gray-700)]">Contact</p>
-                                                    <div className="mt-3 space-y-3">
-                                                        <div>
-                                                            <p className="text-xs text-[var(--gray-700)]">Phone</p>
-                                                            <p className="text-sm font-semibold text-[var(--text)]">{salon.contact || "-"}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-[var(--gray-700)]">Email</p>
-                                                            <p className="text-sm font-semibold text-[var(--text)]">{salon.email || "-"}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
+    const payload = {
+      ...form,
+      holidays: form.holidays
+        ? form.holidays.split(",").map(h => h.trim())
+        : []
+    };
 
-                                                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)]/70 p-4">
-                                                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--gray-700)]">Owner</p>
-                                                    <div className="mt-3">
-                                                        <p className="text-sm font-semibold text-[var(--text)]">{salon.ownerName || "-"}</p>
-                                                        <p className="mt-2 text-xs text-[var(--gray-700)]">Salon ID</p>
-                                                        <p className="text-sm font-medium text-[var(--text)] break-all">{salon._id}</p>
-                                                    </div>
-                                                </div>
+    // If primary selected → unset others
+    if (payload.isPrimary) {
+      await api.put("/salons/reorder", {
+        order: salons.map((s, i) => ({
+          id: s._id,
+          order: i + 1
+        }))
+      });
+    }
 
-                                                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)]/70 p-4">
-                                                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--gray-700)]">Hours</p>
-                                                    <div className="mt-3">
-                                                        <p className="text-sm font-semibold text-[var(--text)]">
-                                                            {salon.openingTime || "-"} to {salon.closingTime || "-"}
-                                                        </p>
-                                                        <p className="mt-2 text-xs text-[var(--gray-700)]">Last updated</p>
-                                                        <p className="text-sm font-medium text-[var(--text)]">
-                                                            {salon.updatedAt ? new Date(salon.updatedAt).toLocaleDateString() : "N/A"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
+    if (editingId) {
+      await api.put(`/salons/${editingId}`, payload);
+      showToast("Salon updated");
+    } else {
+      await api.post("/salons/add", payload);
+      showToast("Salon added");
+    }
 
-                                            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                                                <Link
-                                                    to="/salondetails"
-                                                    className="text-sm font-semibold text-[var(--primary)] hover:underline"
-                                                >
-                                                    Edit full profile
-                                                </Link>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        className="px-4 py-2 rounded-xl border border-[var(--border-light)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--hover-bg)]"
-                                                    >
-                                                        Preview
-                                                    </button>
-                                                    <Link
-                                                        to="/salondetails"
-                                                        className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:opacity-95"
-                                                    >
-                                                        Manage Salon
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                    <main className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Left / Main Column */}
-                        <section className="md:col-span-2 bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-4">Web Store Settings</h2>
-                            <p className="text-sm text-[var(--gray-700)] mb-6">Here are the basic store settings for your services.</p>
+    setShowForm(false);
+    fetchSalons();
+  };
 
-                            <form className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Store Name</label>
-                                        <input className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" type="text" placeholder="My Services" />
-                                    </div>
+  /* ================= DELETE ================= */
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Store URL</label>
-                                        <input className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" type="text" placeholder="https://example.com" />
-                                    </div>
-                                </div>
+  const deleteSalon = async (id) => {
+    if (!window.confirm("Delete salon?")) return;
+    await api.delete(`/salons/${id}`);
+    showToast("Salon deleted");
+    setShowDetails(false);
+    fetchSalons();
+  };
 
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Description</label>
-                                    <textarea className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] h-28 resize-y focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Short description about your services" />
-                                </div>
+  /* ================= UI ================= */
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Contact Email</label>
-                                        <input className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" type="email" placeholder="owner@example.com" />
-                                    </div>
+  return (
+    <div className="min-h-screen px-6 py-10">
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Currency</label>
-                                        <select className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                            <option>USD</option>
-                                            <option>EUR</option>
-                                            <option>GBP</option>
-                                        </select>
-                                    </div>
+      {/* TOAST */}
+      {toast && (
+        <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded">
+          {toast}
+        </div>
+      )}
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--gray-700)] mb-1">Timezone</label>
-                                        <select className="w-full p-2.5 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                            <option>UTC</option>
-                                            <option>GMT</option>
-                                            <option>EST</option>
-                                        </select>
-                                    </div>
-                                </div>
+      <div className="max-w-7xl mx-auto">
 
-                                <div className="flex items-center justify-between">
-                                    <div className="text-sm text-[var(--gray-700)]">Changes are not saved — this is a UI demo.</div>
-                                    <div className="flex gap-3">
-                                        <button type="button" className="px-4 py-2 rounded border border-[var(--border-light)] bg-[var(--background)] text-[var(--text)]">Cancel</button>
-                                        <button type="button" className="px-4 py-2 rounded bg-[var(--primary)] text-white font-semibold hover:opacity-95">Save changes</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </section>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Settings</h1>
 
-                        {/* Right / Sidebar Column */}
-                        <aside className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
-                            <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Appearance</h3>
+          <div className="flex gap-2">
+            <button onClick={toggleTheme} className="btn-outline">
+              {theme === "light" ? "Dark" : "Light"}
+            </button>
 
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-[var(--text)]">Theme</p>
-                                        <p className="text-xs text-[var(--gray-700)]">Switch between light and dark mode.</p>
-                                    </div>
-                                    <button onClick={toggleTheme} aria-label="Toggle theme" className="px-3 py-1.5 rounded bg-[var(--primary)] text-white">{theme === 'light' ? 'Dark' : 'Light'}</button>
-                                </div>
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setForm(emptyForm);
+                setShowForm(true);
+              }}
+              className="btn-primary"
+            >
+              + Add Salon
+            </button>
+          </div>
+        </div>
 
-                                <div>
-                                    <p className="text-sm font-medium text-[var(--text)] mb-2">Store status</p>
-                                    <label className="flex items-center gap-3">
-                                        <input type="checkbox" className="w-4 h-4" />
-                                        <span className="text-sm text-[var(--gray-700)]">Open to public</span>
-                                    </label>
-                                </div>
+        {/* EMERGENCY */}
+        <div className="bg-(--gray-100) p-4 rounded mb-8">
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={emergencyCloseAll}
+              className="bg-red-600 text-white px-4 py-2 rounded"
+            >
+              🚨 Emergency Close All
+            </button>
 
-                                <div>
-                                    <p className="text-sm font-medium text-[var(--text)] mb-2">Danger Zone</p>
-                                    <button className="w-full text-sm px-3 py-2 rounded bg-transparent border border-[var(--border-light)] text-[var(--danger)]">Delete store</button>
-                                </div>
-                            </div>
-                        </aside>
-                    </main>
+            <button
+              onClick={reopenAll}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              ✅ Reopen All
+            </button>
+          </div>
+        </div>
 
-                    <div className="mt-10">
-                        <Footer />
-                    </div>
-                </div>
+        {/* SALON CARDS */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-10">
+
+          {salons.map((s, i) => (
+
+            <div
+              key={s._id}
+              draggable
+              onDragStart={() => setDragIndex(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(i)}
+              onClick={() => {
+                setSelected(s);
+                setShowDetails(true);
+              }}
+              className="bg-(--gray-100) border rounded-xl p-8 cursor-pointer hover:shadow"
+            >
+
+              {/* ORDER NUMBER */}
+              <div className="w-12 h-12 rounded-full bg-(--primary)
+                text-white flex items-center justify-center mx-auto mb-4">
+                {i + 1}
+              </div>
+
+              {/* IMAGE */}
+              {s.logo && (
+                <img
+                  src={s.logo}
+                  className="w-full h-40 object-cover rounded-lg mb-4"
+                />
+              )}
+
+              {/* NAME */}
+              <h3 className="text-center font-semibold">
+                {s.name}
+                {s.isPrimary && (
+                  <span className="ml-2 text-xs bg-green-500 text-white px-2 rounded">
+                    PRIMARY
+                  </span>
+                )}
+              </h3>
+
+              {/* ADDRESS */}
+              <p className="text-center opacity-80 mt-2">
+                {s.address}
+              </p>
+
+              {/* HOURS */}
+              <p className="text-center mt-2">
+                ⏱ {s.openingTime} - {s.closingTime}
+              </p>
+
+              {/* STATUS */}
+              <p className="text-center mt-2">
+                <span className={`px-2 py-1 text-xs rounded
+                  ${
+                    s.status === "open"
+                      ? "bg-green-500"
+                      : s.status === "closed"
+                      ? "bg-red-500"
+                      : "bg-yellow-500"
+                  } text-white`}>
+                  {s.status}
+                </span>
+              </p>
+
             </div>
-    );
+
+          ))}
+
+        </div>
+
+        <div className="mt-12">
+          <Footer />
+        </div>
+
+      </div>
+
+      {/* ================= DETAILS MODAL ================= */}
+
+      {showDetails && selected && (
+        <Modal title="Salon Details" close={()=>setShowDetails(false)}>
+
+          <Detail label="Name" value={selected.name}/>
+          <Detail label="Owner" value={selected.ownerName}/>
+          <Detail label="Contact" value={selected.contact}/>
+          <Detail label="Email" value={selected.email}/>
+          <Detail label="Hours"
+            value={`${selected.openingTime} - ${selected.closingTime}`}
+          />
+          <Detail label="Status" value={selected.status}/>
+          <Detail
+            label="Holidays"
+            value={(selected.holidays || []).join(", ")}
+          />
+
+          <div className="flex justify-end gap-3 mt-4">
+
+            <button
+              onClick={()=>{
+                setEditingId(selected._id);
+                setForm({
+                  ...selected,
+                  holidays:(selected.holidays||[]).join(", ")
+                });
+                setShowDetails(false);
+                setShowForm(true);
+              }}
+              className="btn-primary"
+            >
+              Edit
+            </button>
+
+            <button
+              onClick={()=>deleteSalon(selected._id)}
+              className="btn-outline text-(--danger)"
+            >
+              Delete
+            </button>
+
+          </div>
+
+        </Modal>
+      )}
+
+      {/* ================= FORM MODAL ================= */}
+
+      {showForm && (
+        <Modal
+          title={editingId ? "Edit Salon" : "Add Salon"}
+          close={()=>setShowForm(false)}
+        >
+
+          <form
+            onSubmit={(e)=>{e.preventDefault();saveSalon();}}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+
+            <Input name="name" placeholder="Salon Name" form={form} setForm={setForm}/>
+            <Input name="ownerName" placeholder="Owner Name" form={form} setForm={setForm}/>
+
+            <Input name="contact" placeholder="Contact" form={form} setForm={setForm}/>
+            <Input name="email" placeholder="Email" form={form} setForm={setForm}/>
+
+            <Input name="openingTime" type="time" form={form} setForm={setForm}/>
+            <Input name="closingTime" type="time" form={form} setForm={setForm}/>
+
+            <select
+              value={form.status}
+              onChange={(e)=>setForm({...form,status:e.target.value})}
+              className="input-themed"
+            >
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+              <option value="temporarily-closed">Temporarily Closed</option>
+            </select>
+
+            <Input name="logo" placeholder="Logo URL" form={form} setForm={setForm}/>
+
+            <textarea
+              placeholder="Address"
+              value={form.address}
+              onChange={(e)=>setForm({...form,address:e.target.value})}
+              className="md:col-span-2 input-themed resize-none"
+            />
+
+            <textarea
+              placeholder="Holidays (yyyy-mm-dd, comma separated)"
+              value={form.holidays}
+              onChange={(e)=>setForm({...form,holidays:e.target.value})}
+              className="md:col-span-2 input-themed resize-none"
+            />
+
+            <label className="md:col-span-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.isPrimary}
+                onChange={(e)=>setForm({...form,isPrimary:e.target.checked})}
+              />
+              Set as Primary Salon
+            </label>
+
+            {form.logo && (
+              <img src={form.logo} className="w-24 h-24 rounded"/>
+            )}
+
+            <div className="md:col-span-2 flex justify-end">
+              <button className="btn-primary px-6 py-2 rounded">
+                Save Salon
+              </button>
+            </div>
+
+          </form>
+
+        </Modal>
+      )}
+
+    </div>
+  );
+}
+
+/* ======================================================
+   SMALL COMPONENTS
+====================================================== */
+
+function Modal({ title, close, children }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-start pt-20 z-50">
+      <div className="modal-card w-full max-w-xl max-h-[80vh] flex flex-col">
+        <div className="flex justify-between px-5 py-3 border-b sticky top-0 bg-(--background)">
+          <h2>{title}</h2>
+          <button onClick={close}>✕</button>
+        </div>
+        <div className="p-5 overflow-y-auto flex-1">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div className="flex justify-between border-b py-2 text-sm">
+      <span>{label}</span>
+      <span>{value || "-"}</span>
+    </div>
+  );
+}
+
+function Input({ name, placeholder, form, setForm, type="text" }) {
+  return (
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={form[name] || ""}
+      onChange={(e)=>setForm({...form,[name]:e.target.value})}
+      className="input-themed"
+    />
+  );
 }

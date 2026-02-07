@@ -26,8 +26,7 @@ import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
 import AdminAppointments from "./pages/Appointments/Appointments.jsx";
 import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
-import TeamManage from "./pages/Staff/TeamManage.jsx";
-import SalonDetails from "./pages/SalonDetails.jsx";
+import StaffManage from "./pages/Staff/StaffManage.jsx";
 
 function App() {
 
@@ -179,10 +178,8 @@ function App() {
             <Route path="/profile" element={<Profile/>} />
             <Route path="/paymenthistory" element={<PaymentHistory/>} />
             <Route path="/support" element={<HelpPage/>} />
-            <Route path="/staff" element={<TeamManage/>} />
+            <Route path="/staff" element={<StaffManage/>} />
             <Route path="/settings" element={<Settings/>} />
-            <Route path="/salondetails" element={<SalonDetails/>} />
-
 
           </Routes>
 
