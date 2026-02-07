@@ -35,6 +35,7 @@ app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/services", require("./routes/serviceRoutes"));
 app.use("/api/salons", require("./routes/salonRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
+app.use("/api/plans", require("./routes/plansRoutes"));
 
 // ---------------------
 // SERVER START
