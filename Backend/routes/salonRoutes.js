@@ -87,6 +87,9 @@ router.post("/add", auth, admin, async (req, res) => {
 router.get("/get", auth, admin, async (req, res) => {
   try {
 
+    // 🚫 DISABLE CACHE (CRITICAL)
+    res.set("Cache-Control", "no-store");
+
     let salons = await Salon
       .find({ adminId: req.userId })
       .sort({ isPrimary: -1, order: 1 });

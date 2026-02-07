@@ -83,7 +83,7 @@ router.post("/add", auth, admin, async (req, res) => {
 /* ===========================
    GET STAFF
 =========================== */
-router.get("/", auth, admin, async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
 
     const query = {

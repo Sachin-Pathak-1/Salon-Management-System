@@ -1,13 +1,14 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import React from "react"
+import React from "react";
+
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 
 import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
 import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
 import { ProfilePage } from "./pages/LadingPage/ProfilePage/ProfilePage.jsx";
-import Profile from "./pages/Profile/Profile.jsx"
+import Profile from "./pages/Profile/Profile.jsx";
 import { ActivityPage } from "./pages/LadingPage/Activity/ActivityPage.jsx";
 import { HistoryPage } from "./pages/LadingPage/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/LadingPage/CustomerList/CustomerList.jsx";
@@ -30,9 +31,41 @@ import StaffManage from "./pages/Staff/StaffManage.jsx";
 
 function App() {
 
+  /* ===============================
+     HOOKS (ORDER SAFE)
+  =============================== */
+
   const location = useLocation();
 
-  /* WHERE SIDEBAR SHOULD APPEAR */
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  /* ===============================
+     RESTORE AUTH ON REFRESH
+  =============================== */
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("currentUser");
+
+    if (token && storedUser) {
+      setIsLoggedIn(true);
+      setCurrentUser(JSON.parse(storedUser));
+    } else {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+    }
+
+    setAuthReady(true);
+  }, []);
+
+  if (!authReady) return null;
+
+  /* ===============================
+     SIDEBAR VISIBILITY
+  =============================== */
+
   const systemRoutes = [
     "/dashboard",
     "/staff-dashboard",
@@ -53,38 +86,33 @@ function App() {
     location.pathname.startsWith(route)
   );
 
-  const [services, setServices] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("currentUser");
-      if (token && storedUser) {
-        setIsLoggedIn(true);
-        setCurrentUser(JSON.parse(storedUser));
-      }
-    } catch (e) {
-      setIsLoggedIn(false);
-      setCurrentUser(null);
-    }
-  }, []);
+  /* ===============================
+     ROLE HELPERS
+  =============================== */
 
   const resolveDashboardPath = (user) =>
     user?.role === "admin" ? "/dashboard" : "/staff-dashboard";
 
-  const dashboardLink = isLoggedIn && currentUser ? resolveDashboardPath(currentUser) : "/login";
+  const dashboardLink =
+    isLoggedIn && currentUser
+      ? resolveDashboardPath(currentUser)
+      : "/login";
 
   const RequireRole = ({ role, children }) => {
     if (!isLoggedIn || !currentUser) {
       return <Navigate to="/login" replace />;
     }
+
     if (role && currentUser.role !== role) {
       return <Navigate to={resolveDashboardPath(currentUser)} replace />;
     }
+
     return children;
   };
+
+  /* ===============================
+     RENDER
+  =============================== */
 
   return (
     <>
@@ -97,8 +125,7 @@ function App() {
       />
 
       <div style={{ display: "flex" }}>
-
-        {showSidebar && (
+        {showSidebar && isLoggedIn && (
           <FloatingSideBar
             dashboardLink={dashboardLink}
             isLoggedIn={isLoggedIn}
@@ -107,47 +134,49 @@ function App() {
         )}
 
         <div style={{ flex: 1 }}>
-
           <Routes>
 
-            {/* LANDING */}
+            {/* PUBLIC */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />
 
-
             {/* AUTH */}
             <Route
               path="/login"
               element={
-                <LoginPage
-                  isLoggedIn={isLoggedIn}
-                  setIsLoggedIn={setIsLoggedIn}
-                  setCurrentUser={setCurrentUser}
-                />
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <SignupPage
-                  isLoggedIn={isLoggedIn}
-                  setIsLoggedIn={setIsLoggedIn}
-                  setCurrentUser={setCurrentUser}
-                />
+                isLoggedIn
+                  ? <Navigate to={dashboardLink} replace />
+                  : <LoginPage
+                      setIsLoggedIn={setIsLoggedIn}
+                      setCurrentUser={setCurrentUser}
+                    />
               }
             />
 
-            {/* SYSTEM */}
+            <Route
+              path="/signup"
+              element={
+                isLoggedIn
+                  ? <Navigate to={dashboardLink} replace />
+                  : <SignupPage
+                      setIsLoggedIn={setIsLoggedIn}
+                      setCurrentUser={setCurrentUser}
+                    />
+              }
+            />
+
+            {/* DASHBOARDS */}
             <Route
               path="/dashboard"
               element={
                 <RequireRole role="admin">
-                  <Dashboard services={services} />
+                  <Dashboard />
                 </RequireRole>
               }
             />
+
             <Route
               path="/staff-dashboard"
               element={
@@ -157,34 +186,129 @@ function App() {
               }
             />
 
+            {/* SYSTEM */}
             <Route
               path="/services"
-              element={<Services services={services} setServices={setServices} />}
+              element={
+                <RequireRole>
+                  <Services />
+                </RequireRole>
+              }
             />
 
             <Route
               path="/reports"
-              element={<Reports services={services} setServices={setServices} />}
+              element={
+                <RequireRole>
+                  <Reports />
+                </RequireRole>
+              }
             />
 
-            <Route path="/customers" element={<CustomerList />} />
-            <Route path="/customer/:id" element={<CustomerDetails />} />
+            <Route
+              path="/customers"
+              element={
+                <RequireRole>
+                  <CustomerList />
+                </RequireRole>
+              }
+            />
 
-            <Route path="/profilepage" element={<ProfilePage isLoggedIn={isLoggedIn} currentUser={currentUser} />} />
-            <Route path="/activity" element={<ActivityPage isLoggedIn={isLoggedIn} />} />
-            <Route path="/history" element={<HistoryPage isLoggedIn={isLoggedIn} />} />
-            <Route path="/appointments" element={<AdminAppointments/>}/>
-            <Route path="/profilepage" element={<ProfilePage/>} />
-            <Route path="/profile" element={<Profile/>} />
-            <Route path="/paymenthistory" element={<PaymentHistory/>} />
-            <Route path="/support" element={<HelpPage/>} />
-            <Route path="/staff" element={<StaffManage/>} />
-            <Route path="/settings" element={<Settings/>} />
+            <Route
+              path="/customer/:id"
+              element={
+                <RequireRole>
+                  <CustomerDetails />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/appointments"
+              element={
+                <RequireRole>
+                  <AdminAppointments />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/paymenthistory"
+              element={
+                <RequireRole>
+                  <PaymentHistory />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/support"
+              element={
+                <RequireRole>
+                  <HelpPage />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/staff"
+              element={
+                <RequireRole role="admin">
+                  <StaffManage />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/settings"
+              element={
+                <RequireRole>
+                  <Settings />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                <RequireRole>
+                  <Profile />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/profilepage"
+              element={
+                <RequireRole>
+                  <ProfilePage
+                    isLoggedIn={isLoggedIn}
+                    currentUser={currentUser}
+                  />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/activity"
+              element={
+                <RequireRole>
+                  <ActivityPage isLoggedIn={isLoggedIn} />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/history"
+              element={
+                <RequireRole>
+                  <HistoryPage isLoggedIn={isLoggedIn} />
+                </RequireRole>
+              }
+            />
 
           </Routes>
-
         </div>
-
       </div>
     </>
   );
