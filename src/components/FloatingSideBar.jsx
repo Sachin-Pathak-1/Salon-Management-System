@@ -67,7 +67,7 @@ export function FloatingSideBar({ dashboardLink }) {
         </li>
 
         <li>
-          <Link to="/profile">
+          <Link to="/profilePage">
             <span className="icon">👤</span>
             {!collapsed && "Profile"}
           </Link>
