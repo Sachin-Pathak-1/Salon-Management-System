@@ -1,4 +1,7 @@
 import { Footer } from "../../components/Footer";
+import { useNavigate } from "react-router-dom";
+
+
 
 const PopularServices = [
   { service: "Haircuts & Styling", bookings: 2150 },
@@ -16,6 +19,7 @@ const RecentActivities = [
 ];
 
 export function Dashboard() {
+  const navigate = useNavigate();
   return (
     <div>
        <div className="flex flex-col gap-10 min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10 items-center transition-colors duration-300 ease">
@@ -28,7 +32,7 @@ export function Dashboard() {
             <p className="text-[var(--gray-700)]">Manage your salon's operations, appointments, and customer experience.</p>
           </div>
 
-          <button className="bg-[var(--primary)] text-white border-none px-4 py-2.5 rounded font-bold cursor-pointer w-fit transition-all duration-300 ease hover:bg-[var(--secondary)]">View Appointments</button>
+          <button className="bg-[var(--primary)] text-white border-none px-4 py-2.5 rounded font-bold cursor-pointer w-fit transition-all duration-300 ease hover:bg-[var(--secondary)]" onClick={() => navigate(`/Appointments/`)} >View Appointments</button>
 
           <div className="flex justify-between gap-6">
             <div>

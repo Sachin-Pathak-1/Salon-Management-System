@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 
 const API_URL = "http://localhost:5000/api/services";
 
-export function Reports({ services, setServices }) {
+export function Reports() {
+
+  const [services, setServices] = useState([]);
+  const [loadError, setLoadError] = useState("");
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -23,9 +26,18 @@ export function Reports({ services, setServices }) {
   }, []);
 
   const fetchServices = async () => {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    setServices(data);
+    try {
+      setLoadError("");
+      const res = await fetch(API_URL);
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+      const data = await res.json();
+      setServices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setServices([]);
+      setLoadError("Failed to load services. Please check the API.");
+    }
   };
 
   const resetForm = () => {
@@ -87,10 +99,10 @@ export function Reports({ services, setServices }) {
   };
 
   const filteredServices = services
-    .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(s => (s.name || "").toLowerCase().includes(search.toLowerCase()))
     .filter(s => filter === "All" || s.status === filter)
     .sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "name") return (a.name || "").localeCompare(b.name || "");
       if (sortBy === "status") return (a.status || "").localeCompare(b.status || "");
       return 0;
     });
@@ -179,6 +191,12 @@ export function Reports({ services, setServices }) {
 
           </div>
 
+          {loadError && (
+            <div className="mb-4 text-sm text-red-600">
+              {loadError}
+            </div>
+          )}
+
           {/* TABLE */}
           <div className="overflow-x-auto">
 
@@ -212,7 +230,7 @@ export function Reports({ services, setServices }) {
 
                     <td className="p-3">{index + 1}</td>
                     <td className="p-3">{s.name}</td>
-                    <td className="p-3">₹{s.price || "-"}</td>
+                    <td className="p-3">Rs. {s.price || "-"}</td>
 
                     {/* HIDDEN ON MOBILE */}
                     <td className="p-3 max-md:hidden">

@@ -1,8 +1,9 @@
+const auth = require("../middleware/auth");
 const router = require("express").Router();
 const Service = require("../models/Service");
 
 /* STAFF STATS */
-router.get("/staff-stats", async (req, res) => {
+router.get("/staff-stats", auth, async (req, res) => {
   try {
     const totalServices = await Service.countDocuments();
 
@@ -17,7 +18,7 @@ router.get("/staff-stats", async (req, res) => {
 });
 
 /* POPULAR SERVICES */
-router.get("/popular-services", async (req, res) => {
+router.get("/popular-services", auth, async (req, res) => {
   try {
     const services = await Service.find().limit(5);
 
@@ -33,7 +34,7 @@ router.get("/popular-services", async (req, res) => {
 });
 
 /* RECENT ACTIVITY */
-router.get("/recent-activity", async (req, res) => {
+router.get("/recent-activity", auth, async (req, res) => {
   try {
     const services = await Service.find().limit(5);
 

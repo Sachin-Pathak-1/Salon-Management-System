@@ -1,6 +1,4 @@
-import './CustomerList.css';
 import { useState } from 'react';
- 
 import { useNavigate } from 'react-router-dom';
 
 export function CustomerList() {
@@ -14,38 +12,42 @@ export function CustomerList() {
   ]);
 
   return (
-    <div className="customer-list">
-      <div className="customer-container">
-        <div className="list-header">
+    <div className="min-h-screen bg-[var(--background)] px-5 py-10 text-[var(--text)] transition-colors duration-300">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center bg-[var(--gray-100)] p-8 rounded-xl mb-8 shadow-md border border-[var(--border-light)] md:flex-col md:gap-5 md:items-start">
           <div>
-            <h1>Customers</h1>
-            <p>Manage and view all your customers</p>
+            <h1 className="text-4xl font-extrabold text-[var(--text)] mb-2">Customers</h1>
+            <p className="text-[var(--text)] opacity-70 text-sm">Manage and view all your customers</p>
           </div>
-          <button className="btn-add">+ Add Customer</button>
+          <button className="px-6 py-3 bg-[var(--primary)] text-white border-none rounded-xl font-bold cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:opacity-90">+ Add Customer</button>
         </div>
 
-        <div className="list-table-wrapper">
-          <table className="list-table">
-            <thead>
+        <div className="bg-[var(--gray-100)] rounded-xl overflow-hidden shadow-md">
+          <table className="w-full border-collapse">
+            <thead className="bg-[var(--gray-200)]">
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Services</th>
-                <th>Action</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Name</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Email</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Phone</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Status</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Services</th>
+                <th className="px-5 py-4 text-left font-bold text-[var(--text)] opacity-80 text-xs uppercase tracking-wider border-b-2 border-[var(--border-light)] md:px-2 md:py-3">Action</th>
               </tr>
             </thead>
             <tbody>
               {customers.map(customer => (
-                <tr key={customer.id}>
-                  <td>{customer.name}</td>
-                  <td>{customer.email}</td>
-                  <td>{customer.phone}</td>
-                  <td><span className={`badge badge-${customer.status.toLowerCase()}`}>{customer.status}</span></td>
-                  <td>{customer.services}</td>
-                  <td>
-                    <button className="btn-view" onClick={() => navigate(`/customer/${customer.id}`)}>View</button>
+                <tr key={customer.id} className="transition-all duration-300 hover:bg-[var(--hover-bg)]">
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.name}</td>
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.email}</td>
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.phone}</td>
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">
+                    <span className={`px-3 py-1.5 rounded-lg font-semibold text-xs uppercase tracking-wider ${customer.status.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {customer.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.services}</td>
+                  <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">
+                    <button className="px-3 py-1.5 bg-[var(--primary)] text-white border-none rounded-md font-semibold text-xs cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md" onClick={() => navigate(`/customer/${customer.id}`)}>View</button>
                   </td>
                 </tr>
               ))}

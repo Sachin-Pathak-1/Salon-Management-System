@@ -8,7 +8,8 @@ const app = express();
 // ---------------------
 // MIDDLEWARE
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 
@@ -32,6 +33,9 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/services", require("./routes/serviceRoutes"));
+app.use("/api/salons", require("./routes/salonRoutes"));
+app.use("/api/staff", require("./routes/staffRoutes"));
+app.use("/api/plans", require("./routes/plansRoutes"));
 
 // ---------------------
 // SERVER START

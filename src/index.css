@@ -1,86 +1,157 @@
+/* ===============================
+   TAILWIND BASE
+================================ */
 @tailwind utilities;
 
-/* Hide native scrollbars while preserving scroll behavior */
+/* ===============================
+   HIDE SCROLLBARS
+================================ */
 html, body {
-	scrollbar-width: none; /* Firefox */
-	-ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE 10+ */
 }
-html::-webkit-scrollbar, body::-webkit-scrollbar {
-	display: none; /* Safari and Chrome */
-	width: 0;
-	height: 0;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
-/* Theme Color Variables */
+/* ===============================
+   THEME VARIABLES
+================================ */
 :root {
-	/* Default to light theme */
-	--text: #011623;
-	--background: #f5fbff;
-	--primary: #1892f7;
-	--secondary: #8983fb;
-	--accent: #7e4ef9;
-	--gray-100: #f9fafb;
-	--gray-200: #f3f4f6;
-	--gray-700: #374151;
-	--gray-900: #111827;
-	--border-light: #e5e7eb;
-	--hover-bg: rgba(1,22,35,0.03);
-	--card-shadow: 0 1px 2px rgba(1,22,35,0.04);
-	--card-shadow-lg: 0 10px 30px rgba(1,22,35,0.04);
-	--danger: #ef4444;
-	--success: #10b981;
+  --text: #011623;
+  --background: #f5fbff;
+  --primary: #1892f7;
+  --secondary: #8983fb;
+  --accent: #7e4ef9;
+
+  --gray-100: #f9fafb;
+  --gray-200: #f3f4f6;
+  --gray-700: #374151;
+  --gray-900: #111827;
+
+  --border-light: #e5e7eb;
+  --hover-bg: rgba(1,22,35,0.03);
+
+  --card-shadow: 0 1px 2px rgba(1,22,35,0.04);
+  --card-shadow-lg: 0 10px 30px rgba(1,22,35,0.04);
+
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
+/* ===============================
+   LIGHT THEME
+================================ */
 :root[data-theme="light"] {
-	--text: #191017;
-	--background: #f7edf5;
-	--primary: #751f61;
-	--secondary: #ed73d0;
-	--accent: #e203ae;
-	--gray-100: #f9fafb;
-	--gray-200: #f3f4f6;
-	--gray-700: #374151;
-	--gray-900: #111827;
-	--border-light: #e5e7eb;
-	--hover-bg: rgba(1,22,35,0.03);
-	--card-shadow: 0 1px 2px rgba(1,22,35,0.04);
-	--card-shadow-lg: 0 10px 30px rgba(1,22,35,0.04);
-	--danger: #ef4444;
-	--success: #10b981;
+  --text: #191017;
+  --background: #f7edf5;
+  --primary: #751f61;
+  --secondary: #ed73d0;
+  --accent: #e203ae;
 }
 
+/* ===============================
+   DARK THEME
+================================ */
 :root[data-theme="dark"] {
-	--text: #eee5ec;
-	--background: #10070e;
-	--primary: #e08acc;
-	--secondary: #8d1270;
-	--accent: #fb1bc7;
-	--gray-100: #1a1f2e;
-	--gray-200: #2d3748;
-	--gray-700: #cbd5e1;
-	--gray-900: #f0f0f0;
-	--border-light: #334155;
-	--hover-bg: rgba(255,255,255,0.03);
-	--card-shadow: 0 1px 2px rgba(255,255,255,0.03);
-	--card-shadow-lg: 0 10px 30px rgba(255,255,255,0.02);
-	--danger: #f87171;
-	--success: #34d399;
+  --text: #eee5ec;
+  --background: #10070e;
+  --primary: #e08acc;
+  --secondary: #8d1270;
+  --accent: #fb1bc7;
+
+  --gray-100: #1a1f2e;
+  --gray-200: #2d3748;
+  --gray-700: #cbd5e1;
+  --gray-900: #f0f0f0;
+
+  --border-light: #334155;
+  --hover-bg: rgba(255,255,255,0.03);
+
+  --danger: #f87171;
+  --success: #34d399;
 }
 
-/* Apply theme colors globally */
+/* ===============================
+   GLOBAL APPLY
+================================ */
 html, body, #root {
-	background-color: var(--background);
-	color: var(--text);
-	transition: background-color 0.3s ease, color 0.3s ease;
-	font-family: 'Montserrat', sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: "Montserrat", sans-serif;
 }
 
-/* Apply heading font to headings */
 h1, h2, h3, h4, h5, h6 {
-	font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
 }
 
 * {
-	color-scheme: light dark;
+  color-scheme: light dark;
 }
 
+/* ===============================
+   FORM UTILITIES
+================================ */
+.input-themed {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+}
+
+.input-themed:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(226,3,174,0.3);
+  outline: none;
+}
+
+/* ===============================
+   MODAL CARD
+================================ */
+.modal-card {
+  background: var(--gray-100);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--secondary);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+/* ===============================
+   TOAST COLORS (future use)
+================================ */
+.toast-success {
+  background: var(--success);
+  color: white;
+}
+
+.toast-error {
+  background: var(--danger);
+  color: white;
+}
