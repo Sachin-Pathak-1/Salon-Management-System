@@ -10,7 +10,7 @@ export function FloatingSideBar({ currentUser }) {
     <div
       className={`
         fixed top-20 left-4 h-[calc(100vh-6rem)]
-        ${open ? "w-56" : "w-16"}
+        ${open ? "w-56" : "w-17"}
         bg-[#f7eef6]
         rounded-2xl shadow-xl
         transition-all duration-300
@@ -60,6 +60,7 @@ function Item({ to, icon, label, open }) {
           text-gray-700
           hover:bg-white hover:shadow
           transition-all duration-300
+          
         `}
       >
         {/* ICON */}
