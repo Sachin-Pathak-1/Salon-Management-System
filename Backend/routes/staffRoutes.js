@@ -1,62 +1,32 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const User = require("../models/User");
+const Staff = require("../models/Staff");
+const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
 const router = express.Router();
 
-/* ===================================================
-   REORDER STAFF  (MUST BE ON TOP)
-=================================================== */
-router.put("/reorder", auth, admin, async (req, res) => {
-  try {
-
-    const bulk = req.body.order.map(o => ({
-      updateOne: {
-        filter: { _id: o.id, adminId: req.userId },
-        update: { order: o.order }
-      }
-    }));
-
-    await User.bulkWrite(bulk);
-
-    res.json({ message: "Order saved" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ===========================
-   ADD STAFF
-=========================== */
+/* ADD STAFF */
 router.post("/add", auth, admin, async (req, res) => {
   try {
 
     const { name, email, password, salonId, isManager } = req.body;
 
     if (!name || !email || !password || !salonId) {
-      return res.status(400).json({
-        message: "Name, email, password and salonId required"
-      });
+      return res.status(400).json({ message: "Required fields missing" });
     }
 
-    if (await User.findOne({ email })) {
-      return res.status(400).json({ message: "Email already exists" });
+    if (await Staff.findOne({ email })) {
+      return res.status(400).json({ message: "Email exists" });
     }
 
-    // Only one manager per salon
+    // One manager per salon
     if (isManager === true) {
-      await User.updateMany(
-        { salonId, role: "staff" },
-        { isManager: false }
-      );
+      await Staff.updateMany({ salonId }, { isManager: false });
     }
 
-    // 🔥 Get next order number
-    const last = await User.find({ salonId, role: "staff" })
+    const last = await Staff.find({ salonId })
       .sort({ order: -1 })
       .limit(1);
 
@@ -64,68 +34,74 @@ router.post("/add", auth, admin, async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const staff = await User.create({
+    const staff = await Staff.create({
       ...req.body,
       password: hashed,
-      role: "staff",
       adminId: req.userId,
       order: nextOrder
     });
 
+    // push into salon
+    await Salon.findByIdAndUpdate(
+      salonId,
+      { $addToSet: { staff: staff._id } }
+    );
+
     res.status(201).json({ message: "Staff added", staff });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-/* ===========================
-   GET STAFF
-=========================== */
+/* GET STAFF */
 router.get("/", auth, async (req, res) => {
   try {
 
-    const query = {
-      role: "staff",
-      adminId: req.userId
-    };
+    const query = { adminId: req.userId };
 
-    if (req.query.salonId) {
-      query.salonId = req.query.salonId;
-    }
+    if (req.query.salonId) query.salonId = req.query.salonId;
 
-    const staff = await User.find(query)
-      .sort({ isManager: -1, order: 1 })   // 🔥
+    const staff = await Staff.find(query)
+      .sort({ isManager: -1, order: 1 })
       .select("-password");
 
     res.json(staff);
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-/* ===========================
-   UPDATE STAFF
-=========================== */
+/* UPDATE STAFF */
 router.put("/:id", auth, admin, async (req, res) => {
   try {
 
-    if (req.body.isManager === true) {
-      const current = await User.findById(req.params.id);
+    const existing = await Staff.findById(req.params.id);
 
-      if (current?.salonId) {
-        await User.updateMany(
-          { salonId: current.salonId, role: "staff" },
-          { isManager: false }
-        );
-      }
+    if (req.body.isManager === true) {
+      await Staff.updateMany(
+        { salonId: existing.salonId },
+        { isManager: false }
+      );
     }
 
-    const staff = await User.findOneAndUpdate(
-      { _id: req.params.id, adminId: req.userId },
+    // salon change
+    if (req.body.salonId && existing.salonId.toString() !== req.body.salonId) {
+
+      await Salon.findByIdAndUpdate(
+        existing.salonId,
+        { $pull: { staff: existing._id } }
+      );
+
+      await Salon.findByIdAndUpdate(
+        req.body.salonId,
+        { $addToSet: { staff: existing._id } }
+      );
+    }
+
+    const staff = await Staff.findByIdAndUpdate(
+      req.params.id,
       req.body,
       { new: true }
     ).select("-password");
@@ -133,34 +109,30 @@ router.put("/:id", auth, admin, async (req, res) => {
     res.json({ message: "Staff updated", staff });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-/* ===========================
-   DELETE STAFF
-=========================== */
+/* DELETE STAFF */
 router.delete("/:id", auth, admin, async (req, res) => {
   try {
 
-    const staff = await User.findOne({ _id: req.params.id });
+    const staff = await Staff.findById(req.params.id);
 
     if (staff?.isManager) {
-      return res.status(400).json({
-        message: "Manager cannot be deleted"
-      });
+      return res.status(400).json({ message: "Manager cannot be deleted" });
     }
 
-    await User.findOneAndDelete({
-      _id: req.params.id,
-      adminId: req.userId
-    });
+    await Salon.findByIdAndUpdate(
+      staff.salonId,
+      { $pull: { staff: staff._id } }
+    );
+
+    await Staff.findByIdAndDelete(req.params.id);
 
     res.json({ message: "Staff deleted" });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -115,6 +115,7 @@ router.get("/get", auth, async (req, res) => {
     if (req.userRole === "admin") {
     let salons = await Salon
       .find({ adminId: req.userId })
+      .populate("staff", "-password")
       .sort({ isPrimary: -1, order: 1 });
 
     // Auto close on holidays
@@ -131,7 +132,8 @@ router.get("/get", auth, async (req, res) => {
     }
 
     if (req.userRole === "staff") {
-      const salon = await Salon.findOne({ _id: req.userSalonId });
+      const salon = await Salon.findOne({ _id: req.userSalonId })
+        .populate("staff", "-password");
       if (!salon) return res.json([]);
 
       // Auto close on holidays
