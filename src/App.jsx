@@ -28,7 +28,7 @@ import AdminAppointments from "./pages/Appointments/Appointments.jsx";
 import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
-import { ViewPlan } from "./pages/Plans.jsx";
+import { ViewPlan } from "./pages/Plans/Plans.jsx";
 
 function App() {
 
