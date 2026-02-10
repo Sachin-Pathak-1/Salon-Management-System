@@ -50,10 +50,15 @@ export function Services() {
   const [form, setForm] = useState(emptyForm);
 
   /* ================= HELPERS ================= */
-  const authHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-    "Cache-Control": "no-store"
-  });
+  const authHeader = () => {
+    const token = localStorage.getItem("adminToken") || 
+                  localStorage.getItem("staffToken") || 
+                  localStorage.getItem("token");
+    return {
+      Authorization: `Bearer ${token}`,
+      "Cache-Control": "no-store"
+    };
+  };
 
   const showToast = (msg) => {
     setToast(msg);
