@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import './Appointments.css'
 
 export default function AdminAppointments() {
+  const navigate = useNavigate();
+
   const [appointments, setAppointments] = useState([
     {
       id: 1,
@@ -75,6 +78,12 @@ export default function AdminAppointments() {
         </div>
         <div className="admin-content">
           <div className="appointments-controls">
+            <button
+              className="bg-[var(--primary)] text-white border-none px-4 py-2 rounded font-bold cursor-pointer transition-all duration-300 ease hover:bg-[var(--secondary)]"
+              onClick={() => navigate('/add-appointment')}
+            >
+              Add Appointment
+            </button>
             <input type="text" placeholder="Search appointments..." className="search-input" />
             <select className="filter-select">
               <option value="">All Status</option>
