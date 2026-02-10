@@ -25,6 +25,7 @@ import { Settings } from "./pages/Settings.jsx";
 import { About } from "./pages/LadingPage/About/About.jsx";
 import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
 import AdminAppointments from "./pages/Appointments/Appointments.jsx";
+import AddAppointment from "./pages/Appointments/AddAppointment.jsx";
 import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
@@ -43,6 +44,27 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
 
   /* ===============================
+     FETCH STAFF PROFILE
+  =============================== */
+
+  const fetchStaffProfile = async () => {
+    const token = localStorage.getItem("staffToken");
+    if (!token || !currentUser || currentUser.role !== "staff") return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/staffProfile/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const updatedUser = { ...data, role: "staff" };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error("Failed to fetch staff profile", err);
+    }
+  };
+
+  /* ===============================
      RESTORE AUTH ON REFRESH
   =============================== */
 
@@ -55,7 +77,11 @@ function App() {
 
     if (token && storedUser) {
       setIsLoggedIn(true);
-      setCurrentUser(JSON.parse(storedUser));
+      const user = JSON.parse(storedUser);
+      setCurrentUser(user);
+      if (user.role === "staff") {
+        fetchStaffProfile();
+      }
     } else {
       setIsLoggedIn(false);
       setCurrentUser(null);
@@ -230,6 +256,15 @@ function App() {
               element={
                 <RequireRole>
                   <AdminAppointments />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/add-appointment"
+              element={
+                <RequireRole role="admin">
+                  <AddAppointment />
                 </RequireRole>
               }
             />
