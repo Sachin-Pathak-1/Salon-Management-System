@@ -112,11 +112,15 @@ router.get("/get", auth, async (req, res) => {
     // 🚫 DISABLE CACHE (CRITICAL)
     res.set("Cache-Control", "no-store");
 
+    console.log("Fetching salons for userId:", req.userId, "role:", req.userRole);
+
     if (req.userRole === "admin") {
     let salons = await Salon
       .find({ adminId: req.userId })
       .populate("staff", "-password")
       .sort({ isPrimary: -1, order: 1 });
+
+    console.log("Salons found for admin:", salons.length);
 
     // Auto close on holidays
     for (let salon of salons) {

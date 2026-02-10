@@ -62,20 +62,26 @@ export function Settings() {
   /* ================= LOAD SALONS ================= */
 
   const fetchSalons = async () => {
-    const res = await api.get("/salons/get");
-    let list = res.data || [];
+    try {
+      const res = await api.get("/salons/get");
+      let list = res.data || [];
 
-    // ensure primary salon always first
-    list.sort((a, b) => b.isPrimary - a.isPrimary || a.order - b.order);
+      // ensure primary salon always first
+      list.sort((a, b) => b.isPrimary - a.isPrimary || a.order - b.order);
 
-    setSalons(list);
+      setSalons(list);
+    } catch (err) {
+      console.error("Failed to fetch salons:", err);
+      setSalons([]);
+    }
   };
 
   const fetchPlanInfo = async () => {
     try {
       const res = await api.get("/plans/selection");
       setPlanInfo(res.data || null);
-    } catch {
+    } catch (err) {
+      console.error("Failed to fetch plan info:", err);
       setPlanInfo(null);
     }
   };
@@ -304,7 +310,13 @@ export function Settings() {
         {/* SALON CARDS */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-10">
 
-          {salons.map((s, i) => (
+          {salons.length === 0 ? (
+            <div className="col-span-full text-center py-10">
+              <p className="text-gray-500">No salons added yet.</p>
+              <p className="text-gray-400 text-sm">Select a plan and add your first salon to get started.</p>
+            </div>
+          ) : (
+            salons.map((s, i) => (
 
             <div
               key={s._id}
@@ -369,7 +381,8 @@ export function Settings() {
 
             </div>
 
-          ))}
+          ))
+          )}
 
         </div>
 

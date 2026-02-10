@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api";
+import api from "../../api.js";
 
 /* Plan features (same in light & dark mode) */
 const planFeatures = {

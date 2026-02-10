@@ -9,7 +9,7 @@ export function FloatingSideBar({ currentUser }) {
   return (
     <div
       className={`
-        fixed top-20 left-4 h-[calc(100vh-6rem)]
+        fixed top-35 left-4 h-[65%]
         ${open ? "w-56" : "w-17"}
         bg-[#f7eef6]
         rounded-2xl shadow-xl

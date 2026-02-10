@@ -44,7 +44,11 @@ export default function Staff() {
   /* ================= HELPERS ================= */
 
   const authHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`
+    Authorization: `Bearer ${
+      localStorage.getItem("adminToken") ||
+      localStorage.getItem("staffToken") ||
+      localStorage.getItem("token")
+    }`
   });
 
   const showToast = (msg) => {
@@ -95,6 +99,7 @@ export default function Staff() {
     if (!form.name) return "Name required";
     if (!form.email) return "Email required";
     if (showAdd && !form.password) return "Password required";
+    if (!activeSalon) return "Select or create a salon first";
     return null;
   };
 
@@ -105,11 +110,17 @@ export default function Staff() {
     const err = validate();
     if (err) return showToast(err);
 
-    await fetch(`${STAFF_API}/add`, {
+    const res = await fetch(`${STAFF_API}/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify({ ...form, salonId: activeSalon })
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message || "Failed to add staff");
+      return;
+    }
 
     showToast("Staff added");
     setShowAdd(false);
