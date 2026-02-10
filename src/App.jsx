@@ -26,6 +26,7 @@ import { About } from "./pages/LadingPage/About/About.jsx";
 import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
 import AdminAppointments from "./pages/Appointments/Appointments.jsx";
 import AddAppointment from "./pages/Appointments/AddAppointment.jsx";
+import CreateAppointment from "./pages/Appointments/CreateAppointment.jsx";
 import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
@@ -265,6 +266,15 @@ function App() {
               element={
                 <RequireRole role="admin">
                   <AddAppointment />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/create-appointment/:salonId"
+              element={
+                <RequireRole role="admin">
+                  <CreateAppointment />
                 </RequireRole>
               }
             />
