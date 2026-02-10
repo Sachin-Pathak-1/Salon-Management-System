@@ -61,6 +61,12 @@ export function Navbar({
               Dashboard
             </Link>
           )}
+
+          {isLoggedIn && (
+            <Link to="/add-appointment" className="nav-link">
+              Add Appointment
+            </Link>
+          )}
         </div>
 
         {/* RIGHT */}
