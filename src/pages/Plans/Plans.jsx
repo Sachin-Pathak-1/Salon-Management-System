@@ -129,27 +129,27 @@ export function ViewPlan() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdf4f8] dark:bg-gray-950 px-4 py-10 transition-colors">
+    <div className="min-h-screen bg-background px-4 py-10 transition-colors">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-10">
         <button
           onClick={() => navigate(-1)}
-          className="text-pink-500 font-medium mb-4 hover:underline"
+          className="text-(--primary) font-medium mb-4 hover:underline"
         >
           ← Back to Services
         </button>
 
-        <h1 className="text-4xl font-serif font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-4xl font-serif font-bold text-text">
           Salon Membership Plans
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-xl">
+        <p className="text-(--gray-700) mt-2 max-w-xl">
           Choose a plan that suits your beauty needs.
         </p>
       </div>
 
       {/* Branch Count */}
       <div className="max-w-6xl mx-auto mb-8">
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-semibold text-text mb-2">
           Number of salons to add
         </label>
 
@@ -161,7 +161,7 @@ export function ViewPlan() {
             onChange={(e) =>
               setBranchCount(Math.max(1, Number(e.target.value) || 1))
             }
-            className="w-36 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100"
+            className="w-36 rounded-lg border border-(--border-light) bg-background px-3 py-2 text-text"
           />
 
           {selectedPlan && (
@@ -175,7 +175,7 @@ export function ViewPlan() {
         </div>
 
         {saveMessage && (
-          <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+          <div className="mt-3 text-sm text-text">
             {saveMessage}
           </div>
         )}
@@ -192,23 +192,22 @@ export function ViewPlan() {
         {plans.map((plan) => (
           <div
             key={plan._id}
-            className={`rounded-2xl p-6 border bg-white dark:bg-gray-900
-              border-gray-200 dark:border-gray-700 shadow-md
+            className={`rounded-2xl p-6 border bg-background
+              border-(--border-light) shadow-md
               transition-all duration-300
-              hover:scale-105 hover:shadow-xl hover:border-pink-400
-              dark:hover:border-pink-500`}
+              hover:scale-105 hover:shadow-xl hover:border-(--primary)`}
           >
-            <h2 className="text-2xl font-serif font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-2xl font-serif font-bold text-text">
               {plan.name}
             </h2>
 
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-(--gray-700) mt-1">
               {plan.description}
             </p>
 
-            <div className="mt-4 text-3xl font-bold text-pink-500">
+            <div className="mt-4 text-3xl font-bold text-(--primary)">
               {formatCurrency(Number(plan.price) || 0)}
-              <span className="block text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="block text-sm font-medium text-(--gray-700)">
                 per salon
               </span>
             </div>
@@ -218,9 +217,9 @@ export function ViewPlan() {
                 (feature, i) => (
                   <li
                     key={i}
-                    className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                    className="flex items-center gap-2 text-text"
                   >
-                    <span className="h-2 w-2 rounded-full bg-pink-500"></span>
+                    <span className="h-2 w-2 rounded-full bg-(--primary)"></span>
                     {feature}
                   </li>
                 )
@@ -230,11 +229,11 @@ export function ViewPlan() {
             <button
               onClick={() => handleSelectPlan(plan)}
               disabled={!isBranchCountValid(plan)}
-              className={`mt-8 w-full rounded-xl py-3 font-semibold transition
+            className={`mt-8 w-full rounded-xl py-3 font-semibold transition
                 ${
                   selectedPlanId === plan._id
-                    ? "bg-pink-500 text-white"
-                    : "border border-pink-600 text-pink-500 hover:bg-pink-50 dark:hover:bg-gray-800"
+                    ? "bg-(--primary) text-white"
+                    : "border border-(--primary) text-(--primary) hover:bg-(--background)"
                 }`}
             >
               {selectedPlanId === plan._id ? "Selected" : "Choose Plan"}
