@@ -37,36 +37,43 @@ export default function AddAppointment() {
         <div className="admin-content">
           <div className="salons-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {salons.length === 0 ? (
-              <p className="col-span-full text-center text-gray-500">No salons found.</p>
+              <p className="col-span-full text-center opacity-70">No salons found.</p>
             ) : (
               salons.map((salon) => (
                 <div
                   key={salon._id}
-                  className="salon-card bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                  className="salon-card bg-(--gray-100) border border-(--border-light) rounded-2xl p-5 shadow-[var(--card-shadow)] hover:shadow-[var(--card-shadow-lg)] transition-shadow duration-300 cursor-pointer"
                   onClick={() => navigate(`/create-appointment/${salon._id}`)}
                 >
                   {salon.logo && (
                     <img
                       src={salon.logo}
                       alt={`${salon.name} logo`}
-                      className="w-full h-32 object-cover rounded-md mb-4"
+                      className="w-full h-32 object-cover rounded-xl mb-4"
                     />
                   )}
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{salon.name}</h3>
-                  <p className="text-gray-600 mb-1"><strong>Address:</strong> {salon.address}</p>
-                  <p className="text-gray-600 mb-1"><strong>Contact:</strong> {salon.contact}</p>
-                  {salon.email && <p className="text-gray-600 mb-1"><strong>Email:</strong> {salon.email}</p>}
-                  <p className="text-gray-600 mb-1"><strong>Opening Time:</strong> {salon.openingTime || 'N/A'}</p>
-                  <p className="text-gray-600 mb-1"><strong>Closing Time:</strong> {salon.closingTime || 'N/A'}</p>
-                  <p className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    salon.status === 'open' ? 'bg-green-100 text-green-800' :
-                    salon.status === 'closed' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    Status: {salon.status}
-                  </p>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-(--text)">{salon.name}</h3>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                        salon.status === "open"
+                          ? "bg-[var(--success)]/15 text-[var(--success)] border-[var(--success)]/30"
+                          : salon.status === "closed"
+                          ? "bg-[var(--danger)]/15 text-[var(--danger)] border-[var(--danger)]/30"
+                          : "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/30"
+                      }`}
+                    >
+                      {salon.status}
+                    </span>
+                  </div>
+                  <div className="text-sm text-(--text) opacity-80 space-y-1">
+                    <p><span className="font-semibold">Address:</span> {salon.address}</p>
+                    <p><span className="font-semibold">Contact:</span> {salon.contact}</p>
+                    {salon.email && <p><span className="font-semibold">Email:</span> {salon.email}</p>}
+                    <p><span className="font-semibold">Hours:</span> {salon.openingTime || "N/A"} - {salon.closingTime || "N/A"}</p>
+                  </div>
                   <div className="mt-4 text-center">
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors duration-300">
+                    <button className="btn-primary px-4 py-2 rounded-md transition-colors duration-300">
                       Select Salon
                     </button>
                   </div>
