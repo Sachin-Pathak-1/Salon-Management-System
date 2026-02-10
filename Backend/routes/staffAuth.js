@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const Staff = require("../models/Staff");
 
 const router = express.Router();
@@ -17,7 +18,11 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const staff = await Staff.findOne({ email });
+    let staff = await Staff.findOne({ email });
+
+    if (!staff && mongoose.Types.ObjectId.isValid(email)) {
+      staff = await Staff.findById(email);
+    }
 
     if (!staff) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -25,6 +30,12 @@ router.post("/login", async (req, res) => {
 
     if (staff.status === "inactive") {
       return res.status(403).json({ message: "Staff inactive" });
+    }
+
+    // Ensure access is set for existing staff
+    if (!staff.access || staff.access.length === 0) {
+      staff.access = ["Dashboard", "Services", "Appointments", "Profile", "Support"];
+      await staff.save();
     }
 
     const isMatch = await bcrypt.compare(password, staff.password);
@@ -50,7 +61,8 @@ router.post("/login", async (req, res) => {
         name: staff.name,
         email: staff.email,
         salonId: staff.salonId,
-        isManager: staff.isManager
+        isManager: staff.isManager,
+        access: staff.access
       }
     });
 
