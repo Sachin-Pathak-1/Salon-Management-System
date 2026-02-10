@@ -47,7 +47,10 @@ function App() {
   =============================== */
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const adminToken = localStorage.getItem("adminToken");
+    const staffToken = localStorage.getItem("staffToken");
+
+    const token = adminToken || staffToken;
     const storedUser = localStorage.getItem("currentUser");
 
     if (token && storedUser) {
@@ -95,10 +98,7 @@ function App() {
   const resolveDashboardPath = (user) =>
     user?.role === "admin" ? "/dashboard" : "/staff-dashboard";
 
-  const dashboardLink =
-    isLoggedIn && currentUser
-      ? resolveDashboardPath(currentUser)
-      : "/login";
+  const dashboardLink = resolveDashboardPath(currentUser);
 
   const RequireRole = ({ role, children }) => {
     if (!isLoggedIn || !currentUser) {

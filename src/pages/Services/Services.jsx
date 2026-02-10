@@ -17,6 +17,7 @@ export function Services() {
   /* ================= AUTH ================= */
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const isAdmin = currentUser?.role === "admin";
+  const staffSalonId = currentUser?.salonId;
 
   /* ================= STATE (NEVER UNDEFINED) ================= */
   const [services, setServices] = useState([]);
@@ -67,6 +68,11 @@ export function Services() {
 
   /* ================= LOAD SALONS ================= */
   useEffect(() => {
+    if (!isAdmin && staffSalonId) {
+      setActiveSalon(staffSalonId);
+      return;
+    }
+
     safeFetch(SALON_API, { headers: authHeader() })
       .then(data => {
         setSalons(Array.isArray(data) ? data : []);
@@ -216,6 +222,7 @@ export function Services() {
         )}
 
         {/* SALON SELECT */}
+        {isAdmin && (
         <div className="flex justify-center mt-6">
           <select
             value={activeSalon}
@@ -227,6 +234,7 @@ export function Services() {
             ))}
           </select>
         </div>
+        )}
 
         {/* CATEGORY */}
         <div className="flex justify-center gap-3 mt-6 flex-wrap">

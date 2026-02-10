@@ -34,7 +34,9 @@ export function Navbar({
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
-    localStorage.clear();
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("staffToken");
+    localStorage.removeItem("currentUser");
     navigate("/");
   };
 

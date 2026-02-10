@@ -1,58 +1,46 @@
 const mongoose = require("mongoose");
 
 const salonSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    address: { type: String, required: true },
-    contact: { type: String, required: true },
+{
+  name: { type: String, required: true },
+  address: { type: String, required: true },
+  contact: { type: String, required: true },
 
-    email: String,
-    ownerName: String,
+  email: String,
+  ownerName: String,
 
-    openingTime: String,
-    closingTime: String,
+  openingTime: String,
+  closingTime: String,
 
-    logo: String,
+  logo: String,
 
-    order: {
-      type: Number,
-      default: 0
-    },
+  order: { type: Number, default: 0 },
 
-    /* ============================
-       NEW FIELDS
-    ============================ */
-
-    // open | closed | temporarily-closed
-    status: {
-      type: String,
-      enum: ["open", "closed", "temporarily-closed"],
-      default: "open"
-    },
-
-    // yyyy-mm-dd format dates
-    holidays: {
-      type: [String],
-      default: []
-    },
-
-    // Primary salon flag
-    isPrimary: {
-      type: Boolean,
-      default: false
-    },
-
-    /* ============================
-       OWNER ADMIN
-    ============================ */
-
-    adminId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    }
+  status: {
+    type: String,
+    enum: ["open", "closed", "temporarily-closed"],
+    default: "open"
   },
-  { timestamps: true }
+
+  holidays: { type: [String], default: [] },
+
+  isPrimary: { type: Boolean, default: false },
+
+  adminId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
+  // STAFF IDS
+  staff: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff"
+    }
+  ]
+},
+{ timestamps: true }
 );
 
 module.exports = mongoose.model("Salon", salonSchema);

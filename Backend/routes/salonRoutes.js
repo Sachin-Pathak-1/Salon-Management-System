@@ -106,14 +106,16 @@ router.post("/add", auth, admin, async (req, res) => {
 /* ============================
    GET SALONS
 ============================ */
-router.get("/get", auth, admin, async (req, res) => {
+router.get("/get", auth, async (req, res) => {
   try {
 
     // 🚫 DISABLE CACHE (CRITICAL)
     res.set("Cache-Control", "no-store");
 
+    if (req.userRole === "admin") {
     let salons = await Salon
       .find({ adminId: req.userId })
+      .populate("staff", "-password")
       .sort({ isPrimary: -1, order: 1 });
 
     // Auto close on holidays
@@ -127,6 +129,24 @@ router.get("/get", auth, admin, async (req, res) => {
     }
 
     res.json(salons);
+    }
+
+    if (req.userRole === "staff") {
+      const salon = await Salon.findOne({ _id: req.userSalonId })
+        .populate("staff", "-password");
+      if (!salon) return res.json([]);
+
+      // Auto close on holidays
+      if (isTodayHoliday(salon.holidays)) {
+        if (salon.status !== "temporarily-closed") {
+          salon.status = "temporarily-closed";
+          await salon.save();
+        }
+      }
+      return res.json([salon]);
+    }
+
+    return res.status(403).json({ message: "Unauthorized" });
 
   } catch (err) {
     console.error(err);

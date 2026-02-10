@@ -72,7 +72,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id,
+        role: user.role,
+        salonId: user.salonId || null
+       },
       "mysecretkey",
       { expiresIn: "7d" }
     );
@@ -83,7 +86,8 @@ router.post("/login", async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        salonId: user.salonId
       }
     });
 
