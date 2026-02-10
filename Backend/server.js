@@ -38,6 +38,7 @@ app.use("/api/services", require("./routes/serviceRoutes"));
 app.use("/api/salons", require("./routes/salonRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/plans", require("./routes/plansRoutes"));
+app.use("/api/appointments", require("./routes/appointmentRoutes"));
 
 // ---------------------
 // SERVER START
