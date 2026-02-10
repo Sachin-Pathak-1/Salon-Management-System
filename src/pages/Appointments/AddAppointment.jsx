@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
 export default function AddAppointment() {
+  const navigate = useNavigate();
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +40,11 @@ export default function AddAppointment() {
               <p className="col-span-full text-center text-gray-500">No salons found.</p>
             ) : (
               salons.map((salon) => (
-                <div key={salon._id} className="salon-card bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div
+                  key={salon._id}
+                  className="salon-card bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                  onClick={() => navigate(`/create-appointment/${salon._id}`)}
+                >
                   {salon.logo && (
                     <img
                       src={salon.logo}
@@ -59,6 +65,11 @@ export default function AddAppointment() {
                   }`}>
                     Status: {salon.status}
                   </p>
+                  <div className="mt-4 text-center">
+                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors duration-300">
+                      Select Salon
+                    </button>
+                  </div>
                 </div>
               ))
             )}
