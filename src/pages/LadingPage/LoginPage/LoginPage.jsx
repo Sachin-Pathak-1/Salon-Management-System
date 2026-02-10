@@ -28,7 +28,7 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
       const url =
         role === "admin"
           ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/staff-auth/login";
+          : "http://localhost:5000/api/staffAuth/login";
 
       const res = await axios.post(url, { email, password });
 
@@ -51,9 +51,13 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
         );
         user = profileRes.data;
       } else {
-        // Staff data already comes in login response
+        // Fetch staff profile to include access settings
+        const profileRes = await axios.get(
+          "http://localhost:5000/api/staffProfile/me",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         user = {
-          ...res.data.staff,
+          ...profileRes.data,
           role: "staff"
         };
       }
@@ -130,8 +134,8 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
         <form onSubmit={handleSubmit} className="space-y-4">
 
           <input
-            type="email"
-            placeholder="Email"
+            type="text"
+            placeholder={role === "admin" ? "Email" : "Staff ID or Email"}
             value={email}
             onChange={e => setEmail(e.target.value)}
             className="input-themed"
