@@ -1,14 +1,21 @@
 const Service = require("../models/Service");
+const User = require("../models/User");
 
 /* ===========================
    GET SERVICES
 =========================== */
 exports.getServices = async (req, res) => {
   try {
-
+    
     const query = {};
-    if (req.query.salonId) {
-      query.salonId = req.query.salonId;
+    if (req.userRole === "admin") {
+      if (req.query.salonId) {
+        query.salonId = req.query.salonId;
+      }
+    }
+
+    if (req.userRole === "staff") {
+      query.salonId = req.userSalonId;
     }
 
     const services = await Service

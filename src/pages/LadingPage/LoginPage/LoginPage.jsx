@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
 export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState(localStorage.getItem("userRole") || "admin"); // NEW
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -20,34 +23,46 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password }
-      );
+
+      // Select API based on role
+      const url =
+        role === "admin"
+          ? "http://localhost:5000/api/auth/login"
+          : "http://localhost:5000/api/staff-auth/login";
+
+      const res = await axios.post(url, { email, password });
 
       const token = res.data.token;
 
-      // ✅ SAVE TOKEN
-      localStorage.setItem("token", token);
+      // Save token
+      if (role === "admin") {
+        localStorage.setItem("adminToken", token);
+      } else {
+        localStorage.setItem("staffToken", token);
+      }
 
-      // ✅ FETCH PROFILE
-      const profileRes = await axios.get(
-        "http://localhost:5000/api/user/profile",
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      let user;
 
-      const user = profileRes.data;
+      if (role === "admin") {
+        // Fetch admin profile
+        const profileRes = await axios.get(
+          "http://localhost:5000/api/adminProfile/profile",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        user = profileRes.data;
+      } else {
+        // Staff data already comes in login response
+        user = {
+          ...res.data.staff,
+          role: "staff"
+        };
+      }
 
-      // ✅ SAVE USER (THIS WAS MISSING)
       localStorage.setItem("currentUser", JSON.stringify(user));
 
-      // ✅ UPDATE STATE
       setCurrentUser(user);
       setIsLoggedIn(true);
 
-      // ✅ ROLE-BASED REDIRECT
       if (user.role === "admin") {
         navigate("/dashboard");
       } else {
@@ -60,6 +75,10 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    localStorage.setItem("userRole", role);
+  }, [role]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-6">
@@ -76,6 +95,37 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
             {error}
           </div>
         )}
+
+        {/* ROLE SWITCH */}
+        <div className="flex gap-3 mb-5">
+              
+          <button
+            type="button"
+            onClick={() => setRole("admin")}
+            className={`flex-1 py-2 rounded-lg font-semibold transition
+              ${
+                role === "admin"
+                  ? "bg-[var(--primary)] text-white shadow"
+                  : "bg-[var(--gray-200)] text-[var(--text-primary)] hover:bg-[var(--gray-300)]"
+              }`}
+          >
+            Admin
+          </button>
+            
+          <button
+            type="button"
+            onClick={() => setRole("staff")}
+            className={`flex-1 py-2 rounded-lg font-semibold transition
+              ${
+                role === "staff"
+                  ? "bg-[var(--primary)] text-white shadow"
+                  : "bg-[var(--gray-200)] text-[var(--text-primary)] hover:bg-[var(--gray-300)]"
+              }`}
+          >
+            Staff
+          </button>
+            
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -99,15 +149,17 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
             disabled={loading}
             className="w-full bg-[var(--primary)] text-white py-3 rounded-lg font-semibold"
           >
-            {loading ? "Signing in..." : "Login"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-sm opacity-70">
-            Not signed up?{" "}
-            <Link to="/signup" className="text-[var(--primary)] font-semibold">
-              Create Admin Account
-            </Link>
-          </p>
+          {role === "admin" && (
+            <p className="text-center text-sm opacity-70">
+              Not signed up?{" "}
+              <Link to="/signup" className="text-[var(--primary)] font-semibold">
+                Create Admin Account
+              </Link>
+            </p>
+          )}
 
         </form>
       </div>

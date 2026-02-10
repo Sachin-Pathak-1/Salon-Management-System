@@ -11,7 +11,7 @@ const {
   reorderServices
 } = require("../controllers/serviceController");
 
-router.get("/", auth, admin, getServices);
+router.get("/", auth, getServices);
 router.post("/", auth, admin, addService);
 router.put("/reorder", auth, admin, reorderServices);
 router.put("/:id", auth, admin, updateService);

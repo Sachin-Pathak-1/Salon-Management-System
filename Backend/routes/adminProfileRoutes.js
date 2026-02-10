@@ -4,16 +4,25 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-// PROFILE API
+// ADMIN PROFILE API
 router.get("/profile", auth, async (req, res) => {
   try {
+
+    if (req.userRole !== "admin") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
     const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.json({
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role   // ✅ VERY IMPORTANT
+      role: user.role
     });
 
   } catch (err) {
