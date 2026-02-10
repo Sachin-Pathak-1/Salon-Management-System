@@ -16,7 +16,8 @@ export function FloatingSideBar({ currentUser }) {
       className={`
         fixed top-35 left-4 max-h-[65%]
         ${open ? "w-56" : "w-17"}
-        bg-[#f7eef6]
+        bg-(--gray-100) text-(--text)
+        border border-(--border-light)
         rounded-2xl shadow-xl
         transition-all duration-300
         flex flex-col
@@ -62,8 +63,8 @@ function Item({ to, icon, label, open }) {
         className={`
           flex items-center gap-4
           rounded-xl px-3 py-2
-          text-gray-700
-          hover:bg-white hover:shadow
+          text-(--text)
+          hover:bg-(--background) hover:shadow
           transition-all duration-300
           
         `}
