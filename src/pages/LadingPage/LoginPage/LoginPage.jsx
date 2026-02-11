@@ -6,7 +6,7 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState(localStorage.getItem("userRole") || "admin"); // NEW
+  const [role, setRole] = useState(localStorage.getItem("userRole") || "admin");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,6 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
     try {
 
-      // Select API based on role
       const url =
         role === "admin"
           ? "http://localhost:5000/api/auth/login"
@@ -32,43 +31,22 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
       const res = await axios.post(url, { email, password });
 
-      const token = res.data.token;
+      const { token, user } = res.data;
 
-      // Save token
-      if (role === "admin") {
-        localStorage.setItem("adminToken", token);
-      } else {
-        localStorage.setItem("staffToken", token);
-      }
+      // ✅ Save ONE token only
+      localStorage.setItem("token", token);
 
-      let user;
-
-      if (role === "admin") {
-        // Fetch admin profile
-        const profileRes = await axios.get(
-          "http://localhost:5000/api/adminProfile/profile",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        user = profileRes.data;
-      } else {
-        // Fetch staff profile to include access settings
-        const profileRes = await axios.get(
-          "http://localhost:5000/api/staffProfile/me",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        user = {
-          ...profileRes.data,
-          role: "staff"
-        };
-      }
-
+      // ✅ Save user directly (no extra API call)
       localStorage.setItem("currentUser", JSON.stringify(user));
 
       setCurrentUser(user);
       setIsLoggedIn(true);
 
+      // Redirect based on role
       if (user.role === "admin") {
         navigate("/dashboard");
+      } else if (user.role === "manager") {
+        navigate("/manager-dashboard");
       } else {
         navigate("/staff-dashboard");
       }
@@ -86,7 +64,6 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-6">
-
       <div className="w-full max-w-md bg-[var(--gray-100)]
                       border border-[var(--border-light)]
                       rounded-2xl shadow-xl p-8">
@@ -102,40 +79,34 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
         {/* ROLE SWITCH */}
         <div className="flex gap-3 mb-5">
-              
           <button
             type="button"
             onClick={() => setRole("admin")}
             className={`flex-1 py-2 rounded-lg font-semibold transition
-              ${
-                role === "admin"
-                  ? "bg-[var(--primary)] text-white shadow"
-                  : "bg-[var(--gray-200)] text-[var(--text-primary)] hover:bg-[var(--gray-300)]"
-              }`}
+              ${role === "admin"
+                ? "bg-[var(--primary)] text-white"
+                : "bg-[var(--gray-200)]"}`}
           >
             Admin
           </button>
-            
+
           <button
             type="button"
             onClick={() => setRole("staff")}
             className={`flex-1 py-2 rounded-lg font-semibold transition
-              ${
-                role === "staff"
-                  ? "bg-[var(--primary)] text-white shadow"
-                  : "bg-[var(--gray-200)] text-[var(--text-primary)] hover:bg-[var(--gray-300)]"
-              }`}
+              ${role === "staff"
+                ? "bg-[var(--primary)] text-white"
+                : "bg-[var(--gray-200)]"}`}
           >
             Staff
           </button>
-            
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
           <input
             type="text"
-            placeholder={role === "admin" ? "Email" : "Staff ID or Email"}
+            placeholder="Email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             className="input-themed"
@@ -164,7 +135,6 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
               </Link>
             </p>
           )}
-
         </form>
       </div>
     </div>

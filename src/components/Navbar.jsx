@@ -18,7 +18,48 @@ export function Navbar({
   const isAdmin = currentUser?.role === "admin";
   const dashboardLink = isAdmin ? "/dashboard" : "/staff-dashboard";
 
-  /* THEME */
+  /* ================= AUTH HEADER ================= */
+  const authHeader = () => ({
+    Authorization: `Bearer ${
+      localStorage.getItem("token")
+    }`
+  });
+
+  /* ================= FETCH SALONS ================= */
+  const fetchSalons = async () => {
+  try {
+    const res = await fetch(SALON_API, {
+      headers: authHeader()
+    });
+
+    if (!res.ok) {
+      console.error("Status:", res.status);
+      const text = await res.text();
+      console.error("Response:", text);
+      return;
+    }
+
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : [];
+
+    setSalons(list);
+
+    if (list.length && !activeSalon) {
+      setActiveSalon(list[0]._id);
+    }
+
+  } catch (err) {
+    console.error("Network error:", err);
+  }
+};
+
+useEffect(() => {
+  if (!isLoggedIn) return;
+  fetchSalons();
+  // eslint-disable-next-line
+}, [isLoggedIn]);
+
+  /* ================= THEME ================= */
   const applyTheme = (t) => {
     document.documentElement.setAttribute("data-theme", t);
     localStorage.setItem("theme", t);
@@ -34,8 +75,7 @@ export function Navbar({
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("staffToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
     navigate("/");
   };

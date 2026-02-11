@@ -3,12 +3,11 @@ const bcrypt = require("bcryptjs");
 const Staff = require("../models/Staff");
 const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
-const admin = require("../middleware/admin");
 
 const router = express.Router();
 
 /* ADD STAFF */
-router.post("/add", auth, admin, async (req, res) => {
+router.post("/add", auth(["admin"]), async (req, res) => {
   try {
 
     const { name, email, password, salonId, isManager } = req.body;
@@ -37,7 +36,7 @@ router.post("/add", auth, admin, async (req, res) => {
     const staff = await Staff.create({
       ...req.body,
       password: hashed,
-      adminId: req.userId,
+      adminId: req.user.id,
       order: nextOrder
     });
 
@@ -55,10 +54,10 @@ router.post("/add", auth, admin, async (req, res) => {
 });
 
 /* GET STAFF */
-router.get("/", auth, async (req, res) => {
+router.get("/", auth(), async (req, res) => {
   try {
 
-    const query = { adminId: req.userId };
+    const query = { adminId: req.user.id };
 
     if (req.query.salonId) query.salonId = req.query.salonId;
 
@@ -74,7 +73,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 /* UPDATE STAFF */
-router.put("/:id", auth, admin, async (req, res) => {
+router.put("/:id", auth(["admin"]), async (req, res) => {
   try {
 
     const existing = await Staff.findById(req.params.id);
@@ -114,7 +113,7 @@ router.put("/:id", auth, admin, async (req, res) => {
 });
 
 /* DELETE STAFF */
-router.delete("/:id", auth, admin, async (req, res) => {
+router.delete("/:id", auth(["admin"]), async (req, res) => {
   try {
 
     const staff = await Staff.findById(req.params.id);

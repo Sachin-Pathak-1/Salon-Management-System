@@ -3,12 +3,11 @@ const Plan = require('../models/Plans');
 const User = require("../models/User");
 const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
-const admin = require("../middleware/admin");
 
 const router = express.Router();
 
 // GET /api/plans - Get all plans
-router.get('/', auth, admin, async (req, res) => {
+router.get('/', auth(["admin"]), async (req, res) => {
   try {
     const plans = await Plan.find();
     res.json(plans);
@@ -19,21 +18,18 @@ router.get('/', auth, admin, async (req, res) => {
 });
 
 // GET /api/plans/selection - Get admin plan selection + salon counts
-router.get("/selection", auth, admin, async (req, res) => {
+router.get("/selection", auth(["admin"]), async (req, res) => {
   try {
-    console.log("GET /selection - User ID:", req.userId);
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
-      console.log("User not found for ID:", req.userId);
       return res.status(404).json({ message: "User not found" });
     }
-    console.log("User found:", user.name, "Role:", user.role, "Selected Plan:", user.selectedPlanId);
-
+    
     const selectedPlan = user.selectedPlanId
       ? await Plan.findById(user.selectedPlanId)
       : null;
 
-    const salonsAdded = await Salon.countDocuments({ adminId: req.userId });
+    const salonsAdded = await Salon.countDocuments({ adminId: req.user.id });
     const salonLimit = user.planBranchLimit || 0;
     const remaining = salonLimit ? Math.max(salonLimit - salonsAdded, 0) : 0;
 
@@ -55,7 +51,7 @@ router.get("/selection", auth, admin, async (req, res) => {
 });
 
 // POST /api/plans/select - Save admin plan selection
-router.post("/select", auth, admin, async (req, res) => {
+router.post("/select", auth(["admin"]), async (req, res) => {
   try {
     const { planId, branchCount } = req.body;
 
@@ -75,7 +71,7 @@ router.post("/select", auth, admin, async (req, res) => {
       });
     }
 
-    const existingSalons = await Salon.countDocuments({ adminId: req.userId });
+    const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
     if (existingSalons > count) {
       return res.status(400).json({
         message: "You already have more salons than this limit"
@@ -83,7 +79,7 @@ router.post("/select", auth, admin, async (req, res) => {
     }
 
     await User.findByIdAndUpdate(
-      req.userId,
+      req.user.id,
       {
         selectedPlanId: plan._id,
         planBranchLimit: count,
