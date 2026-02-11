@@ -19,49 +19,49 @@ export function StaffDashboard() {
   }, []);
 
   const loadDashboard = async () => {
-  try {
-    const token = localStorage.getItem("staffToken"); // ✅ FIXED
+    try {
+      const token = localStorage.getItem("token"); // 👈 adjust key if needed
 
-    if (!token) {
-      throw new Error("No staff token found");
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const [statsRes, popularRes, activityRes] = await Promise.all([
+        fetch(`${API}/staff-stats`, { headers }),
+        fetch(`${API}/popular-services`, { headers }),
+        fetch(`${API}/recent-activity`, { headers }),
+      ]);
+
+      if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {
+        throw new Error("Unauthorized or API error");
+      }
+
+      const statsData = await statsRes.json();
+      const popularData = await popularRes.json();
+      const activityData = await activityRes.json();
+
+      setStats({
+        todayAppointments: statsData.todayAppointments ?? 0,
+        completed: statsData.completed ?? 0,
+        pending: statsData.pending ?? 0,
+        totalServices: statsData.totalServices ?? 0,
+      });
+
+      // ✅ GUARANTEE ARRAYS
+      setPopularServices(Array.isArray(popularData) ? popularData : []);
+      setRecentActivity(Array.isArray(activityData) ? activityData : []);
+
+    } catch (err) {
+      console.error("Dashboard load failed:", err);
+
+      // ✅ FAIL SAFE
+      setPopularServices([]);
+      setRecentActivity([]);
+    } finally {
+      setLoading(false);
     }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    const [statsRes, popularRes, activityRes] = await Promise.all([
-      fetch(`${API}/staff-stats`, { headers }),
-      fetch(`${API}/popular-services`, { headers }),
-      fetch(`${API}/recent-activity`, { headers }),
-    ]);
-
-    if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {
-      throw new Error("Unauthorized or API error");
-    }
-
-    const statsData = await statsRes.json();
-    const popularData = await popularRes.json();
-    const activityData = await activityRes.json();
-
-    setStats({
-      todayAppointments: statsData.todayAppointments ?? 0,
-      completed: statsData.completed ?? 0,
-      pending: statsData.pending ?? 0,
-      totalServices: statsData.totalServices ?? 0,
-    });
-
-    setPopularServices(Array.isArray(popularData) ? popularData : []);
-    setRecentActivity(Array.isArray(activityData) ? activityData : []);
-
-  } catch (err) {
-    console.error("Dashboard load failed:", err);
-    setPopularServices([]);
-    setRecentActivity([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (loading) {
     return (
