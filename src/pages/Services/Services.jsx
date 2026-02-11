@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
 const API = "http://localhost:5000/api/services";
-const SALON_API = "http://localhost:5000/api/salons/get";
 
-export function Services() {
+export function Services({ activeSalon }) {
 
   /* ================= THEME (COLORS ONLY) ================= */
   const [theme] = useState(
@@ -21,8 +20,6 @@ export function Services() {
 
   /* ================= STATE (NEVER UNDEFINED) ================= */
   const [services, setServices] = useState([]);
-  const [salons, setSalons] = useState([]);
-  const [activeSalon, setActiveSalon] = useState("");
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -70,21 +67,6 @@ export function Services() {
     if (!res.ok) throw new Error("Request failed");
     return res.json();
   };
-
-  /* ================= LOAD SALONS ================= */
-  useEffect(() => {
-    if (!isAdmin && staffSalonId) {
-      setActiveSalon(staffSalonId);
-      return;
-    }
-
-    safeFetch(SALON_API, { headers: authHeader() })
-      .then(data => {
-        setSalons(Array.isArray(data) ? data : []);
-        if (data?.length) setActiveSalon(data[0]._id);
-      })
-      .catch(() => showToast("Failed to load salons"));
-  }, []);
 
   /* ================= LOAD SERVICES ================= */
   useEffect(() => {
@@ -224,21 +206,6 @@ export function Services() {
           <p className="text-center opacity-60 mt-1">
             Read-only mode (staff access)
           </p>
-        )}
-
-        {/* SALON SELECT */}
-        {isAdmin && (
-        <div className="flex justify-center mt-6">
-          <select
-            value={activeSalon}
-            onChange={e => setActiveSalon(e.target.value)}
-            className="bg-[var(--background)] border px-4 py-2 rounded-xl"
-          >
-            {salons.map(s => (
-              <option key={s._id} value={s._id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
         )}
 
         {/* CATEGORY */}
