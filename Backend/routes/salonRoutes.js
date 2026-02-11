@@ -132,7 +132,7 @@ router.get("/get", auth, async (req, res) => {
       }
     }
 
-    res.json(salons);
+    return res.json(salons);
     }
 
     if (req.userRole === "staff") {
