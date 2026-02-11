@@ -1,307 +1,108 @@
-import { useEffect, useState } from "react";
-
-const API_URL = "http://localhost:5000/api/services";
+import { useState, useEffect } from 'react';
+import { Footer } from "../../components/Footer";
 
 export function Reports() {
-
-  const [services, setServices] = useState([]);
-  const [loadError, setLoadError] = useState("");
-
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("none");
-
-  const [showModal, setShowModal] = useState(false);
-  const [editId, setEditId] = useState(null);
-
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("");
-  const [duration, setDuration] = useState("");
-  const [category, setCategory] = useState("");
-  const [status, setStatus] = useState("Active");
+  const [reportsData, setReportsData] = useState({
+    monthlyRevenue: 0,
+    totalAppointments: 0,
+    popularServices: [],
+    appointmentsStats: { completed: 0, pending: 0, cancelled: 0 }
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const fetchServices = async () => {
-    try {
-      setLoadError("");
-      const res = await fetch(API_URL);
-      if (!res.ok) {
-        throw new Error(`Request failed: ${res.status}`);
+    // Fetch reports data from backend
+    const fetchReports = async () => {
+      try {
+        const response = await fetch('/api/reports/summary');
+        if (response.ok) {
+          const data = await response.json();
+          setReportsData(data);
+        } else {
+          console.error('Failed to fetch reports');
+        }
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      setServices(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setServices([]);
-      setLoadError("Failed to load services. Please check the API.");
-    }
-  };
-
-  const resetForm = () => {
-    setName("");
-    setDesc("");
-    setPrice("");
-    setDuration("");
-    setCategory("");
-    setStatus("Active");
-    setEditId(null);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      name,
-      description: desc,
-      price,
-      duration,
-      category,
-      status
     };
 
-    if (editId) {
-      await fetch(`${API_URL}/${editId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    }
+    fetchReports();
+  }, []);
 
-    fetchServices();
-    resetForm();
-    setShowModal(false);
-  };
-
-  const handleEdit = (s) => {
-    setEditId(s._id);
-    setName(s.name);
-    setDesc(s.description);
-    setPrice(s.price || "");
-    setDuration(s.duration || "");
-    setCategory(s.category || "");
-    setStatus(s.status || "Active");
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this service?")) return;
-    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    fetchServices();
-  };
-
-  const filteredServices = services
-    .filter(s => (s.name || "").toLowerCase().includes(search.toLowerCase()))
-    .filter(s => filter === "All" || s.status === filter)
-    .sort((a, b) => {
-      if (sortBy === "name") return (a.name || "").localeCompare(b.name || "");
-      if (sortBy === "status") return (a.status || "").localeCompare(b.status || "");
-      return 0;
-    });
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Loading reports...</div>
+      </div>
+    );
+  }
 
   return (
+    <div className="flex flex-col gap-10 min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10 items-center transition-colors duration-300 ease">
+      <div className="w-full max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-[var(--text)] mb-8">Salon Reports</h1>
 
-    <div className="min-h-screen w-full bg-(--background) px-4 md:px-10 py-10">
-
-      <div className="max-w-7xl mx-auto text-(--text)">
-
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold mb-2">
-            Salon Service Management
-          </h1>
-          <p className="opacity-80">
-            Manage and monitor all salon services
-          </p>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
+            <h3 className="text-xl font-semibold text-[var(--text)]">Monthly Revenue</h3>
+            <p className="text-2xl font-bold text-[var(--primary)]">${reportsData.monthlyRevenue.toFixed(2)}</p>
+          </div>
+          <div className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
+            <h3 className="text-xl font-semibold text-[var(--text)]">Total Appointments</h3>
+            <p className="text-2xl font-bold text-[var(--primary)]">{reportsData.totalAppointments}</p>
+          </div>
+          <div className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
+            <h3 className="text-xl font-semibold text-[var(--text)]">Completed Appointments</h3>
+            <p className="text-2xl font-bold text-[var(--primary)]">{reportsData.appointmentsStats.completed}</p>
+          </div>
         </div>
 
-        <div
-          className="bg-(--gray-100)
-                     border border-(--border-light)
-                     rounded-xl
-                     p-4 md:p-6"
-        >
-
-          {/* TOOLS */}
-          <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
-
-            <div className="flex gap-3">
-
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="bg-(--background)
-                           border border-(--border-light)
-                           px-4 py-2 rounded-xl"
-              >
-                <option>All</option>
-                <option>Active</option>
-                <option>Low</option>
-                <option>Inactive</option>
-              </select>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-(--background)
-                           border border-(--border-light)
-                           px-4 py-2 rounded-xl"
-              >
-                <option value="none">Sort By</option>
-                <option value="name">Name</option>
-                <option value="status">Status</option>
-              </select>
-
-            </div>
-
-            <div className="flex gap-3">
-
-              <input
-                type="text"
-                placeholder="Search service..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64
-                           bg-(--background)
-                           border border-(--border-light)
-                           px-4 py-2 rounded-xl outline-none"
-              />
-
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowModal(true);
-                }}
-                className="bg-(--primary)
-                           hover:bg-(--secondary)
-                           text-white font-semibold
-                           px-5 py-2 rounded-xl"
-              >
-                + Add Service
-              </button>
-
-            </div>
-
-          </div>
-
-          {loadError && (
-            <div className="mb-4 text-sm text-red-600">
-              {loadError}
-            </div>
-          )}
-
-          {/* TABLE */}
+        {/* Popular Services */}
+        <div className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm mb-8">
+          <h3 className="text-xl font-semibold text-[var(--text)] mb-4">Popular Services</h3>
           <div className="overflow-x-auto">
-
-            <table className="w-full text-sm">
-
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--border-light) opacity-70">
-                  <th className="text-left p-3">ID</th>
-                  <th className="text-left p-3">Service Name</th>
-                  <th className="text-left p-3">Price</th>
-
-                  {/* HIDDEN ON MOBILE */}
-                  <th className="text-left p-3 max-md:hidden">Duration</th>
-                  <th className="text-left p-3 max-md:hidden">Category</th>
-                  <th className="text-left p-3 max-md:hidden">Description</th>
-
-                  <th className="text-left p-3">Status</th>
-                  <th className="text-left p-3">Actions</th>
+                <tr className="border-b border-[var(--border-light)]">
+                  <th className="py-2 px-4 font-semibold text-[var(--gray-700)]">Service</th>
+                  <th className="py-2 px-4 font-semibold text-[var(--gray-700)]">Bookings</th>
                 </tr>
               </thead>
-
               <tbody>
-
-                {filteredServices.map((s, index) => (
-
-                  <tr
-                    key={s._id}
-                    className="border-b border-(--border-light)
-                               hover:bg-black/5 transition"
-                  >
-
-                    <td className="p-3">{index + 1}</td>
-                    <td className="p-3">{s.name}</td>
-                    <td className="p-3">Rs. {s.price || "-"}</td>
-
-                    {/* HIDDEN ON MOBILE */}
-                    <td className="p-3 max-md:hidden">
-                      {s.duration || "-"} mins
-                    </td>
-
-                    <td className="p-3 max-md:hidden">
-                      {s.category || "-"}
-                    </td>
-
-                    <td className="p-3 max-md:hidden opacity-80">
-                      {s.description}
-                    </td>
-
-                    <td className="p-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium
-                        ${
-                          (s.status || "Active") === "Active"
-                            ? "bg-emerald-500/20 text-emerald-500"
-                            : (s.status || "Active") === "Low"
-                            ? "bg-amber-500/20 text-amber-500"
-                            : "bg-red-500/20 text-red-500"
-                        }`}
-                      >
-                        {s.status || "Active"}
-                      </span>
-                    </td>
-
-                    <td className="p-3">
-                      <div className="flex gap-2">
-
-                        <button
-                          onClick={() => handleEdit(s)}
-                          className="bg-(--primary)
-                                   hover:bg-(--secondary)
-                                   text-white
-                                   px-4 py-2
-                                   rounded-lg"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(s._id)}
-                          className="bg-[#e5e7eb]
-                                   hover:bg-[#d1d5db]
-                                   text-blue-600
-                                   px-4 py-2
-                                   rounded-lg"
-                        >
-                          Delete
-                        </button>
-
-                      </div>
-                    </td>
-
+                {reportsData.popularServices.map((service, index) => (
+                  <tr key={index} className="border-b border-[var(--border-light)]">
+                    <td className="py-2 px-4">{service.name}</td>
+                    <td className="py-2 px-4">{service.bookings}</td>
                   </tr>
-
                 ))}
-
               </tbody>
-
             </table>
-
           </div>
-
         </div>
 
+        {/* Appointments Stats */}
+        <div className="bg-[var(--gray-100)] p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
+          <h3 className="text-xl font-semibold text-[var(--text)] mb-4">Appointments Statistics</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">{reportsData.appointmentsStats.completed}</p>
+              <p className="text-sm text-[var(--gray-700)]">Completed</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-yellow-600">{reportsData.appointmentsStats.pending}</p>
+              <p className="text-sm text-[var(--gray-700)]">Pending</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-red-600">{reportsData.appointmentsStats.cancelled}</p>
+              <p className="text-sm text-[var(--gray-700)]">Cancelled</p>
+            </div>
+          </div>
+        </div>
       </div>
-
+      <Footer />
     </div>
   );
 }

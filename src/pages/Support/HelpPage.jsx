@@ -50,7 +50,7 @@ export function HelpPage() {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text)] m-0 mb-2.5">{topic.title}</h3>
                 <p className="text-sm text-[var(--text)] m-0 mb-3 leading-relaxed opacity-80">{topic.description}</p>
-                <a href="#topics" className="text-blue-500 no-underline text-sm font-medium hover:text-blue-700 hover:underline">
+                <a href="#topics" className="text-pink-500 no-underline text-sm font-medium hover:text-pink-700 hover:underline">
                   Here are {topic.count} questions and answers.
                 </a>
               </div>
@@ -59,12 +59,12 @@ export function HelpPage() {
         </div>
 
         {/* Contact Section */}
-        <div className="flex items-center gap-5 p-6 bg-[#f8f9ff] border border-blue-500 rounded-lg mb-10">
+        <div className="flex items-center gap-5 p-6 bg-[#f8f9ff] border border-pink-500 rounded-lg mb-10">
           <div className="text-4xl min-w-[50px] text-center">💬</div>
           <div className="flex-1">
             <h3 className="text-base font-semibold text-[#1a1a1a] m-0 leading-relaxed">If you don't find your question please contact our support team.</h3>
           </div>
-          <button className="px-6 py-2.5 bg-blue-500 text-white no-underline rounded-md border-none font-semibold text-sm whitespace-nowrap hover:bg-blue-700">Contact Us</button>
+          <button className="px-6 py-2.5 bg-pink-500 text-white no-underline rounded-md border-none font-semibold text-sm whitespace-nowrap hover:bg-pink-700">Contact Us</button>
         </div>
 
         {/* Footer */}
