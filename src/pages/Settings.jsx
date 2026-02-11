@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Footer } from "../components/Footer";
 import api from "../api";
 
+const SELECTED_SALON_KEY = "selectedSalonId";
+
 /* ======================================================
    SETTINGS PAGE
 ====================================================== */
@@ -56,6 +58,9 @@ export function Settings() {
 
   const [editingId, setEditingId] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [selectedSalonId, setSelectedSalonId] = useState(
+    localStorage.getItem(SELECTED_SALON_KEY) || ""
+  );
 
   const [dragIndex, setDragIndex] = useState(null);
 
@@ -70,6 +75,20 @@ export function Settings() {
       list.sort((a, b) => b.isPrimary - a.isPrimary || a.order - b.order);
 
       setSalons(list);
+
+      if (list.length === 0) {
+        setSelectedSalonId("");
+        localStorage.removeItem(SELECTED_SALON_KEY);
+        return;
+      }
+
+      const storedSalonId = localStorage.getItem(SELECTED_SALON_KEY);
+      const exists = list.some((s) => s._id === storedSalonId);
+      const fallbackSalonId = list.find((s) => s.isPrimary)?._id || list[0]._id;
+      const nextSalonId = exists ? storedSalonId : fallbackSalonId;
+
+      setSelectedSalonId(nextSalonId);
+      localStorage.setItem(SELECTED_SALON_KEY, nextSalonId);
     } catch (err) {
       console.error("Failed to fetch salons:", err);
       setSalons([]);
@@ -176,6 +195,12 @@ export function Settings() {
     setShowDetails(false);
     fetchSalons();
     fetchPlanInfo();
+  };
+
+  const selectSalon = (salon) => {
+    setSelectedSalonId(salon._id);
+    localStorage.setItem(SELECTED_SALON_KEY, salon._id);
+    showToast(`${salon.name} selected`);
   };
 
   /* ================= UI ================= */
@@ -311,7 +336,9 @@ export function Settings() {
                 setSelected(s);
                 setShowDetails(true);
               }}
-              className="bg-(--gray-100) border rounded-xl p-8 cursor-pointer hover:shadow"
+              className={`bg-(--gray-100) border rounded-xl p-8 cursor-pointer hover:shadow ${
+                selectedSalonId === s._id ? "ring-2 ring-(--primary)" : ""
+              }`}
             >
 
               {/* ORDER NUMBER */}
@@ -361,6 +388,22 @@ export function Settings() {
                   {s.status}
                 </span>
               </p>
+
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectSalon(s);
+                  }}
+                  className={`px-4 py-2 rounded text-sm ${
+                    selectedSalonId === s._id
+                      ? "bg-(--primary) text-white"
+                      : "btn-outline"
+                  }`}
+                >
+                  {selectedSalonId === s._id ? "Selected" : "Select"}
+                </button>
+              </div>
 
             </div>
 
