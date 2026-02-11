@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const API = "http://localhost:5000/api/services";
 const SALON_API = "http://localhost:5000/api/salons/get";
+const SELECTED_SALON_KEY = "selectedSalonId";
 
 export function Services() {
 
@@ -80,8 +81,20 @@ export function Services() {
 
     safeFetch(SALON_API, { headers: authHeader() })
       .then(data => {
-        setSalons(Array.isArray(data) ? data : []);
-        if (data?.length) setActiveSalon(data[0]._id);
+        const list = Array.isArray(data) ? data : [];
+        setSalons(list);
+
+        if (!list.length) {
+          setActiveSalon("");
+          localStorage.removeItem(SELECTED_SALON_KEY);
+          return;
+        }
+
+        const storedSalonId = localStorage.getItem(SELECTED_SALON_KEY);
+        const hasStoredSalon = list.some((s) => s._id === storedSalonId);
+        const nextSalonId = hasStoredSalon ? storedSalonId : list[0]._id;
+        setActiveSalon(nextSalonId);
+        localStorage.setItem(SELECTED_SALON_KEY, nextSalonId);
       })
       .catch(() => showToast("Failed to load salons"));
   }, []);
@@ -96,6 +109,12 @@ export function Services() {
       .then(data => setServices(Array.isArray(data) ? data : []))
       .catch(() => setServices([]));
   }, [activeSalon]);
+
+  useEffect(() => {
+    if (isAdmin && activeSalon) {
+      localStorage.setItem(SELECTED_SALON_KEY, activeSalon);
+    }
+  }, [activeSalon, isAdmin]);
 
   /* ================= FORM ================= */
   const handleChange = (e) => {

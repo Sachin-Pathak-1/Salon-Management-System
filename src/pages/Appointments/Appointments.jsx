@@ -4,10 +4,16 @@ import api from '../../api';
 
 import './Appointments.css'
 
+const SELECTED_SALON_KEY = "selectedSalonId";
+
 export default function AdminAppointments() {
   const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
+  const [salons, setSalons] = useState([]);
+  const [selectedSalonId, setSelectedSalonId] = useState(
+    localStorage.getItem(SELECTED_SALON_KEY) || ""
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState("");
@@ -26,6 +32,32 @@ export default function AdminAppointments() {
     };
 
     fetchAppointments();
+  }, []);
+
+  useEffect(() => {
+    const fetchSalons = async () => {
+      try {
+        const response = await api.get('/salons/get');
+        const list = Array.isArray(response.data) ? response.data : [];
+        setSalons(list);
+
+        if (!list.length) {
+          setSelectedSalonId("");
+          localStorage.removeItem(SELECTED_SALON_KEY);
+          return;
+        }
+
+        const storedSalonId = localStorage.getItem(SELECTED_SALON_KEY);
+        const hasStoredSalon = list.some((s) => s._id === storedSalonId);
+        const nextSalonId = hasStoredSalon ? storedSalonId : list[0]._id;
+        setSelectedSalonId(nextSalonId);
+        localStorage.setItem(SELECTED_SALON_KEY, nextSalonId);
+      } catch (err) {
+        console.error('Error loading salons:', err);
+      }
+    };
+
+    fetchSalons();
   }, []);
 
   const getStatusColor = (status) => {
@@ -58,6 +90,20 @@ export default function AdminAppointments() {
     }
   };
 
+  const getSalonId = (appointment) => {
+    if (!appointment?.salonId) return "";
+    return typeof appointment.salonId === "string"
+      ? appointment.salonId
+      : appointment.salonId._id || "";
+  };
+
+  const filteredAppointments = selectedSalonId
+    ? appointments.filter((appointment) => getSalonId(appointment) === selectedSalonId)
+    : appointments;
+
+  const selectedSalonName =
+    salons.find((s) => s._id === selectedSalonId)?.name || "Selected salon";
+
   if (loading) return <div className="admin-layout"><div className="admin-main-content"><div>Loading appointments...</div></div></div>;
   if (error) return <div className="admin-layout"><div className="admin-main-content"><div>{error}</div></div></div>;
 
@@ -67,7 +113,7 @@ export default function AdminAppointments() {
       <main className="admin-main-content">
         <div className="admin-header">
           <h1>Appointments</h1>
-          <p>Manage all appointments</p>
+          <p>Showing appointments for: {selectedSalonName}</p>
         </div>
         <div className="admin-content">
           <div className="appointments-controls">
@@ -103,14 +149,14 @@ export default function AdminAppointments() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.length === 0 ? (
+                {filteredAppointments.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="text-center py-8 text-gray-500">
-                      No appointments found. Create your first appointment!
+                      No appointments found for this salon.
                     </td>
                   </tr>
                 ) : (
-                  appointments.map((appointment) => (
+                  filteredAppointments.map((appointment) => (
                     <tr key={appointment._id}>
                       <td>#{appointment._id.slice(-6)}</td>
                       <td>{appointment.customerName}</td>
