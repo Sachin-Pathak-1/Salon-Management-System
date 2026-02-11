@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
 const STAFF_API = "http://localhost:5000/api/staff";
-const SALON_API = "http://localhost:5000/api/salons/get";
 
-export default function Staff() {
+export default function Staff({ activeSalon}) {
 
   /* ================= STATES ================= */
 
@@ -25,8 +24,6 @@ export default function Staff() {
   };
 
   const [staff, setStaff] = useState([]);
-  const [salons, setSalons] = useState([]);
-  const [activeSalon, setActiveSalon] = useState("");
 
   const [form, setForm] = useState(emptyForm);
 
@@ -57,16 +54,6 @@ export default function Staff() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  /* ================= LOAD SALONS ================= */
-
-  const fetchSalons = async () => {
-    const res = await fetch(SALON_API, { headers: authHeader() });
-    const data = await res.json();
-    const list = Array.isArray(data) ? data : [];
-    setSalons(list);
-    if (list.length && !activeSalon) setActiveSalon(list[0]._id);
-  };
-
   /* ================= LOAD STAFF ================= */
 
   const fetchStaff = async (salonId) => {
@@ -83,7 +70,6 @@ export default function Staff() {
 
   /* ================= EFFECTS ================= */
 
-  useEffect(() => { fetchSalons(); }, []);
   useEffect(() => { if (activeSalon) fetchStaff(activeSalon); }, [activeSalon]);
 
   /* ================= FORM ================= */
@@ -221,9 +207,6 @@ export default function Staff() {
     showToast("Order saved");
   };
 
-  const activeSalonName =
-    salons.find(s => s._id === activeSalon)?.name || "";
-
   /* ================= UI ================= */
 
   return (
@@ -240,7 +223,7 @@ export default function Staff() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold">Staff Management</h1>
           <p className="opacity-80">
-            {activeSalonName} • {staff.length} Staff Members
+            {staff.length} Staff Members
           </p>
         </div>
 
@@ -250,18 +233,6 @@ export default function Staff() {
           <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
 
             <div className="flex gap-3">
-
-              {salons.length > 1 && (
-                <select
-                  value={activeSalon}
-                  onChange={(e)=>setActiveSalon(e.target.value)}
-                  className="bg-(--background) border px-4 py-2 rounded-xl"
-                >
-                  {salons.map(s => (
-                    <option key={s._id} value={s._id}>{s.name}</option>
-                  ))}
-                </select>
-              )}
 
               <select value={statusFilter}
                 onChange={(e)=>setStatusFilter(e.target.value)}
