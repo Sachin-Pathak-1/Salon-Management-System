@@ -43,7 +43,6 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  const [activeSalon, setActiveSalon] = useState("");
 
   /* ===============================
      FETCH STAFF PROFILE
@@ -152,8 +151,6 @@ function App() {
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
         dashboardLink={dashboardLink}
-        activeSalon={activeSalon}
-        setActiveSalon={setActiveSalon}
       />
 
       <div style={{ display: "flex" }}>
@@ -223,7 +220,7 @@ function App() {
               path="/services"
               element={
                 <RequireRole>
-                  <Services activeSalon={activeSalon} />
+                  <Services />
                 </RequireRole>
               }
             />
@@ -313,7 +310,7 @@ function App() {
               path="/staff"
               element={
                 <RequireRole role="admin">
-                  <StaffManage activeSalon={activeSalon} />
+                  <StaffManage />
                 </RequireRole>
               }
             />
