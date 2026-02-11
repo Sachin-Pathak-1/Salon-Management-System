@@ -1,46 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from '../../api';
 
 import './Appointments.css'
 
 export default function AdminAppointments() {
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      userName: "John Doe",
-      date: "2026-01-30",
-      time: "10:00 AM",
-      service: "Consultation",
-      status: "Pending",
-      email: "john@example.com",
-    },
-    {
-      id: 2,
-      userName: "Jane Smith",
-      date: "2026-01-28",
-      time: "2:00 PM",
-      service: "Service A",
-      status: "Confirmed",
-      email: "jane@example.com",
-    },
-    {
-      id: 3,
-      userName: "Mike Johnson",
-      date: "2026-01-27",
-      time: "11:30 AM",
-      service: "Service B",
-      status: "Completed",
-      email: "mike@example.com",
-    },
-    {
-      id: 4,
-      userName: "Sarah Wilson",
-      date: "2026-02-01",
-      time: "3:30 PM",
-      service: "Consultation",
-      status: "Pending",
-      email: "sarah@example.com",
-    },
-  ]);
+  const navigate = useNavigate();
+
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("");
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await api.get('/appointments');
+        setAppointments(response.data);
+      } catch (err) {
+        setError('Failed to load appointments');
+        console.error('Error loading appointments:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -57,17 +43,27 @@ export default function AdminAppointments() {
     }
   };
 
-  const handleStatusChange = (id, newStatus) => {
-    setAppointments(
-      appointments.map((apt) =>
-        apt.id === id ? { ...apt, status: newStatus } : apt
-      )
-    );
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await api.put(`/appointments/${id}/status`, { status: newStatus });
+      // Update local state
+      setAppointments(
+        appointments.map((apt) =>
+          apt._id === id ? { ...apt, status: newStatus } : apt
+        )
+      );
+    } catch (err) {
+      console.error('Error updating appointment status:', err);
+      alert('Failed to update appointment status');
+    }
   };
+
+  if (loading) return <div className="admin-layout"><div className="admin-main-content"><div>Loading appointments...</div></div></div>;
+  if (error) return <div className="admin-layout"><div className="admin-main-content"><div>{error}</div></div></div>;
 
   return (
     <div className="admin-layout">
-    
+
       <main className="admin-main-content">
         <div className="admin-header">
           <h1>Appointments</h1>
@@ -75,13 +71,19 @@ export default function AdminAppointments() {
         </div>
         <div className="admin-content">
           <div className="appointments-controls">
+            <button
+              className="bg-[var(--primary)] text-white border-none px-4 py-2 rounded font-bold cursor-pointer transition-all duration-300 ease hover:bg-[var(--secondary)]"
+              onClick={() => navigate('/add-appointment')}
+            >
+              Add Appointment
+            </button>
             <input type="text" placeholder="Search appointments..." className="search-input" />
             <select className="filter-select">
               <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
 
@@ -90,43 +92,53 @@ export default function AdminAppointments() {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>User Name</th>
+                  <th>Customer Name</th>
                   <th>Email</th>
                   <th>Date</th>
                   <th>Time</th>
                   <th>Service</th>
+                  <th>Staff</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td>#{appointment.id}</td>
-                    <td>{appointment.userName}</td>
-                    <td>{appointment.email}</td>
-                    <td>{appointment.date}</td>
-                    <td>{appointment.time}</td>
-                    <td>{appointment.service}</td>
-                    <td>
-                      <span className={`status ${getStatusColor(appointment.status)}`}>
-                        {appointment.status}
-                      </span>
-                    </td>
-                    <td>
-                      <select
-                        value={appointment.status}
-                        onChange={(e) => handleStatusChange(appointment.id, e.target.value)}
-                        className="status-select"
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                {appointments.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="text-center py-8 text-gray-500">
+                      No appointments found. Create your first appointment!
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  appointments.map((appointment) => (
+                    <tr key={appointment._id}>
+                      <td>#{appointment._id.slice(-6)}</td>
+                      <td>{appointment.customerName}</td>
+                      <td>{appointment.customerEmail}</td>
+                      <td>{new Date(appointment.date).toLocaleDateString()}</td>
+                      <td>{appointment.time}</td>
+                      <td>{appointment.serviceId?.name || 'N/A'}</td>
+                      <td>{appointment.staffId?.name || 'N/A'}</td>
+                      <td>
+                        <span className={`status ${getStatusColor(appointment.status)}`}>
+                          {appointment.status}
+                        </span>
+                      </td>
+                      <td>
+                        <select
+                          value={appointment.status}
+                          onChange={(e) => handleStatusChange(appointment._id, e.target.value)}
+                          className="status-select"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

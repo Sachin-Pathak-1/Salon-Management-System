@@ -233,11 +233,11 @@ export function Settings() {
           </div>
         </div>
         {/* PLAN USAGE */}
-        <div className="bg-(--gray-100) p-6 rounded-2xl mb-8 border border-(--border-light)">
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-            <h2 className="text-lg font-semibold">Plan Usage</h2>
+        <div className="bg-(--gray-100) p-4 md:p-5 rounded-2xl mb-8 border border-(--border-light)">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-base font-semibold">Plan Usage</h2>
             {planInfo?.selectedPlan && (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600">
                 {planInfo.selectedPlan.name}
               </span>
             )}
@@ -245,63 +245,46 @@ export function Settings() {
 
           {planInfo?.selectedPlan ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Salons Added</div>
-                  <div className="text-2xl font-bold">
-                    {planInfo.salonsAdded}
-                  </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
+                  Used <span className="font-semibold">{planInfo.salonsAdded}</span>
                 </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Plan Limit</div>
-                  <div className="text-2xl font-bold">
-                    {planInfo.salonLimit}
-                  </div>
+                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
+                  Limit <span className="font-semibold">{planInfo.salonLimit}</span>
                 </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Remaining</div>
-                  <div className="text-2xl font-bold text-emerald-600">
-                    {planInfo.salonsRemaining}
-                  </div>
+                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
+                  Remaining <span className="font-semibold text-emerald-600">{planInfo.salonsRemaining}</span>
+                </div>
+                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
+                  Total <span className="font-semibold">Rs. {planInfo.totalPrice}</span>
                 </div>
               </div>
 
-              <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500"
-                  style={{
-                    width: `${Math.min(
-                      (planInfo.salonsAdded / (planInfo.salonLimit || 1)) * 100,
-                      100
-                    )}%`
-                  }}
-                />
-              </div>
-              <div className="mt-2 text-xs opacity-70">
-                {planInfo.salonsAdded} of {planInfo.salonLimit} salons used
-              </div>
-
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-(--text)">
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Price Per Branch</div>
-                  <div className="font-semibold">Rs. {planInfo.pricePerBranch}</div>
+              <div className="mt-3">
+                <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500"
+                    style={{
+                      width: `${Math.min(
+                        (planInfo.salonsAdded / (planInfo.salonLimit || 1)) * 100,
+                        100
+                      )}%`
+                    }}
+                  />
                 </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Total Price</div>
-                  <div className="font-semibold">Rs. {planInfo.totalPrice}</div>
-                </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-xl p-4">
-                  <div className="text-xs opacity-70">Selected On</div>
-                  <div className="font-semibold">
-                    {planInfo.selectedPlanAt
+                <div className="mt-2 text-[11px] opacity-70 flex flex-wrap gap-x-3">
+                  <span>{planInfo.salonsAdded} / {planInfo.salonLimit} salons</span>
+                  <span>Per Branch: Rs. {planInfo.pricePerBranch}</span>
+                  <span>
+                    Selected: {planInfo.selectedPlanAt
                       ? new Date(planInfo.selectedPlanAt).toLocaleDateString()
                       : "N/A"}
-                  </div>
+                  </span>
                 </div>
               </div>
             </>
           ) : (
-            <div className="text-sm text-(--text)">
+            <div className="text-sm text-(--text) mt-2">
               No plan selected yet. Choose a plan to enable salon limits.
             </div>
           )}

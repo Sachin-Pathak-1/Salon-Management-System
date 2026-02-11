@@ -36,6 +36,7 @@ export default function Staff() {
 
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showAccess, setShowAccess] = useState(false);
   const [selected, setSelected] = useState(null);
 
   const [toast, setToast] = useState("");
@@ -142,6 +143,21 @@ export default function Staff() {
 
     showToast("Staff updated");
     setShowEdit(false);
+    setSelected(null);
+    fetchStaff(activeSalon);
+  };
+
+  /* ================= UPDATE ACCESS ================= */
+
+  const updateAccess = async (access) => {
+    await fetch(`${STAFF_API}/${selected._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeader() },
+      body: JSON.stringify({ access })
+    });
+
+    showToast("Access updated");
+    setShowAccess(false);
     setSelected(null);
     fetchStaff(activeSalon);
   };
@@ -294,6 +310,7 @@ export default function Staff() {
                   <th className="p-3 text-left">Specialization</th>
                   <th className="p-3 text-left">Shift</th>
                   <th className="p-3 text-left">Status</th>
+                  <th className="p-3 text-left">Actions</th>
                 </tr>
               </thead>
 
@@ -328,6 +345,18 @@ export default function Staff() {
                     <td className="p-3">{s.specialization || "-"}</td>
                     <td className="p-3 capitalize">{s.shift}</td>
                     <td className="p-3 capitalize">{s.status}</td>
+                    <td className="p-3 flex gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setForm(s); setShowEdit(true); }}
+                        className="bg-(--primary) text-white px-3 py-1 rounded-lg text-xs">
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelected(s); setShowAccess(true); }}
+                        className="bg-(--secondary) text-white px-3 py-1 rounded-lg text-xs">
+                        Access
+                      </button>
+                    </td>
 
                   </tr>
                 ))}
@@ -346,7 +375,7 @@ export default function Staff() {
       }
 
       {/* DETAILS */}
-      {selected &&
+      {selected && !showAccess &&
         <Modal title="Staff Details" close={()=>setSelected(null)}>
           <Detail label="Name" value={selected.name}/>
           <Detail label="Email" value={selected.email}/>
@@ -380,6 +409,13 @@ export default function Staff() {
       {showEdit &&
         <Modal title="Edit Staff" close={()=>setShowEdit(false)}>
           <StaffForm form={form} handleChange={handleChange} submit={updateStaff}/>
+        </Modal>
+      }
+
+      {/* ACCESS CONTROL */}
+      {showAccess && selected &&
+        <Modal title={`Access Control for ${selected.name}`} close={()=>{setShowAccess(false); setSelected(null);}}>
+          <AccessControlModal staff={selected} updateAccess={updateAccess}/>
         </Modal>
       }
 
@@ -486,5 +522,68 @@ function Input({ name, placeholder, form, handleChange, type="text" }) {
       onChange={handleChange}
       className="bg-(--background) border px-3 py-2 rounded-xl"
     />
+  );
+}
+
+function AccessControlModal({ staff, updateAccess }) {
+  const [access, setAccess] = useState(staff.access || []);
+
+  const tabs = [
+    { key: "Dashboard", label: "Dashboard" },
+    { key: "Services", label: "Services" },
+    { key: "Appointments", label: "Appointments" },
+    { key: "Clients", label: "Clients" },
+    { key: "Staff", label: "Staff" },
+    { key: "Plans", label: "Plans" },
+    { key: "Reports", label: "Reports" },
+    { key: "Billing", label: "Billing" },
+    { key: "Profile", label: "Profile" },
+    { key: "Settings", label: "Settings" },
+    { key: "Support", label: "Support" }
+  ];
+
+  const handleToggle = (tab) => {
+    setAccess(prev =>
+      prev.includes(tab)
+        ? prev.filter(t => t !== tab)
+        : [...prev, tab]
+    );
+  };
+
+  const handleSave = () => {
+    updateAccess(access);
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm opacity-70">
+        Select the sidebar tabs that {staff.name} should have access to:
+      </p>
+
+      <div className="space-y-3">
+        {tabs.map(tab => (
+          <label key={tab.key} className="flex items-center justify-between p-3 bg-(--gray-50) rounded-lg cursor-pointer hover:bg-(--gray-100) transition-colors">
+            <span className="text-sm font-medium">{tab.label}</span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={access.includes(tab.key)}
+                onChange={() => handleToggle(tab.key)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-(--gray-200) rounded-full peer peer-focus:ring-4 peer-focus:ring-(--primary)/25 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={handleSave}
+          className="bg-(--primary) text-white px-4 py-2 rounded-lg">
+          Save Access
+        </button>
+      </div>
+    </div>
   );
 }

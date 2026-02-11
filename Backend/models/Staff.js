@@ -57,6 +57,11 @@ const staffSchema = new mongoose.Schema(
   joiningDate: {
     type: Date,
     default: Date.now
+  },
+
+  access: {
+    type: [String],
+    default: ["Dashboard", "Services", "Appointments", "Profile", "Support"]
   }
 },
 { timestamps: true }
