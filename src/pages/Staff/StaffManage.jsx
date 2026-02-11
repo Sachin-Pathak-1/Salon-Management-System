@@ -42,11 +42,7 @@ export default function Staff({ activeSalon}) {
   /* ================= HELPERS ================= */
 
   const authHeader = () => ({
-    Authorization: `Bearer ${
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("staffToken") ||
-      localStorage.getItem("token")
-    }`
+    Authorization: `Bearer ${localStorage.getItem("token")}`
   });
 
   const showToast = (msg) => {

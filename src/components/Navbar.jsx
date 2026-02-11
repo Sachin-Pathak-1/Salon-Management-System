@@ -28,8 +28,7 @@ export function Navbar({
   /* ================= AUTH HEADER ================= */
   const authHeader = () => ({
     Authorization: `Bearer ${
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("staffToken")
+      localStorage.getItem("token")
     }`
   });
 
@@ -83,8 +82,7 @@ useEffect(() => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("staffToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
     navigate("/");
   };

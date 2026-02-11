@@ -15,7 +15,7 @@ export function Services({ activeSalon }) {
 
   /* ================= AUTH ================= */
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = ["admin", "manager"].includes(currentUser?.role);
   const staffSalonId = currentUser?.salonId;
 
   /* ================= STATE (NEVER UNDEFINED) ================= */
@@ -48,13 +48,10 @@ export function Services({ activeSalon }) {
 
   /* ================= HELPERS ================= */
   const authHeader = () => {
-    const token = localStorage.getItem("adminToken") || 
-                  localStorage.getItem("staffToken") || 
-                  localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-      "Cache-Control": "no-store"
-    };
+      return {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Cache-Control": "no-store"
+      };
   };
 
   const showToast = (msg) => {

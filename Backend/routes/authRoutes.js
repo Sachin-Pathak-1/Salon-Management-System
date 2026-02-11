@@ -2,11 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 const router = express.Router();
 
 /* ======================
-   ADMIN SIGNUP ONLY
+   ADMIN SIGNUP
 ====================== */
 router.post("/signup", async (req, res) => {
   try {
@@ -24,7 +25,6 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    // 🔒 FORCE ADMIN ROLE
     const admin = await User.create({
       name,
       email,
@@ -33,13 +33,16 @@ router.post("/signup", async (req, res) => {
     });
 
     const token = jwt.sign(
-      { id: admin._id },
-      "mysecretkey",
+      {
+        id: admin._id,
+        role: "admin",
+        salonId: null
+      },
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({
-      message: "Admin account created",
       token,
       user: {
         id: admin._id,
@@ -50,18 +53,20 @@ router.post("/signup", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* ======================
-   LOGIN (ADMIN + STAFF)
+   LOGIN (ALL ROLES)
 ====================== */
 router.post("/login", async (req, res) => {
   try {
 
     const { email, password } = req.body;
+
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password required" });
 
     const user = await User.findOne({ email });
     if (!user)
@@ -72,11 +77,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
-      { id: user._id,
+      {
+        id: user._id,
         role: user.role,
         salonId: user.salonId || null
-       },
-      "mysecretkey",
+      },
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -87,12 +93,11 @@ router.post("/login", async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        salonId: user.salonId
+        salonId: user.salonId || null
       }
     });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

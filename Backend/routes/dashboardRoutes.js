@@ -1,9 +1,10 @@
-const staffAuth = require("../middleware/staffAuth");
 const router = require("express").Router();
 const Service = require("../models/Service");
+const auth = require("../middleware/auth");
 
 /* STAFF STATS */
-router.get("/staff-stats", staffAuth, async (req, res) => {
+router.get("/staff-stats", auth(["staff", "manager"]), async (req, res) => {
+  res.json({ message: "Staff dashboard stats retrieved successfully" });
   try {
     const totalServices = await Service.countDocuments();
 
@@ -18,7 +19,7 @@ router.get("/staff-stats", staffAuth, async (req, res) => {
 });
 
 /* POPULAR SERVICES */
-router.get("/popular-services", staffAuth, async (req, res) => {
+router.get("/popular-services", auth(["staff"]), async (req, res) => {
   try {
     const services = await Service.find().limit(5);
 
@@ -34,7 +35,7 @@ router.get("/popular-services", staffAuth, async (req, res) => {
 });
 
 /* RECENT ACTIVITY */
-router.get("/recent-activity", staffAuth, async (req, res) => {
+router.get("/recent-activity", auth(["staff"]), async (req, res) => {
   try {
     const services = await Service.find().limit(5);
 

@@ -10,6 +10,12 @@ const staffSchema = new mongoose.Schema(
 
   contact: String,
 
+  role: {
+    type: String,
+    enum: ["staff", "manager"],
+    default: "staff"
+  },
+
   adminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -25,11 +31,6 @@ const staffSchema = new mongoose.Schema(
   order: {
     type: Number,
     default: 0
-  },
-
-  isManager: {
-    type: Boolean,
-    default: false
   },
 
   gender: String,
