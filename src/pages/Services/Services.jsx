@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 
 const API = "http://localhost:5000/api/services";
-const SALON_API = "http://localhost:5000/api/salons/get";
-const SELECTED_SALON_KEY = "selectedSalonId";
 
-export function Services() {
+export function Services({ activeSalon }) {
 
   /* ================= THEME (COLORS ONLY) ================= */
   const [theme] = useState(
@@ -22,8 +20,6 @@ export function Services() {
 
   /* ================= STATE (NEVER UNDEFINED) ================= */
   const [services, setServices] = useState([]);
-  const [salons, setSalons] = useState([]);
-  const [activeSalon, setActiveSalon] = useState("");
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -72,33 +68,6 @@ export function Services() {
     return res.json();
   };
 
-  /* ================= LOAD SALONS ================= */
-  useEffect(() => {
-    if (!isAdmin && staffSalonId) {
-      setActiveSalon(staffSalonId);
-      return;
-    }
-
-    safeFetch(SALON_API, { headers: authHeader() })
-      .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        setSalons(list);
-
-        if (!list.length) {
-          setActiveSalon("");
-          localStorage.removeItem(SELECTED_SALON_KEY);
-          return;
-        }
-
-        const storedSalonId = localStorage.getItem(SELECTED_SALON_KEY);
-        const hasStoredSalon = list.some((s) => s._id === storedSalonId);
-        const nextSalonId = hasStoredSalon ? storedSalonId : list[0]._id;
-        setActiveSalon(nextSalonId);
-        localStorage.setItem(SELECTED_SALON_KEY, nextSalonId);
-      })
-      .catch(() => showToast("Failed to load salons"));
-  }, []);
-
   /* ================= LOAD SERVICES ================= */
   useEffect(() => {
     if (!activeSalon) return;
@@ -109,12 +78,6 @@ export function Services() {
       .then(data => setServices(Array.isArray(data) ? data : []))
       .catch(() => setServices([]));
   }, [activeSalon]);
-
-  useEffect(() => {
-    if (isAdmin && activeSalon) {
-      localStorage.setItem(SELECTED_SALON_KEY, activeSalon);
-    }
-  }, [activeSalon, isAdmin]);
 
   /* ================= FORM ================= */
   const handleChange = (e) => {
@@ -243,21 +206,6 @@ export function Services() {
           <p className="text-center opacity-60 mt-1">
             Read-only mode (staff access)
           </p>
-        )}
-
-        {/* SALON SELECT */}
-        {isAdmin && (
-        <div className="flex justify-center mt-6">
-          <select
-            value={activeSalon}
-            onChange={e => setActiveSalon(e.target.value)}
-            className="bg-[var(--background)] border px-4 py-2 rounded-xl"
-          >
-            {salons.map(s => (
-              <option key={s._id} value={s._id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
         )}
 
         {/* CATEGORY */}

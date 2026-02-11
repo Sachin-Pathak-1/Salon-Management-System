@@ -9,6 +9,22 @@ const admin = require("../middleware/admin");
 const router = express.Router();
 
 /* ============================
+   HELPER FUNCTIONS
+============================ */
+
+// Convert "HH:MM" to minutes
+const timeToMinutes = (time) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+// Check if date is in past
+const isPastDateTime = (date, time) => {
+  const bookingDateTime = new Date(`${date}T${time}`);
+  return bookingDateTime < new Date();
+};
+
+/* ============================
    CREATE APPOINTMENT
 ============================ */
 router.post("/create", auth, admin, async (req, res) => {
@@ -25,34 +41,135 @@ router.post("/create", auth, admin, async (req, res) => {
       serviceId
     } = req.body;
 
-    if (!customerName || !customerEmail || !customerContact || !date || !time || !salonId || !staffId || !serviceId) {
-      return res.status(400).json({ message: "All required fields must be provided" });
+    if (
+      !customerName ||
+      !customerEmail ||
+      !customerContact ||
+      !date ||
+      !time ||
+      !salonId ||
+      !staffId ||
+      !serviceId
+    ) {
+      return res.status(400).json({
+        message: "All required fields must be provided"
+      });
     }
 
-    // Verify salon belongs to admin
-    const salon = await Salon.findOne({ _id: salonId, adminId: req.userId });
+    /* ============================
+       VALIDATE SALON
+    ============================ */
+
+    const salon = await Salon.findOne({
+      _id: salonId,
+      adminId: req.userId
+    });
+
     if (!salon) {
       return res.status(404).json({ message: "Salon not found" });
     }
 
-    // Verify staff belongs to the salon
-    const staff = await Staff.findOne({ _id: staffId, salonId: salonId });
+    if (salon.status === "closed") {
+      return res.status(400).json({
+        message: "Cannot book appointment. Salon is closed."
+      });
+    }
+
+    if (salon.status === "temporarily-closed") {
+      return res.status(400).json({
+        message: "Salon is temporarily closed."
+      });
+    }
+
+    /* ============================
+       HOLIDAY CHECK
+    ============================ */
+
+    const bookingDate = new Date(date);
+    const formattedDate = bookingDate.toISOString().split("T")[0];
+
+    if (salon.holidays.includes(formattedDate)) {
+      return res.status(400).json({
+        message: "Salon is closed on selected date (holiday)."
+      });
+    }
+
+    /* ============================
+       WORKING HOURS CHECK
+    ============================ */
+
+    const bookingMinutes = timeToMinutes(time);
+    const openingMinutes = timeToMinutes(salon.openingTime);
+    const closingMinutes = timeToMinutes(salon.closingTime);
+
+    if (bookingMinutes < openingMinutes || bookingMinutes > closingMinutes) {
+      return res.status(400).json({
+        message: "Selected time is outside salon working hours."
+      });
+    }
+
+    /* ============================
+       PAST DATE CHECK
+    ============================ */
+
+    if (isPastDateTime(date, time)) {
+      return res.status(400).json({
+        message: "Cannot book appointment in the past."
+      });
+    }
+
+    /* ============================
+       VALIDATE STAFF
+    ============================ */
+
+    const staff = await Staff.findOne({ _id: staffId, salonId });
+
     if (!staff) {
-      return res.status(404).json({ message: "Staff not found in this salon" });
+      return res.status(404).json({
+        message: "Staff not found in this salon"
+      });
     }
 
-    // Verify service belongs to the salon and get price
-    const service = await Service.findOne({ _id: serviceId, salonId: salonId });
+    if (staff.status === "inactive") {
+      return res.status(400).json({
+        message: "Cannot book appointment. Staff is inactive."
+      });
+    }
+
+    /* ============================
+       VALIDATE SERVICE
+    ============================ */
+
+    const service = await Service.findOne({ _id: serviceId, salonId });
+
     if (!service) {
-      return res.status(404).json({ message: "Service not found in this salon" });
+      return res.status(404).json({
+        message: "Service not found in this salon"
+      });
     }
 
-    // Set default price if not set
-    let price = service.price;
-    if (!price || price === "0" || price === "") {
-      price = "50"; // Default price
-      await Service.findByIdAndUpdate(serviceId, { price: price });
+    const price = service.price && service.price > 0 ? service.price : 50;
+
+    /* ============================
+       DOUBLE BOOKING CHECK
+    ============================ */
+
+    const existingAppointment = await Appointment.findOne({
+      staffId,
+      date: new Date(date),
+      time,
+      status: { $ne: "cancelled" }
+    });
+
+    if (existingAppointment) {
+      return res.status(400).json({
+        message: "Staff already has an appointment at this time."
+      });
     }
+
+    /* ============================
+       CREATE APPOINTMENT
+    ============================ */
 
     const appointment = await Appointment.create({
       customerName,
@@ -65,16 +182,19 @@ router.post("/create", auth, admin, async (req, res) => {
       staffId,
       serviceId,
       adminId: req.userId,
-      totalPrice: parseFloat(price)
+      totalPrice: price,
+      status: "pending"
     });
+
+    const populatedAppointment = await appointment.populate([
+      { path: "salonId", select: "name" },
+      { path: "staffId", select: "name" },
+      { path: "serviceId", select: "name price" }
+    ]);
 
     res.status(201).json({
       message: "Appointment created successfully",
-      appointment: await appointment.populate([
-        { path: 'salonId', select: 'name' },
-        { path: 'staffId', select: 'name' },
-        { path: 'serviceId', select: 'name price' }
-      ])
+      appointment: populatedAppointment
     });
 
   } catch (err) {
@@ -95,9 +215,9 @@ router.get("/", auth, async (req, res) => {
     if (req.query.status) query.status = req.query.status;
 
     const appointments = await Appointment.find(query)
-      .populate('salonId', 'name')
-      .populate('staffId', 'name')
-      .populate('serviceId', 'name price')
+      .populate("salonId", "name")
+      .populate("staffId", "name")
+      .populate("serviceId", "name price")
       .sort({ date: 1, time: 1 });
 
     res.json(appointments);
@@ -109,7 +229,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 /* ============================
-   UPDATE APPOINTMENT STATUS
+   UPDATE STATUS
 ============================ */
 router.put("/:id/status", auth, admin, async (req, res) => {
   try {
@@ -124,9 +244,9 @@ router.put("/:id/status", auth, admin, async (req, res) => {
       { status },
       { new: true }
     ).populate([
-      { path: 'salonId', select: 'name' },
-      { path: 'staffId', select: 'name' },
-      { path: 'serviceId', select: 'name price' }
+      { path: "salonId", select: "name" },
+      { path: "staffId", select: "name" },
+      { path: "serviceId", select: "name price" }
     ]);
 
     if (!appointment) {
@@ -156,50 +276,6 @@ router.delete("/:id", auth, admin, async (req, res) => {
     }
 
     res.json({ message: "Appointment deleted" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ============================
-   GET STAFF AND SERVICES FOR SALON
-============================ */
-router.get("/salon/:salonId/details", auth, async (req, res) => {
-  try {
-    const salonId = req.params.salonId;
-
-    // Verify salon access
-    if (req.userRole === "admin") {
-      const salon = await Salon.findOne({ _id: salonId, adminId: req.userId });
-      if (!salon) {
-        return res.status(404).json({ message: "Salon not found" });
-      }
-    } else if (req.userRole === "staff") {
-      if (req.userSalonId.toString() !== salonId) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-    }
-
-    // Get staff for the salon
-    const staff = await Staff.find({ salonId })
-      .select('name designation specialization')
-      .sort({ isManager: -1, order: 1 });
-
-    // Get services for the salon and set default prices if missing
-    const services = await Service.find({ salonId })
-      .sort({ isFeatured: -1, order: 1 });
-
-    // Set default prices for services without prices
-    for (let service of services) {
-      if (!service.price || service.price === "0" || service.price === "") {
-        service.price = "50"; // Default price
-        await Service.findByIdAndUpdate(service._id, { price: service.price });
-      }
-    }
-
-    res.json({ staff, services });
 
   } catch (err) {
     console.error(err);
