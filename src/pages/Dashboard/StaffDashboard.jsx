@@ -75,18 +75,19 @@ export function StaffDashboard() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10">
       <div className="max-w-4xl mx-auto flex flex-col gap-10">
 
-        <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white p-8 rounded-lg shadow-lg">
           <h1 className="text-3xl font-bold">Staff Dashboard</h1>
-          <p className="text-[var(--gray-700)]">
+          <p className="text-white/80">
             Overview of salon activities and services
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Today's Appointments" value={stats.todayAppointments} />
-          <StatCard title="Completed Services" value={stats.completed} />
-          <StatCard title="Pending Services" value={stats.pending} />
-          <StatCard title="Total Services" value={stats.totalServices} />
+          <StatCard title="Today's Appointments" value={stats.todayAppointments} icon="📅" />
+          <StatCard title="Completed Services" value={stats.completed} icon="✅" />
+          <StatCard title="Pending Services" value={stats.pending} icon="⏳" />
+          <StatCard title="Total Services" value={stats.totalServices} icon="💼" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -126,9 +127,10 @@ export function StaffDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-[var(--gray-100)] border border-[var(--border-light)] rounded-lg p-6 text-center">
+    <div className="bg-white border border-[var(--border-light)] rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow">
+      <div className="text-4xl mb-2">{icon}</div>
       <p className="text-sm text-[var(--gray-700)]">{title}</p>
-      <h2 className="text-3xl font-bold">{value}</h2>
+      <h2 className="text-3xl font-bold text-[var(--primary)]">{value}</h2>
     </div>
   );
 }

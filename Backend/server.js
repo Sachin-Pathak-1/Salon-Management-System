@@ -34,6 +34,7 @@ app.use("/api/adminProfile", require("./routes/adminProfileRoutes"));
 app.use("/api/staffAuth", require("./routes/staffAuth"));
 app.use("/api/staffProfile", require("./routes/staffProfile"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/reports", require("./routes/reportsRoutes"));
 app.use("/api/services", require("./routes/serviceRoutes"));
 app.use("/api/salons", require("./routes/salonRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
