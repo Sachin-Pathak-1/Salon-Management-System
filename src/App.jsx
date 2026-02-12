@@ -31,6 +31,7 @@ import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
 import { ViewPlan } from "./pages/Plans/Plans.jsx";
+import Attendance from "./pages/Attendance/Attendance.jsx";
 
 function App() {
 
@@ -81,6 +82,7 @@ function App() {
     "/plans",
     "/support",
     "/staff",
+    "/attendance",
     "/settings"
   ];
 
@@ -287,6 +289,15 @@ function App() {
               element={
                 <RequireRole role="admin">
                   <StaffManage />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/attendance"
+              element={
+                <RequireRole role="admin">
+                  <Attendance />
                 </RequireRole>
               }
             />
