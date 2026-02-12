@@ -1,5 +1,4 @@
 const auth = require("../middleware/auth");
-const admin = require("../middleware/admin");
 const express = require("express");
 const Salon = require("../models/Salon");
 const User = require("../models/User");
@@ -17,7 +16,7 @@ function isTodayHoliday(holidays = []) {
 /* ============================
    ADD SALON
 ============================ */
-router.post("/add", auth, admin, async (req, res) => {
+router.post("/add", auth(["admin"]), async (req, res) => {
   try {
 
     const {
@@ -40,7 +39,7 @@ router.post("/add", auth, admin, async (req, res) => {
       });
     }
 
-    const adminUser = await User.findById(req.userId);
+    const adminUser = await User.findById(req.user.id);
     if (!adminUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -53,7 +52,7 @@ router.post("/add", auth, admin, async (req, res) => {
 
     const salonLimit = adminUser.planBranchLimit || 0;
     if (salonLimit > 0) {
-      const existing = await Salon.countDocuments({ adminId: req.userId });
+      const existing = await Salon.countDocuments({ adminId: req.user.id });
       if (existing >= salonLimit) {
         return res.status(403).json({
           message: "Salon limit reached for your selected plan"
@@ -64,13 +63,13 @@ router.post("/add", auth, admin, async (req, res) => {
     // Only one primary salon
     if (isPrimary === true) {
       await Salon.updateMany(
-        { adminId: req.userId },
+        { adminId: req.user.id },
         { isPrimary: false }
       );
     }
 
     // Get next order
-    const last = await Salon.find({ adminId: req.userId })
+    const last = await Salon.find({ adminId: req.user.id })
       .sort({ order: -1 })
       .limit(1);
 
@@ -88,7 +87,7 @@ router.post("/add", auth, admin, async (req, res) => {
       holidays: holidays || [],
       status: status || "open",
       isPrimary: isPrimary || false,
-      adminId: req.userId,
+      adminId: req.user.id,
       order: nextOrder
     });
 
@@ -106,17 +105,17 @@ router.post("/add", auth, admin, async (req, res) => {
 /* ============================
    GET SALONS
 ============================ */
-router.get("/get", auth, async (req, res) => {
+router.get("/get", auth(), async (req, res) => {
   try {
 
     // 🚫 DISABLE CACHE (CRITICAL)
     res.set("Cache-Control", "no-store");
 
-    console.log("Fetching salons for userId:", req.userId, "role:", req.userRole);
+    console.log("Fetching salons for userId:", req.user.id, "role:", req.user.role);
 
-    if (req.userRole === "admin") {
+    if (req.user.role === "admin") {
     let salons = await Salon
-      .find({ adminId: req.userId })
+      .find({ adminId: req.user.id })
       .populate("staff", "-password")
       .sort({ isPrimary: -1, order: 1 });
 
@@ -135,8 +134,8 @@ router.get("/get", auth, async (req, res) => {
     return res.json(salons);
     }
 
-    if (req.userRole === "staff") {
-      const salon = await Salon.findOne({ _id: req.userSalonId })
+    if (req.user.role === "staff") {
+      const salon = await Salon.findOne({ _id: req.user.salonId })
         .populate("staff", "-password");
       if (!salon) return res.json([]);
 
@@ -161,12 +160,12 @@ router.get("/get", auth, async (req, res) => {
 /* ============================
    REORDER SALONS
 ============================ */
-router.put("/reorder", auth, admin, async (req, res) => {
+router.put("/reorder", auth(["admin"]), async (req, res) => {
   try {
 
     const bulk = req.body.order.map(o => ({
       updateOne: {
-        filter: { _id: o.id, adminId: req.userId },
+        filter: { _id: o.id, adminId: req.user.id },
         update: { order: o.order, isPrimary: false }
       }
     }));
@@ -175,7 +174,7 @@ router.put("/reorder", auth, admin, async (req, res) => {
 
     // Primary always first
     await Salon.updateMany(
-      { adminId: req.userId, isPrimary: true },
+      { adminId: req.user.id, isPrimary: true },
       { order: -1 }
     );
 
@@ -190,10 +189,10 @@ router.put("/reorder", auth, admin, async (req, res) => {
 /* ============================
    EMERGENCY CLOSE ALL
 ============================ */
-router.put("/emergency/close-all", auth, admin, async (req, res) => {
+router.put("/emergency/close-all", auth(["admin"]), async (req, res) => {
   try {
     await Salon.updateMany(
-      { adminId: req.userId },
+      { adminId: req.user.id },
       { status: "temporarily-closed" }
     );
 
@@ -207,10 +206,10 @@ router.put("/emergency/close-all", auth, admin, async (req, res) => {
 /* ============================
    REOPEN ALL
 ============================ */
-router.put("/emergency/open-all", auth, admin, async (req, res) => {
+router.put("/emergency/open-all", auth(["admin"]), async (req, res) => {
   try {
     await Salon.updateMany(
-      { adminId: req.userId },
+      { adminId: req.user.id },
       { status: "open" }
     );
 
@@ -224,18 +223,18 @@ router.put("/emergency/open-all", auth, admin, async (req, res) => {
 /* ============================
    UPDATE SALON
 ============================ */
-router.put("/:id", auth, admin, async (req, res) => {
+router.put("/:id", auth(["admin"]), async (req, res) => {
   try {
 
     if (req.body.isPrimary === true) {
       await Salon.updateMany(
-        { adminId: req.userId },
+        { adminId: req.user.id },
         { isPrimary: false }
       );
     }
 
     const salon = await Salon.findOneAndUpdate(
-      { _id: req.params.id, adminId: req.userId },
+      { _id: req.params.id, adminId: req.user.id },
       req.body,
       { new: true }
     );
@@ -255,12 +254,12 @@ router.put("/:id", auth, admin, async (req, res) => {
 /* ============================
    DELETE SALON
 ============================ */
-router.delete("/:id", auth, admin, async (req, res) => {
+router.delete("/:id", auth(["admin"]), async (req, res) => {
   try {
 
     const salon = await Salon.findOneAndDelete({
       _id: req.params.id,
-      adminId: req.userId
+      adminId: req.user.id
     });
 
     if (!salon) {

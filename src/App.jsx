@@ -5,25 +5,28 @@ import React from "react";
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 
+/* ================= LANDING PAGES ================= */
+
 import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
 import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
 import { ProfilePage } from "./pages/LadingPage/ProfilePage/ProfilePage.jsx";
-import Profile from "./pages/Profile/Profile.jsx";
 import { ActivityPage } from "./pages/LadingPage/Activity/ActivityPage.jsx";
 import { HistoryPage } from "./pages/LadingPage/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/LadingPage/CustomerList/CustomerList.jsx";
 import { CustomerDetails } from "./pages/LadingPage/CustomerDetails/CustomerDetails.jsx";
 import { Home } from "./pages/LadingPage/Home/Home.jsx";
 import { LPServices } from "./pages/LadingPage/Services/Services.jsx";
+import { About } from "./pages/LadingPage/About/About.jsx";
+import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
+
+/* ================= SYSTEM PAGES ================= */
 
 import { Dashboard } from "./pages/Dashboard/Dashboard.jsx";
 import { StaffDashboard } from "./pages/Dashboard/StaffDashboard.jsx";
+import { ManagerDashboard } from "./pages/Dashboard/ManagerDashboard.jsx";
 import { Services } from "./pages/Services/Services.jsx";
 import { Reports } from "./pages/Reports/Reports.jsx";
 import { Settings } from "./pages/Settings.jsx";
-
-import { About } from "./pages/LadingPage/About/About.jsx";
-import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
 import AdminAppointments from "./pages/Appointments/Appointments.jsx";
 import AddAppointment from "./pages/Appointments/AddAppointment.jsx";
 import CreateAppointment from "./pages/Appointments/CreateAppointment.jsx";
@@ -31,12 +34,9 @@ import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
 import { ViewPlan } from "./pages/Plans/Plans.jsx";
+import Profile from "./pages/Profile/Profile.jsx";
 
 function App() {
-
-  /* ===============================
-     HOOKS (ORDER SAFE)
-  =============================== */
 
   const location = useLocation();
 
@@ -45,104 +45,84 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
   const [activeSalon, setActiveSalon] = useState("");
 
-  /* ===============================
-     FETCH STAFF PROFILE
-  =============================== */
-
-  const fetchStaffProfile = async () => {
-    const token = localStorage.getItem("staffToken");
-    if (!token || !currentUser || currentUser.role !== "staff") return;
-
-    try {
-      const res = await fetch("http://localhost:5000/api/staffProfile/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const updatedUser = { ...data, role: "staff" };
-      setCurrentUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    } catch (err) {
-      console.error("Failed to fetch staff profile", err);
-    }
-  };
-
-  /* ===============================
-     RESTORE AUTH ON REFRESH
-  =============================== */
+  /* ============================================
+     RESTORE AUTH ON REFRESH (SAFE VERSION)
+  ============================================ */
 
   useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    const staffToken = localStorage.getItem("staffToken");
 
-    const token = adminToken || staffToken;
+    const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("currentUser");
 
-    if (token && storedUser) {
+    if (!token || !storedUser) {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+      setAuthReady(true);
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(storedUser);
       setIsLoggedIn(true);
-      const user = JSON.parse(storedUser);
-      setCurrentUser(user);
-      if (user.role === "staff") {
-        fetchStaffProfile();
-      }
-    } else {
+      setCurrentUser(parsedUser);
+    } catch {
+      localStorage.clear();
       setIsLoggedIn(false);
       setCurrentUser(null);
     }
 
     setAuthReady(true);
+
   }, []);
 
   if (!authReady) return null;
 
-  /* ===============================
+  /* ============================================
      SIDEBAR VISIBILITY
-  =============================== */
+  ============================================ */
 
-  const systemRoutes = [
-    "/dashboard",
-    "/staff-dashboard",
-    "/services",
-    "/reports",
-    "/customers",
-    "/profile",
-    "/activity",
-    "/history",
-    "/appointments",
-    "/paymenthistory",
-    "/plans",
-    "/support",
-    "/staff",
-    "/settings"
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/about",
+    "/contact",
+    "/lpservices"
   ];
 
-  const showSidebar = systemRoutes.some(route =>
-    location.pathname.startsWith(route)
-  );
+  const showSidebar =
+    isLoggedIn && !publicRoutes.includes(location.pathname);
 
-  /* ===============================
+  /* ============================================
      ROLE HELPERS
-  =============================== */
+  ============================================ */
 
-  const resolveDashboardPath = (user) =>
-    user?.role === "admin" ? "/dashboard" : "/staff-dashboard";
+  const resolveDashboardPath = (user) => {
+    if (!user) return "/login";
+
+    if (user.role === "admin") return "/dashboard";
+    if (user.role === "manager") return "/manager-dashboard";
+    return "/staff-dashboard";
+  };
 
   const dashboardLink = resolveDashboardPath(currentUser);
 
-  const RequireRole = ({ role, children }) => {
+  const RequireRole = ({ roles = [], children }) => {
+
     if (!isLoggedIn || !currentUser) {
       return <Navigate to="/login" replace />;
     }
 
-    if (role && currentUser.role !== role) {
-      return <Navigate to={resolveDashboardPath(currentUser)} replace />;
+    if (roles.length > 0 && !roles.includes(currentUser.role)) {
+      return <Navigate to={dashboardLink} replace />;
     }
 
     return children;
   };
 
-  /* ===============================
+  /* ============================================
      RENDER
-  =============================== */
+  ============================================ */
 
   return (
     <>
@@ -157,7 +137,8 @@ function App() {
       />
 
       <div style={{ display: "flex" }}>
-        {showSidebar && isLoggedIn && (
+
+        {showSidebar && (
           <FloatingSideBar
             dashboardLink={dashboardLink}
             isLoggedIn={isLoggedIn}
@@ -166,15 +147,18 @@ function App() {
         )}
 
         <div style={{ flex: 1 }}>
+
           <Routes>
 
-            {/* PUBLIC */}
+            {/* ================= PUBLIC ================= */}
+
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />
 
-            {/* AUTH */}
+            {/* ================= AUTH ================= */}
+
             <Route
               path="/login"
               element={
@@ -199,12 +183,22 @@ function App() {
               }
             />
 
-            {/* DASHBOARDS */}
+            {/* ================= DASHBOARDS ================= */}
+
             <Route
               path="/dashboard"
               element={
-                <RequireRole role="admin">
+                <RequireRole roles={["admin"]}>
                   <Dashboard />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/manager-dashboard"
+              element={
+                <RequireRole roles={["manager"]}>
+                  <ManagerDashboard />
                 </RequireRole>
               }
             />
@@ -212,17 +206,18 @@ function App() {
             <Route
               path="/staff-dashboard"
               element={
-                <RequireRole role="staff">
+                <RequireRole roles={["staff"]}>
                   <StaffDashboard />
                 </RequireRole>
               }
             />
 
-            {/* SYSTEM */}
+            {/* ================= SYSTEM ROUTES ================= */}
+
             <Route
               path="/services"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <Services activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -231,7 +226,7 @@ function App() {
             <Route
               path="/reports"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <Reports />
                 </RequireRole>
               }
@@ -240,7 +235,7 @@ function App() {
             <Route
               path="/customers"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <CustomerList />
                 </RequireRole>
               }
@@ -249,7 +244,7 @@ function App() {
             <Route
               path="/customer/:id"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <CustomerDetails />
                 </RequireRole>
               }
@@ -258,7 +253,7 @@ function App() {
             <Route
               path="/appointments"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <AdminAppointments />
                 </RequireRole>
               }
@@ -267,7 +262,7 @@ function App() {
             <Route
               path="/add-appointment"
               element={
-                <RequireRole role="admin">
+                <RequireRole roles={["admin"]}>
                   <AddAppointment />
                 </RequireRole>
               }
@@ -276,7 +271,7 @@ function App() {
             <Route
               path="/create-appointment/:salonId"
               element={
-                <RequireRole role="admin">
+                <RequireRole roles={["admin"]}>
                   <CreateAppointment />
                 </RequireRole>
               }
@@ -285,7 +280,7 @@ function App() {
             <Route
               path="/paymenthistory"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <PaymentHistory />
                 </RequireRole>
               }
@@ -294,7 +289,7 @@ function App() {
             <Route
               path="/plans"
               element={
-                <RequireRole role="admin">
+                <RequireRole roles={["admin"]}>
                   <ViewPlan />
                 </RequireRole>
               }
@@ -303,7 +298,7 @@ function App() {
             <Route
               path="/support"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <HelpPage />
                 </RequireRole>
               }
@@ -312,7 +307,7 @@ function App() {
             <Route
               path="/staff"
               element={
-                <RequireRole role="admin">
+                <RequireRole roles={["admin"]}>
                   <StaffManage activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -321,7 +316,7 @@ function App() {
             <Route
               path="/settings"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager"]}>
                   <Settings />
                 </RequireRole>
               }
@@ -330,7 +325,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <Profile />
                 </RequireRole>
               }
@@ -339,7 +334,7 @@ function App() {
             <Route
               path="/profilepage"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <ProfilePage
                     isLoggedIn={isLoggedIn}
                     currentUser={currentUser}
@@ -351,7 +346,7 @@ function App() {
             <Route
               path="/activity"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <ActivityPage isLoggedIn={isLoggedIn} />
                 </RequireRole>
               }
@@ -360,13 +355,14 @@ function App() {
             <Route
               path="/history"
               element={
-                <RequireRole>
+                <RequireRole roles={["admin", "manager", "staff"]}>
                   <HistoryPage isLoggedIn={isLoggedIn} />
                 </RequireRole>
               }
             />
 
           </Routes>
+
         </div>
       </div>
     </>

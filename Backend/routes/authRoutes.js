@@ -2,11 +2,13 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Staff = require("../models/Staff");
+const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 const router = express.Router();
 
 /* ======================
-   ADMIN SIGNUP ONLY
+   ADMIN SIGNUP
 ====================== */
 router.post("/signup", async (req, res) => {
   try {
@@ -24,7 +26,6 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    // 🔒 FORCE ADMIN ROLE
     const admin = await User.create({
       name,
       email,
@@ -33,13 +34,16 @@ router.post("/signup", async (req, res) => {
     });
 
     const token = jwt.sign(
-      { id: admin._id },
-      "mysecretkey",
+      {
+        id: admin._id,
+        role: "admin",
+        salonId: null
+      },
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({
-      message: "Admin account created",
       token,
       user: {
         id: admin._id,
@@ -50,51 +54,63 @@ router.post("/signup", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* ======================
-   LOGIN (ADMIN + STAFF)
+   LOGIN (ALL ROLES)
 ====================== */
 router.post("/login", async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user)
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password required" });
+
+    // 1️⃣ Check Admin (User)
+    let account = await User.findOne({ email });
+    let roleSource = "admin";
+
+    // 2️⃣ If not admin, check Staff (staff or manager)
+    if (!account) {
+      account = await Staff.findOne({ email });
+      roleSource = "staff";
+    }
+
+    if (!account)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.password);
+    const ok = await bcrypt.compare(password, account.password);
     if (!ok)
       return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
-      { id: user._id,
-        role: user.role,
-        salonId: user.salonId || null
-       },
-      "mysecretkey",
+      {
+        id: account._id,
+        role: account.role,
+        salonId: account.salonId || null,
+        adminId: account.adminId || null
+      },
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        salonId: user.salonId
+        id: account._id,
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        salonId: account.salonId || null
       }
     });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;

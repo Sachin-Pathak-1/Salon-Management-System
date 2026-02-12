@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
 export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,20 +27,17 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
     setError("");
 
     if (!formData.name || !formData.email || !formData.password) {
-      return setError("All fields are required");
+      return setError("All fields required");
     }
 
     if (formData.password !== formData.confirmPassword) {
       return setError("Passwords do not match");
     }
 
-    if (formData.password.length < 8) {
-      return setError("Password must be at least 8 characters");
-    }
-
     setLoading(true);
 
     try {
+
       const res = await axios.post(
         "http://localhost:5000/api/auth/signup",
         {
@@ -49,25 +47,12 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
         }
       );
 
-      const token = res.data.token;
+      const { token, user } = res.data;
 
-      // ✅ SAVE TOKEN
+      // ✅ Save ONE token only
       localStorage.setItem("token", token);
-
-      // ✅ FETCH PROFILE
-      const profileRes = await axios.get(
-        "http://localhost:5000/api/user/profile",
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      const user = profileRes.data;
-
-      // ✅ SAVE USER (THIS WAS MISSING)
       localStorage.setItem("currentUser", JSON.stringify(user));
 
-      // ✅ UPDATE STATE
       setCurrentUser(user);
       setIsLoggedIn(true);
 
@@ -82,7 +67,6 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-6">
-
       <div className="w-full max-w-md bg-[var(--gray-100)]
                       border border-[var(--border-light)]
                       rounded-2xl shadow-xl p-8">
@@ -144,7 +128,6 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
               Login
             </Link>
           </p>
-
         </form>
       </div>
     </div>
