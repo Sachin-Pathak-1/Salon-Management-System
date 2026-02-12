@@ -4,14 +4,14 @@ const Staff = require("../models/Staff");
 const Service = require("../models/Service");
 const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
-const admin = require("../middleware/admin");
 
 const router = express.Router();
 
 /* ============================
    CREATE APPOINTMENT
 ============================ */
-router.post("/create", auth, admin, async (req, res) => {
+router.post("/create", auth(["admin"]), async (req, res) => {
+  const adminId = req.user.id; // Extract adminId from authenticated user
   try {
     const {
       customerName,
@@ -29,8 +29,15 @@ router.post("/create", auth, admin, async (req, res) => {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Verify salon belongs to admin
-    const salon = await Salon.findOne({ _id: salonId, adminId: req.userId });
+    /* ============================
+       VALIDATE SALON
+    ============================ */
+
+    const salon = await Salon.findOne({
+      _id: salonId,
+      adminId: req.user.id
+    });
+
     if (!salon) {
       return res.status(404).json({ message: "Salon not found" });
     }
@@ -64,8 +71,9 @@ router.post("/create", auth, admin, async (req, res) => {
       salonId,
       staffId,
       serviceId,
-      adminId: req.userId,
-      totalPrice: parseFloat(price)
+      adminId: req.user.id,
+      totalPrice: price,
+      status: "pending"
     });
 
     res.status(201).json({
@@ -86,9 +94,9 @@ router.post("/create", auth, admin, async (req, res) => {
 /* ============================
    GET APPOINTMENTS
 ============================ */
-router.get("/", auth, async (req, res) => {
+router.get("/", auth(), async (req, res) => {
   try {
-    const query = { adminId: req.userId };
+    const query = { adminId: req.user.id };
 
     if (req.query.salonId) query.salonId = req.query.salonId;
     if (req.query.staffId) query.staffId = req.query.staffId;
@@ -111,7 +119,7 @@ router.get("/", auth, async (req, res) => {
 /* ============================
    UPDATE APPOINTMENT STATUS
 ============================ */
-router.put("/:id/status", auth, admin, async (req, res) => {
+router.put("/:id/status", auth(["admin"]), async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -120,7 +128,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
     }
 
     const appointment = await Appointment.findOneAndUpdate(
-      { _id: req.params.id, adminId: req.userId },
+      { _id: req.params.id, adminId: req.user.id },
       { status },
       { new: true }
     ).populate([
@@ -144,11 +152,11 @@ router.put("/:id/status", auth, admin, async (req, res) => {
 /* ============================
    DELETE APPOINTMENT
 ============================ */
-router.delete("/:id", auth, admin, async (req, res) => {
+router.delete("/:id", auth(["admin"]), async (req, res) => {
   try {
     const appointment = await Appointment.findOneAndDelete({
       _id: req.params.id,
-      adminId: req.userId
+      adminId: req.user.id
     });
 
     if (!appointment) {

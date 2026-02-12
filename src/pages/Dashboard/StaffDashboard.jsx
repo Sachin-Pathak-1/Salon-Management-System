@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 const API = "http://localhost:5000/api/dashboard";
 
 export function StaffDashboard() {
+
   const [stats, setStats] = useState({
     todayAppointments: 0,
     completed: 0,
@@ -19,49 +20,48 @@ export function StaffDashboard() {
   }, []);
 
   const loadDashboard = async () => {
-  try {
-    const token = localStorage.getItem("staffToken"); // ✅ FIXED
+    try {
 
-    if (!token) {
-      throw new Error("No staff token found");
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("No token found");
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const [statsRes, popularRes, activityRes] = await Promise.all([
+        fetch(`${API}/staff-stats`, { headers }),
+        fetch(`${API}/popular-services`, { headers }),
+        fetch(`${API}/recent-activity`, { headers }),
+      ]);
+
+      if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {
+        throw new Error("Unauthorized or API error");
+      }
+
+      const statsData = await statsRes.json();
+      const popularData = await popularRes.json();
+      const activityData = await activityRes.json();
+
+      setStats({
+        todayAppointments: statsData.todayAppointments ?? 0,
+        completed: statsData.completed ?? 0,
+        pending: statsData.pending ?? 0,
+        totalServices: statsData.totalServices ?? 0,
+      });
+
+      setPopularServices(Array.isArray(popularData) ? popularData : []);
+      setRecentActivity(Array.isArray(activityData) ? activityData : []);
+
+    } catch (err) {
+      console.error("Dashboard load failed:", err);
+    } finally {
+      setLoading(false);
     }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    const [statsRes, popularRes, activityRes] = await Promise.all([
-      fetch(`${API}/staff-stats`, { headers }),
-      fetch(`${API}/popular-services`, { headers }),
-      fetch(`${API}/recent-activity`, { headers }),
-    ]);
-
-    if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {
-      throw new Error("Unauthorized or API error");
-    }
-
-    const statsData = await statsRes.json();
-    const popularData = await popularRes.json();
-    const activityData = await activityRes.json();
-
-    setStats({
-      todayAppointments: statsData.todayAppointments ?? 0,
-      completed: statsData.completed ?? 0,
-      pending: statsData.pending ?? 0,
-      totalServices: statsData.totalServices ?? 0,
-    });
-
-    setPopularServices(Array.isArray(popularData) ? popularData : []);
-    setRecentActivity(Array.isArray(activityData) ? activityData : []);
-
-  } catch (err) {
-    console.error("Dashboard load failed:", err);
-    setPopularServices([]);
-    setRecentActivity([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -83,7 +83,6 @@ export function StaffDashboard() {
           </p>
         </div>
 
-        {/* STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard title="Today's Appointments" value={stats.todayAppointments} icon="📅" />
           <StatCard title="Completed Services" value={stats.completed} icon="✅" />
@@ -91,55 +90,34 @@ export function StaffDashboard() {
           <StatCard title="Total Services" value={stats.totalServices} icon="💼" />
         </div>
 
-        {/* TABLES */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* POPULAR SERVICES */}
-          <div className="bg-white p-8 rounded-lg border border-[var(--border-light)] shadow-md">
-            <h2 className="text-xl font-semibold mb-4 text-[var(--text)]">Popular Services</h2>
-
-            {popularServices.length === 0 ? (
-              <p className="text-sm text-center text-[var(--gray-700)]">
-                No data available
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {popularServices.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center bg-[var(--gray-50)] p-3 rounded-md border border-[var(--border-light)]"
-                  >
-                    <span className="font-medium text-[var(--text)]">{s.name}</span>
-                    <span className="bg-[var(--primary)] text-white px-2 py-1 rounded-full text-xs font-bold">{s.count}</span>
-                  </div>
-                ))}
-              </div>
+          <DashboardTable
+            title="Popular Services"
+            data={popularServices}
+            emptyText="No data available"
+            render={(item) => (
+              <>
+                <span>{item.name}</span>
+                <span>{item.count}</span>
+              </>
             )}
-          </div>
+          />
 
-          {/* RECENT ACTIVITY */}
-          <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
-            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-
-            {recentActivity.length === 0 ? (
-              <p className="text-sm text-center text-[var(--gray-700)]">
-                No recent activity
-              </p>
-            ) : (
-              recentActivity.map((a, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between border-t border-[var(--border-light)] py-2 text-sm"
-                >
-                  <div>
-                    <div className="font-semibold">{a.customer}</div>
-                    <small className="text-gray-400">{a.action}</small>
-                  </div>
-                  <span>{a.time}</span>
+          <DashboardTable
+            title="Recent Activity"
+            data={recentActivity}
+            emptyText="No recent activity"
+            render={(item) => (
+              <>
+                <div>
+                  <div className="font-semibold">{item.customer}</div>
+                  <small className="text-gray-400">{item.action}</small>
                 </div>
-              ))
+                <span>{item.time}</span>
+              </>
             )}
-          </div>
+          />
 
         </div>
       </div>
@@ -147,14 +125,35 @@ export function StaffDashboard() {
   );
 }
 
-/* COMPONENTS */
-
-function StatCard({ title, value, icon }) {
+function StatCard({ title, value }) {
   return (
     <div className="bg-white border border-[var(--border-light)] rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow">
       <div className="text-4xl mb-2">{icon}</div>
       <p className="text-sm text-[var(--gray-700)]">{title}</p>
       <h2 className="text-3xl font-bold text-[var(--primary)]">{value}</h2>
+    </div>
+  );
+}
+
+function DashboardTable({ title, data, emptyText, render }) {
+  return (
+    <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
+      <h2 className="text-xl font-semibold mb-4">{title}</h2>
+
+      {data.length === 0 ? (
+        <p className="text-sm text-center text-[var(--gray-700)]">
+          {emptyText}
+        </p>
+      ) : (
+        data.map((item, i) => (
+          <div
+            key={i}
+            className="flex justify-between border-t border-[var(--border-light)] py-2 text-sm"
+          >
+            {render(item)}
+          </div>
+        ))
+      )}
     </div>
   );
 }

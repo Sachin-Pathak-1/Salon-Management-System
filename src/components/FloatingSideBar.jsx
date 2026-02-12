@@ -38,6 +38,8 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Dashboard") && <Item to={dashboardLink} icon="🏠" label="Dashboard" open={open} />}
         {hasAccess("Services") && <Item to="/services" icon="🛠️" label="Services" open={open} />}
         {hasAccess("Appointments") && <Item to="/appointments" icon="📅" label="Appointments" open={open} />}
+        {hasAccess("Attendance") && <Item to="/attendance" icon="✅" label="Attendance" open={open} />}
+       
 
         {hasAccess("Clients") && <Item to="/customers" icon="👥" label="Clients" open={open} />}
         {hasAccess("Staff") && <Item to="/staff" icon="👥" label="Staff" open={open} />}

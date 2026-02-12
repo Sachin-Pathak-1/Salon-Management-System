@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const STAFF_API = "http://localhost:5000/api/staff";
 const SALON_API = "http://localhost:5000/api/salons/get";
+const SELECTED_SALON_KEY = "selectedSalonId";
 
 export default function Staff() {
 
@@ -45,11 +46,7 @@ export default function Staff() {
   /* ================= HELPERS ================= */
 
   const authHeader = () => ({
-    Authorization: `Bearer ${
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("staffToken") ||
-      localStorage.getItem("token")
-    }`
+    Authorization: `Bearer ${localStorage.getItem("token")}`
   });
 
   const showToast = (msg) => {
@@ -64,7 +61,17 @@ export default function Staff() {
     const data = await res.json();
     const list = Array.isArray(data) ? data : [];
     setSalons(list);
-    if (list.length && !activeSalon) setActiveSalon(list[0]._id);
+    if (!list.length) {
+      setActiveSalon("");
+      localStorage.removeItem(SELECTED_SALON_KEY);
+      return;
+    }
+
+    const storedSalonId = localStorage.getItem(SELECTED_SALON_KEY);
+    const hasStoredSalon = list.some((s) => s._id === storedSalonId);
+    const nextSalonId = hasStoredSalon ? storedSalonId : list[0]._id;
+    setActiveSalon(nextSalonId);
+    localStorage.setItem(SELECTED_SALON_KEY, nextSalonId);
   };
 
   /* ================= LOAD STAFF ================= */
@@ -85,6 +92,11 @@ export default function Staff() {
 
   useEffect(() => { fetchSalons(); }, []);
   useEffect(() => { if (activeSalon) fetchStaff(activeSalon); }, [activeSalon]);
+  useEffect(() => {
+    if (activeSalon) {
+      localStorage.setItem(SELECTED_SALON_KEY, activeSalon);
+    }
+  }, [activeSalon]);
 
   /* ================= FORM ================= */
 

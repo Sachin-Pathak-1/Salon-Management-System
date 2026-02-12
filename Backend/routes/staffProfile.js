@@ -4,14 +4,14 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-router.get("/me", auth, async (req, res) => {
+router.get("/me", auth(), async (req, res) => {
   try {
 
-    if (req.userRole !== "staff") {
+    if (req.user.role !== "staff") {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const staff = await Staff.findById(req.userId).select("-password");
+    const staff = await Staff.findById(req.user.id).select("-password");
 
     res.json(staff);
 

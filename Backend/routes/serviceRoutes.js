@@ -1,4 +1,3 @@
-const admin = require("../middleware/admin");
 const auth = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
@@ -11,10 +10,10 @@ const {
   reorderServices
 } = require("../controllers/serviceController");
 
-router.get("/", auth, getServices);
-router.post("/", auth, admin, addService);
-router.put("/reorder", auth, admin, reorderServices);
-router.put("/:id", auth, admin, updateService);
-router.delete("/:id", auth, admin, deleteService);
+router.get("/", auth(), getServices);
+router.post("/", auth(["admin"]), addService);
+router.put("/reorder", auth(["admin"]), reorderServices);
+router.put("/:id", auth(["admin"]), updateService);
+router.delete("/:id", auth(["admin"]), deleteService);
 
 module.exports = router;

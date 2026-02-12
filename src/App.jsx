@@ -31,12 +31,9 @@ import PaymentHistory from "./pages/BillingHistory/PaymentHistory.jsx";
 import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
 import { ViewPlan } from "./pages/Plans/Plans.jsx";
+import Attendance from "./pages/Attendance/Attendance.jsx";
 
 function App() {
-
-  /* ===============================
-     HOOKS (ORDER SAFE)
-  =============================== */
 
   const location = useLocation();
 
@@ -45,50 +42,24 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
 
   /* ===============================
-     FETCH STAFF PROFILE
-  =============================== */
-
-  const fetchStaffProfile = async () => {
-    const token = localStorage.getItem("staffToken");
-    if (!token || !currentUser || currentUser.role !== "staff") return;
-
-    try {
-      const res = await fetch("http://localhost:5000/api/staffProfile/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const updatedUser = { ...data, role: "staff" };
-      setCurrentUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    } catch (err) {
-      console.error("Failed to fetch staff profile", err);
-    }
-  };
-
-  /* ===============================
      RESTORE AUTH ON REFRESH
   =============================== */
 
   useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    const staffToken = localStorage.getItem("staffToken");
 
-    const token = adminToken || staffToken;
+    const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("currentUser");
 
     if (token && storedUser) {
       setIsLoggedIn(true);
-      const user = JSON.parse(storedUser);
-      setCurrentUser(user);
-      if (user.role === "staff") {
-        fetchStaffProfile();
-      }
+      setCurrentUser(JSON.parse(storedUser));
     } else {
       setIsLoggedIn(false);
       setCurrentUser(null);
     }
 
     setAuthReady(true);
+
   }, []);
 
   if (!authReady) return null;
@@ -111,6 +82,7 @@ function App() {
     "/plans",
     "/support",
     "/staff",
+    "/attendance",
     "/settings"
   ];
 
@@ -122,18 +94,24 @@ function App() {
      ROLE HELPERS
   =============================== */
 
-  const resolveDashboardPath = (user) =>
-    user?.role === "admin" ? "/dashboard" : "/staff-dashboard";
+  const resolveDashboardPath = (user) => {
+    if (!user) return "/login";
+
+    if (user.role === "admin") return "/dashboard";
+    if (user.role === "manager") return "/manager-dashboard";
+    return "/staff-dashboard";
+  };
 
   const dashboardLink = resolveDashboardPath(currentUser);
 
   const RequireRole = ({ role, children }) => {
+
     if (!isLoggedIn || !currentUser) {
       return <Navigate to="/login" replace />;
     }
 
     if (role && currentUser.role !== role) {
-      return <Navigate to={resolveDashboardPath(currentUser)} replace />;
+      return <Navigate to={dashboardLink} replace />;
     }
 
     return children;
@@ -215,7 +193,7 @@ function App() {
               }
             />
 
-            {/* SYSTEM */}
+            {/* SYSTEM ROUTES */}
             <Route
               path="/services"
               element={
@@ -311,6 +289,15 @@ function App() {
               element={
                 <RequireRole role="admin">
                   <StaffManage />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/attendance"
+              element={
+                <RequireRole role="admin">
+                  <Attendance />
                 </RequireRole>
               }
             />

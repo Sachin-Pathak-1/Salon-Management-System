@@ -1,7 +1,7 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
 
@@ -40,6 +40,7 @@ app.use("/api/salons", require("./routes/salonRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/plans", require("./routes/plansRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/api/attendance", require("./routes/attendanceRoutes"));
 
 // ---------------------
 // SERVER START
