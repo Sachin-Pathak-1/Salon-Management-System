@@ -125,7 +125,7 @@ export function StaffDashboard() {
   );
 }
 
-function StatCard({ title, value }) {
+function StatCard({ title, value, icon }) {
   return (
     <div className="bg-white border border-[var(--border-light)] rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow">
       <div className="text-4xl mb-2">{icon}</div>

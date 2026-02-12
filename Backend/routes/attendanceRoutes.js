@@ -7,11 +7,11 @@ const {
   getAttendanceSummary,
   deleteAttendance
 } = require("../controllers/attendanceController");
-const { authMiddleware } = require("../middleware/auth");
+const authMiddleware = require("../middleware/auth");
 const adminMiddleware = require("../middleware/admin");
 
 // Make sure all routes are protected
-router.use(authMiddleware);
+router.use(authMiddleware());
 
 // Create or update attendance record
 router.post("/", adminMiddleware, createOrUpdateAttendance);

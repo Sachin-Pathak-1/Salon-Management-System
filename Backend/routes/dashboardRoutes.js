@@ -5,30 +5,29 @@ const auth = require("../middleware/auth");
 
 /* STAFF STATS */
 router.get("/staff-stats", auth(["staff", "manager"]), async (req, res) => {
-  res.json({ message: "Staff dashboard stats retrieved successfully" });
   try {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
     const todayAppointments = await Appointment.countDocuments({
-      staffId: req.staff.id,
+      staffId: req.user.id,
       date: { $gte: startOfDay, $lt: endOfDay }
     });
 
     const completed = await Appointment.countDocuments({
-      staffId: req.staff.id,
+      staffId: req.user.id,
       status: 'completed',
       date: { $gte: startOfDay, $lt: endOfDay }
     });
 
     const pending = await Appointment.countDocuments({
-      staffId: req.staff.id,
+      staffId: req.user.id,
       status: { $in: ['pending', 'confirmed'] },
       date: { $gte: startOfDay, $lt: endOfDay }
     });
 
-    const totalServices = await Appointment.countDocuments({ staffId: req.staff.id });
+    const totalServices = await Appointment.countDocuments({ staffId: req.user.id });
 
     res.json({
       todayAppointments,
@@ -45,7 +44,7 @@ router.get("/staff-stats", auth(["staff", "manager"]), async (req, res) => {
 router.get("/popular-services", auth(["staff"]), async (req, res) => {
   try {
     const popularServices = await Appointment.aggregate([
-      { $match: { staffId: req.staff.id } },
+      { $match: { staffId: req.user.id } },
       { $group: { _id: "$serviceId", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 5 },

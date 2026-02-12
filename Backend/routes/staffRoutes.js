@@ -22,7 +22,7 @@ router.post("/add", auth(["admin"]), async (req, res) => {
 
     // One manager per salon
     if (isManager === true) {
-      await Staff.updateMany({ salonId }, { isManager: false });
+      await Staff.updateMany({ salonId }, { role: "staff" });
     }
 
     const last = await Staff.find({ salonId })
@@ -37,7 +37,8 @@ router.post("/add", auth(["admin"]), async (req, res) => {
       ...req.body,
       password: hashed,
       adminId: req.user.id,
-      order: nextOrder
+      order: nextOrder,
+      role: isManager ? "manager" : "staff"
     });
 
     // push into salon
@@ -118,7 +119,7 @@ router.delete("/:id", auth(["admin"]), async (req, res) => {
 
     const staff = await Staff.findById(req.params.id);
 
-    if (staff?.isManager) {
+    if (staff?.role === "manager") {
       return res.status(400).json({ message: "Manager cannot be deleted" });
     }
 
