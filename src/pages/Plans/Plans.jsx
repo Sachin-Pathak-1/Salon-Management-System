@@ -160,7 +160,7 @@ export function ViewPlan() {
     } catch (err) {
       setSaveMessage(
         err?.response?.data?.message ||
-          "Failed to save plan selection."
+        "Failed to save plan selection."
       );
     }
   };
@@ -174,7 +174,8 @@ export function ViewPlan() {
       <div className="max-w-6xl mx-auto mb-10">
         <button
           onClick={() => navigate(-1)}
-          className="text-(--primary) font-medium mb-4 hover:underline"
+          className="font-medium mb-4 hover:underline"
+          style={{ color: 'var(--primary)' }}
         >
           ← Back
         </button>
@@ -182,7 +183,7 @@ export function ViewPlan() {
         <h1 className="text-4xl font-serif font-bold text-text">
           Salon Membership Plans
         </h1>
-        <p className="text-(--gray-700) mt-2 max-w-xl">
+        <p className="mt-2 max-w-xl" style={{ color: 'var(--gray-700)' }}>
           Choose a plan that suits your business needs.
         </p>
       </div>
@@ -201,7 +202,8 @@ export function ViewPlan() {
             onChange={(e) =>
               setBranchCount(Math.max(1, Number(e.target.value) || 1))
             }
-            className="w-36 rounded-lg border border-(--border-light) bg-background px-3 py-2 text-text"
+            className="w-36 rounded-lg border bg-background px-3 py-2 text-text"
+            style={{ borderColor: 'var(--border-light)' }}
           />
 
           {selectedPlan && (
@@ -241,23 +243,23 @@ export function ViewPlan() {
           return (
             <div
               key={plan._id}
-              className={`rounded-2xl p-6 border bg-background
-                border-(--border-light) shadow-md
+              className={`rounded-2xl p-6 border bg-background shadow-md
                 transition-all duration-300
                 hover:scale-105 hover:shadow-xl
-                ${isCurrent ? "ring-2 ring-(--primary)" : ""}`}
+                ${isCurrent ? "ring-2" : ""}`}
+              style={{ borderColor: isCurrent ? 'var(--primary)' : 'var(--border-light)' }}
             >
               <h2 className="text-2xl font-serif font-bold text-text">
                 {plan.name}
               </h2>
 
-              <p className="text-(--gray-700) mt-1">
+              <p className="mt-1" style={{ color: 'var(--gray-700)' }}>
                 {plan.description}
               </p>
 
-              <div className="mt-4 text-3xl font-bold text-(--primary)">
+              <div className="mt-4 text-3xl font-bold" style={{ color: 'var(--primary)' }}>
                 {formatCurrency(Number(plan.price) || 0)}
-                <span className="block text-sm font-medium text-(--gray-700)">
+                <span className="block text-sm font-medium" style={{ color: 'var(--gray-700)' }}>
                   per salon
                 </span>
               </div>
@@ -267,7 +269,7 @@ export function ViewPlan() {
                   .map((feature, i) => (
                     <li key={i}
                       className="flex items-center gap-2 text-text">
-                      <span className="h-2 w-2 rounded-full bg-(--primary)"></span>
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--primary)' }}></span>
                       {feature}
                     </li>
                   ))}
@@ -276,18 +278,15 @@ export function ViewPlan() {
               <button
                 onClick={() => handleSelectPlan(plan)}
                 disabled={!isBranchCountValid(plan)}
-                className={`mt-8 w-full rounded-xl py-3 font-semibold transition
-                  ${
-                    isCurrent
-                      ? "bg-(--primary) text-white"
-                      : "border border-(--primary) text-(--primary) hover:bg-(--background)"
+                className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isCurrent ? "text-white" : "border"
                   }`}
+                style={isCurrent ? { backgroundColor: 'var(--primary)' } : { borderColor: 'var(--primary)', color: 'var(--primary)' }}
               >
                 {isCurrent
                   ? "Selected"
                   : isUpgrade
-                  ? "Upgrade Plan"
-                  : "Switch Plan"}
+                    ? "Upgrade Plan"
+                    : "Switch Plan"}
               </button>
 
             </div>

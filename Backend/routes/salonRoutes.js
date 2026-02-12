@@ -33,9 +33,15 @@ router.post("/add", auth(["admin"]), async (req, res) => {
       isPrimary
     } = req.body;
 
-    if (!name || !address || !contact) {
+    const missing = [];
+    if (!name) missing.push("Name");
+    if (!address) missing.push("Address");
+    if (!contact) missing.push("Contact");
+
+    if (missing.length > 0) {
+      console.log("Missing fields:", missing);
       return res.status(400).json({
-        message: "Name, address and contact required"
+        message: `${missing.join(", ")} required`
       });
     }
 
@@ -114,27 +120,27 @@ router.get("/get", auth(), async (req, res) => {
     console.log("Fetching salons for userId:", req.user.id, "role:", req.user.role);
 
     if (req.user.role === "admin") {
-    let salons = await Salon
-      .find({ adminId: req.user.id })
-      .populate("staff", "-password")
-      .sort({ isPrimary: -1, order: 1 });
+      let salons = await Salon
+        .find({ adminId: req.user.id })
+        .populate("staff", "-password")
+        .sort({ isPrimary: -1, order: 1 });
 
-    console.log("Salons found for admin:", salons.length);
+      console.log("Salons found for admin:", salons.length);
 
-    // Auto close on holidays
-    for (let salon of salons) {
-      if (isTodayHoliday(salon.holidays)) {
-        if (salon.status !== "temporarily-closed") {
-          salon.status = "temporarily-closed";
-          await salon.save();
+      // Auto close on holidays
+      for (let salon of salons) {
+        if (isTodayHoliday(salon.holidays)) {
+          if (salon.status !== "temporarily-closed") {
+            salon.status = "temporarily-closed";
+            await salon.save();
+          }
         }
       }
+
+      return res.json(salons);
     }
 
-    return res.json(salons);
-    }
-
-    if (req.user.role === "staff") {
+    if (req.user.role === "staff" || req.user.role === "manager") {
       const salon = await Salon.findOne({ _id: req.user.salonId })
         .populate("staff", "-password");
       if (!salon) return res.json([]);

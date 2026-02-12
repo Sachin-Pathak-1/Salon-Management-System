@@ -102,9 +102,9 @@ export default function PaymentHistory() {
   ]);
 
   return (
-    <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
+    <div className="min-h-screen w-full px-6 md:px-10 py-10" style={{ backgroundColor: 'var(--background)' }}>
 
-      <div className="max-w-7xl mx-auto text-(--text)">
+      <div className="max-w-7xl mx-auto" style={{ color: 'var(--text)' }}>
 
         {/* HEADER */}
         <div className="mb-10">
@@ -118,10 +118,8 @@ export default function PaymentHistory() {
 
         {/* TABLE CARD */}
         <div
-          className="bg-(--gray-100)
-                     border border-(--border-light)
-                     rounded-xl
-                     p-6"
+          className="border rounded-xl p-6"
+          style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}
         >
 
           {/* TABLE */}
@@ -130,7 +128,7 @@ export default function PaymentHistory() {
             <table className="w-full text-sm min-w-56.25">
 
               <thead>
-                <tr className="border-b border-(--border-light) opacity-70">
+                <tr className="border-b opacity-70" style={{ borderColor: 'var(--border-light)' }}>
                   <th className="text-left p-3">ID</th>
                   <th className="text-left p-3">Bill For</th>
                   <th className="text-left p-3">Issue Date</th>
@@ -154,8 +152,8 @@ export default function PaymentHistory() {
 
                   <tr
                     key={p.id}
-                    className="border-b border-(--border-light)
-                               hover:bg-black/5 transition"
+                    className="border-b hover:bg-black/5 transition"
+                    style={{ borderColor: 'var(--border-light)' }}
                   >
 
                     <td className="p-3">#{p.id}</td>
@@ -171,10 +169,9 @@ export default function PaymentHistory() {
                     <td className="p-3">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium
-                          ${
-                            p.status === "Paid"
-                              ? "bg-emerald-500/20 text-emerald-500"
-                              : p.status === "Due"
+                          ${p.status === "Paid"
+                            ? "bg-emerald-500/20 text-emerald-500"
+                            : p.status === "Due"
                               ? "bg-amber-500/20 text-amber-500"
                               : "bg-red-500/20 text-red-500"
                           }`}

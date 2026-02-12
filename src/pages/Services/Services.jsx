@@ -102,8 +102,8 @@ export function Services({ activeSalon }) {
 
     try {
       const method = editCategoryId ? "PUT" : "POST";
-      const url = editCategoryId 
-        ? `${CATEGORIES_API}/${editCategoryId}` 
+      const url = editCategoryId
+        ? `${CATEGORIES_API}/${editCategoryId}`
         : CATEGORIES_API;
 
       await safeFetch(url, {
@@ -117,8 +117,8 @@ export function Services({ activeSalon }) {
         { headers: authHeader() }
       );
       setCategories(refreshed);
-      showToast(editCategoryId ? "Category updated" : "Category added");
       closeCategoryModal();
+      showToast(editCategoryId ? "Category updated" : "Category added");
     } catch (err) {
       showToast(err.message || "Failed to save category");
     }
@@ -139,7 +139,14 @@ export function Services({ activeSalon }) {
         method: "DELETE",
         headers: authHeader()
       });
-      setCategories(prev => prev.filter(c => c._id !== id));
+
+      // Auto-refresh from server
+      const refreshed = await safeFetch(
+        `${CATEGORIES_API}?salonId=${activeSalon}`,
+        { headers: authHeader() }
+      );
+      setCategories(refreshed);
+
       if (activeCategory === id) setActiveCategory("All");
       showToast("Category deleted");
     } catch (err) {
@@ -174,8 +181,8 @@ export function Services({ activeSalon }) {
 
     try {
       const method = editServiceId ? "PUT" : "POST";
-      const url = editServiceId 
-        ? `${SERVICES_API}/${editServiceId}` 
+      const url = editServiceId
+        ? `${SERVICES_API}/${editServiceId}`
         : SERVICES_API;
 
       await safeFetch(url, {
@@ -194,8 +201,8 @@ export function Services({ activeSalon }) {
         { headers: authHeader() }
       );
       setServices(refreshed);
-      showToast(editServiceId ? "Service updated" : "Service added");
       closeServiceModal();
+      showToast(editServiceId ? "Service updated" : "Service added");
     } catch (err) {
       showToast(err.message || "Failed to save service");
     }
@@ -216,7 +223,14 @@ export function Services({ activeSalon }) {
         method: "DELETE",
         headers: authHeader()
       });
-      setServices(prev => prev.filter(s => s._id !== id));
+
+      // Auto-refresh from server
+      const refreshed = await safeFetch(
+        `${SERVICES_API}?salonId=${activeSalon}`,
+        { headers: authHeader() }
+      );
+      setServices(refreshed);
+
       showToast("Service deleted");
     } catch (err) {
       showToast("Failed to delete service");
@@ -263,9 +277,9 @@ export function Services({ activeSalon }) {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen w-full px-4 md:px-10 py-10" style={{backgroundColor: 'var(--background)'}}>
+    <div className="min-h-screen w-full px-4 md:px-10 py-10" style={{ backgroundColor: 'var(--background)' }}>
       {toast && (
-        <div className="fixed top-5 right-5 px-5 py-3 rounded-xl shadow-lg z-50 animate-fade-in border" style={{backgroundColor: 'var(--gray-900)', color: 'white', borderColor: 'var(--border-light)'}}>
+        <div className="fixed top-5 right-5 px-5 py-3 rounded-xl shadow-lg z-50 animate-fade-in border" style={{ backgroundColor: 'var(--gray-900)', color: 'white', borderColor: 'var(--border-light)' }}>
           <div className="flex items-center gap-2">
             <span className="text-lg">✓</span>
             <span className="font-medium">{toast}</span>
@@ -273,25 +287,25 @@ export function Services({ activeSalon }) {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto" style={{color: 'var(--text)'}}>
+      <div className="max-w-7xl mx-auto" style={{ color: 'var(--text)' }}>
         {/* HEADER */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold" style={{color: 'var(--text)'}}>
+          <h1 className="text-3xl md:text-4xl font-bold" style={{ color: 'var(--text)' }}>
             Services & Categories
           </h1>
-          <p className="text-sm mt-2" style={{opacity: 0.7}}>
+          <p className="text-sm mt-2" style={{ opacity: 0.7 }}>
             <span className="font-semibold">{filteredServices.length}</span> Services • <span className="font-semibold">{categories.length}</span> Categories
           </p>
         </div>
 
         {/* MAIN CONTAINER */}
-        <div className="rounded-2xl p-6 md:p-8 shadow-sm border" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}}>
+        <div className="rounded-2xl p-6 md:p-8 shadow-sm border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
 
           {/* TOOLS */}
           <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
             <div className="flex gap-3">
-              <select 
-                value={activeCategory} 
+              <select
+                value={activeCategory}
                 onChange={(e) => setActiveCategory(e.target.value)}
                 className="input-themed text-sm px-4 py-2.5 rounded-xl">
                 <option value="All">All Categories</option>
@@ -314,14 +328,14 @@ export function Services({ activeSalon }) {
                   <button
                     onClick={() => setShowCategoryModal(true)}
                     className="text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all duration-200"
-                    style={{backgroundColor: 'var(--secondary)'}}
+                    style={{ backgroundColor: 'var(--secondary)' }}
                   >
                     + Category
                   </button>
                   <button
                     onClick={() => setShowServiceModal(true)}
                     className="text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all duration-200"
-                    style={{backgroundColor: 'var(--primary)'}}
+                    style={{ backgroundColor: 'var(--primary)' }}
                   >
                     + Service
                   </button>
@@ -331,17 +345,17 @@ export function Services({ activeSalon }) {
           </div>
 
           {/* TABLE */}
-          <div className="overflow-x-auto rounded-xl border" style={{borderColor: 'var(--border-light)'}}>
+          <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-light)' }}>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b" style={{backgroundColor: 'var(--background)', borderColor: 'var(--border-light)'}}>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Service</th>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Category</th>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Price</th>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Duration</th>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Status</th>
-                  <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Staff</th>
-                  {isAdmin && <th className="p-4 text-left font-semibold" style={{opacity: 0.7}}>Actions</th>}
+                <tr className="border-b" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Service</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Category</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Price</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Duration</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Status</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Staff</th>
+                  {isAdmin && <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Actions</th>}
                 </tr>
               </thead>
 
@@ -361,7 +375,7 @@ export function Services({ activeSalon }) {
                     >
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <span 
+                          <span
                             onClick={(e) => { e.stopPropagation(); toggleFeatured(s); }}
                             className={`text-xl cursor-pointer transition-transform hover:scale-125 ${isAdmin ? "" : "opacity-40 cursor-default"}`}
                             title={isAdmin ? "Toggle featured" : ""}
@@ -369,20 +383,20 @@ export function Services({ activeSalon }) {
                             {s.isFeatured ? "⭐" : "☆"}
                           </span>
                           <div>
-                            <div className="font-semibold" style={{color: 'var(--text)'}}>{s.name}</div>
-                            <small className="block mt-0.5" style={{opacity: 0.7}}>
+                            <div className="font-semibold" style={{ color: 'var(--text)' }}>{s.name}</div>
+                            <small className="block mt-0.5" style={{ opacity: 0.7 }}>
                               {s.description?.slice(0, 40)}{s.description?.length > 40 ? "..." : ""}
                             </small>
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{backgroundColor: 'var(--gray-100)'}}>
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'var(--gray-100)' }}>
                           {getCategoryIcon(s.categoryId?._id || s.categoryId)} {getCategoryName(s.categoryId?._id || s.categoryId)}
                         </span>
                       </td>
-                      <td className="p-4 font-semibold" style={{color: 'var(--success)'}}>₹{s.price}</td>
-                      <td className="p-4" style={{opacity: 0.7}}>{s.duration} mins</td>
+                      <td className="p-4 font-semibold" style={{ color: 'var(--success)' }}>₹{s.price}</td>
+                      <td className="p-4" style={{ opacity: 0.7 }}>{s.duration} mins</td>
                       <td className="p-4">
                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium capitalize`}
                           style={{
@@ -395,32 +409,32 @@ export function Services({ activeSalon }) {
                       <td className="p-4">
                         {s.assignedStaff?.length > 0 ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
-                            style={{backgroundColor: 'rgba(24, 146, 247, 0.1)', color: 'var(--primary)'}}>
+                            style={{ backgroundColor: 'rgba(24, 146, 247, 0.1)', color: 'var(--primary)' }}>
                             <span>👥</span> {s.assignedStaff.length}
                           </span>
                         ) : (
-                          <span style={{opacity: 0.4}}>—</span>
+                          <span style={{ opacity: 0.4 }}>—</span>
                         )}
                       </td>
                       {isAdmin && (
                         <td className="p-4">
                           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setEditServiceId(s._id);
-                                setServiceForm({ ...emptyService, ...s, categoryId: s.categoryId?._id || s.categoryId });
+                                setServiceForm({ ...emptyService, ...s, categoryId: s.categoryId?._id || s.categoryId, assignedStaff: (s.assignedStaff || []).map(st => typeof st === 'object' ? st._id : st) });
                                 setShowServiceModal(true);
                               }}
                               className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                              style={{backgroundColor: 'var(--primary)'}}
+                              style={{ backgroundColor: 'var(--primary)' }}
                             >
                               Edit
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDeleteService(s._id); }}
                               className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                              style={{backgroundColor: 'var(--danger)'}}
+                              style={{ backgroundColor: 'var(--danger)' }}
                             >
                               Delete
                             </button>
@@ -431,7 +445,7 @@ export function Services({ activeSalon }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 6} className="p-8 text-center" style={{opacity: 0.6}}>
+                    <td colSpan={isAdmin ? 7 : 6} className="p-8 text-center" style={{ opacity: 0.6 }}>
                       <div className="flex flex-col items-center gap-3">
                         <span className="text-4xl opacity-50">📋</span>
                         <span>No services found</span>
@@ -447,21 +461,21 @@ export function Services({ activeSalon }) {
 
         {/* CATEGORIES SECTION */}
         {isAdmin && (
-          <div className="mt-8 rounded-2xl p-6 md:p-8 shadow-sm border" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}}>
+          <div className="mt-8 rounded-2xl p-6 md:p-8 shadow-sm border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold" style={{color: 'var(--text)'}}>Categories Manager</h2>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Categories Manager</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map(c => (
-                <div 
+                <div
                   key={c._id}
                   className="p-5 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition-shadow"
-                  style={{backgroundColor: 'var(--background)', borderColor: 'var(--border-light)'}}
+                  style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}
                 >
                   <div className="flex-1">
-                    <div className="font-semibold text-lg" style={{color: 'var(--text)'}}>{c.icon} {c.name}</div>
-                    <small className="block mt-1" style={{opacity: 0.7}}>{c.description}</small>
+                    <div className="font-semibold text-lg" style={{ color: 'var(--text)' }}>{c.icon} {c.name}</div>
+                    <small className="block mt-1" style={{ opacity: 0.7 }}>{c.description}</small>
                     <div className={`inline-flex mt-2 px-2 py-1 rounded-full text-xs font-medium capitalize`}
                       style={{
                         backgroundColor: c.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'var(--gray-100)',
@@ -479,14 +493,14 @@ export function Services({ activeSalon }) {
                         setShowCategoryModal(true);
                       }}
                       className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                      style={{backgroundColor: 'var(--primary)'}}
+                      style={{ backgroundColor: 'var(--primary)' }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c._id); }}
                       className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                      style={{backgroundColor: 'var(--danger)'}}
+                      style={{ backgroundColor: 'var(--danger)' }}
                     >
                       Delete
                     </button>
@@ -501,21 +515,21 @@ export function Services({ activeSalon }) {
       {/* SERVICE DETAILS MODAL */}
       {selected && !showServiceModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelected(null)}>
-          <div className="border w-full max-w-xl rounded-2xl shadow-2xl" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}} onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-6 py-5 border-b" style={{borderColor: 'var(--border-light)'}}>
-              <h2 className="text-xl font-bold" style={{color: 'var(--text)'}}>Service Details</h2>
+          <div className="border w-full max-w-xl rounded-2xl shadow-2xl" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Service Details</h2>
             </div>
 
             <div className="p-6 space-y-5">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Name</label>
-                <div className="font-semibold text-lg mt-1" style={{color: 'var(--text)'}}>{selected.name}</div>
+                <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Name</label>
+                <div className="font-semibold text-lg mt-1" style={{ color: 'var(--text)' }}>{selected.name}</div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Category</label>
+                <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Category</label>
                 <div className="mt-1">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium" style={{backgroundColor: 'var(--background)'}}>
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium" style={{ backgroundColor: 'var(--background)' }}>
                     {getCategoryIcon(selected.categoryId?._id || selected.categoryId)} {getCategoryName(selected.categoryId?._id || selected.categoryId)}
                   </span>
                 </div>
@@ -523,22 +537,22 @@ export function Services({ activeSalon }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Price</label>
-                  <div className="font-bold text-xl mt-1" style={{color: 'var(--success)'}}>₹{selected.price}</div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Price</label>
+                  <div className="font-bold text-xl mt-1" style={{ color: 'var(--success)' }}>₹{selected.price}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Duration</label>
-                  <div className="font-semibold text-lg mt-1" style={{color: 'var(--text)'}}>{selected.duration} mins</div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Duration</label>
+                  <div className="font-semibold text-lg mt-1" style={{ color: 'var(--text)' }}>{selected.duration} mins</div>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Description</label>
-                <div className="text-sm mt-1" style={{opacity: 0.8}}>{selected.description || "—"}</div>
+                <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Description</label>
+                <div className="text-sm mt-1" style={{ opacity: 0.8 }}>{selected.description || "—"}</div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Status</label>
+                <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Status</label>
                 <div className="mt-1">
                   <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium capitalize`}
                     style={{
@@ -552,17 +566,17 @@ export function Services({ activeSalon }) {
 
               {selected.assignedStaff?.length > 0 && (
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{opacity: 0.7}}>Assigned Staff</label>
-                  <div className="text-sm mt-1" style={{opacity: 0.8}}>{selected.assignedStaff.map(s => s.name || s).join(", ")}</div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Assigned Staff</label>
+                  <div className="text-sm mt-1" style={{ opacity: 0.8 }}>{selected.assignedStaff.map(s => s.name || s).join(", ")}</div>
                 </div>
               )}
 
               {isAdmin && (
-                <div className="flex justify-end gap-3 pt-4 border-t" style={{borderColor: 'var(--border-light)'}}>
+                <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
                   <button
                     onClick={(e) => { e.stopPropagation(); setSelected(null); }}
                     className="px-5 py-2.5 border-2 rounded-xl text-sm font-semibold transition-colors"
-                    style={{borderColor: 'var(--border-light)', backgroundColor: 'var(--background)'}}
+                    style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--background)'}
                   >
@@ -572,18 +586,18 @@ export function Services({ activeSalon }) {
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditServiceId(selected._id);
-                      setServiceForm({ ...emptyService, ...selected, categoryId: selected.categoryId?._id || selected.categoryId });
+                      setServiceForm({ ...emptyService, ...selected, categoryId: selected.categoryId?._id || selected.categoryId, assignedStaff: (selected.assignedStaff || []).map(st => typeof st === 'object' ? st._id : st) });
                       setShowServiceModal(true);
                     }}
                     className="text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
-                    style={{backgroundColor: 'var(--primary)'}}
+                    style={{ backgroundColor: 'var(--primary)' }}
                   >
                     Edit
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteService(selected._id); setSelected(null); }}
                     className="text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
-                    style={{backgroundColor: 'var(--danger)'}}
+                    style={{ backgroundColor: 'var(--danger)' }}
                   >
                     Delete
                   </button>
@@ -597,16 +611,16 @@ export function Services({ activeSalon }) {
       {/* CATEGORY MODAL */}
       {showCategoryModal && isAdmin && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={closeCategoryModal}>
-          <div className="border w-full max-w-xl rounded-2xl shadow-2xl" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}} onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-6 py-5 border-b" style={{borderColor: 'var(--border-light)'}}>
-              <h2 className="text-xl font-bold" style={{color: 'var(--text)'}}>
+          <div className="border w-full max-w-xl rounded-2xl shadow-2xl" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>
                 {editCategoryId ? "Edit Category" : "Add Category"}
               </h2>
             </div>
 
             <form onSubmit={handleCategorySubmit} className="grid gap-5 p-6">
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Category Name</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Category Name</label>
                 <input
                   name="name"
                   value={categoryForm.name}
@@ -618,7 +632,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Icon (emoji)</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Icon (emoji)</label>
                 <input
                   name="icon"
                   value={categoryForm.icon}
@@ -630,7 +644,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Description</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Description</label>
                 <textarea
                   name="description"
                   value={categoryForm.description}
@@ -642,7 +656,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Status</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Status</label>
                 <select
                   name="status"
                   value={categoryForm.status}
@@ -654,12 +668,12 @@ export function Services({ activeSalon }) {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t" style={{borderColor: 'var(--border-light)'}}>
+              <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); closeCategoryModal(); }}
                   className="px-5 py-2.5 border-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{borderColor: 'var(--border-light)', backgroundColor: 'var(--background)'}}
+                  style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--background)'}
                 >
@@ -670,7 +684,7 @@ export function Services({ activeSalon }) {
                   type="submit"
                   onClick={(e) => e.stopPropagation()}
                   className="text-white px-6 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold"
-                  style={{backgroundColor: 'var(--secondary)'}}
+                  style={{ backgroundColor: 'var(--secondary)' }}
                 >
                   Save Category
                 </button>
@@ -683,16 +697,16 @@ export function Services({ activeSalon }) {
       {/* SERVICE MODAL */}
       {showServiceModal && isAdmin && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={closeServiceModal}>
-          <div className="border w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}} onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-6 py-5 border-b sticky top-0 z-10" style={{backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)'}}>
-              <h2 className="text-xl font-bold" style={{color: 'var(--text)'}}>
+          <div className="w-full max-w-2xl flex flex-col max-h-[85vh] rounded-2xl shadow-2xl border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-6 py-5 border-b sticky top-0 z-10" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>
                 {editServiceId ? "Edit Service" : "Add Service"}
               </h2>
             </div>
 
-            <form onSubmit={handleServiceSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 p-6">
+            <form onSubmit={handleServiceSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 p-6 overflow-y-auto flex-1">
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Service Name</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Service Name</label>
                 <input
                   name="name"
                   value={serviceForm.name}
@@ -704,7 +718,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Category</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Category</label>
                 <select
                   name="categoryId"
                   value={serviceForm.categoryId}
@@ -722,7 +736,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Price (₹)</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Price (₹)</label>
                 <input
                   name="price"
                   type="number"
@@ -735,7 +749,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Duration (mins)</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Duration (mins)</label>
                 <input
                   name="duration"
                   type="number"
@@ -748,7 +762,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Description</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Description</label>
                 <textarea
                   name="description"
                   value={serviceForm.description}
@@ -760,7 +774,7 @@ export function Services({ activeSalon }) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Image URL</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Image URL</label>
                 <input
                   name="imageUrl"
                   value={serviceForm.imageUrl}
@@ -783,12 +797,12 @@ export function Services({ activeSalon }) {
 
               {/* STAFF ASSIGNMENT */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Assign Staff Members</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-xl border-2 max-h-48 overflow-y-auto" style={{backgroundColor: 'var(--background)', borderColor: 'var(--border-light)'}}>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Assign Staff Members</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-xl border-2 max-h-48 overflow-y-auto" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
                   {staff.length > 0 ? (
                     staff.map(s => (
                       <label key={s._id} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors"
-                        style={{backgroundColor: 'transparent'}}
+                        style={{ backgroundColor: 'transparent' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
@@ -797,19 +811,19 @@ export function Services({ activeSalon }) {
                           checked={serviceForm.assignedStaff.includes(s._id)}
                           onChange={() => handleStaffToggle(s._id)}
                           className="cursor-pointer w-4 h-4 rounded"
-                          style={{accentColor: 'var(--primary)'}}
+                          style={{ accentColor: 'var(--primary)' }}
                         />
                         <span className="text-sm font-medium">{s.name}</span>
                       </label>
                     ))
                   ) : (
-                    <p className="text-sm col-span-2 text-center py-4" style={{opacity: 0.6}}>No staff members available</p>
+                    <p className="text-sm col-span-2 text-center py-4" style={{ opacity: 0.6 }}>No staff members available</p>
                   )}
                 </div>
               </div>
 
-              <label className="md:col-span-2 flex items-center gap-3 cursor-pointer p-4 rounded-xl border-2 transition-colors" 
-                style={{borderColor: 'var(--border-light)', backgroundColor: 'transparent'}}
+              <label className="md:col-span-2 flex items-center gap-3 cursor-pointer p-4 rounded-xl border-2 transition-colors"
+                style={{ borderColor: 'var(--border-light)', backgroundColor: 'transparent' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
@@ -819,16 +833,16 @@ export function Services({ activeSalon }) {
                   checked={serviceForm.isFeatured}
                   onChange={handleServiceChange}
                   className="cursor-pointer w-4 h-4 rounded"
-                  style={{accentColor: 'var(--primary)'}}
+                  style={{ accentColor: 'var(--primary)' }}
                 />
                 <div>
-                  <span className="text-sm font-semibold" style={{color: 'var(--text)'}}>Mark as Featured Service</span>
-                  <p className="text-xs mt-0.5" style={{opacity: 0.6}}>Featured services appear at the top</p>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Mark as Featured Service</span>
+                  <p className="text-xs mt-0.5" style={{ opacity: 0.6 }}>Featured services appear at the top</p>
                 </div>
               </label>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text)'}}>Status</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Status</label>
                 <select
                   name="status"
                   value={serviceForm.status}
@@ -840,12 +854,12 @@ export function Services({ activeSalon }) {
                 </select>
               </div>
 
-              <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t" style={{borderColor: 'var(--border-light)'}}>
+              <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); closeServiceModal(); }}
                   className="px-5 py-2.5 border-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{borderColor: 'var(--border-light)', backgroundColor: 'var(--background)'}}
+                  style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--background)'}
                 >
@@ -856,7 +870,7 @@ export function Services({ activeSalon }) {
                   type="submit"
                   onClick={(e) => e.stopPropagation()}
                   className="text-white px-6 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold"
-                  style={{backgroundColor: 'var(--primary)'}}
+                  style={{ backgroundColor: 'var(--primary)' }}
                 >
                   Save Service
                 </button>
@@ -866,7 +880,7 @@ export function Services({ activeSalon }) {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           from {
             opacity: 0;
@@ -881,6 +895,7 @@ export function Services({ activeSalon }) {
           animation: fade-in 0.2s ease-out;
         }
       `}</style>
+      {/* Fixed: Removed jsx attribute from style tag */}
     </div>
   );
 }

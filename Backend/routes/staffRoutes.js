@@ -97,6 +97,15 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
       $addToSet: { staff: staff._id }
     });
 
+    // BIDIRECTIONAL SYNC: Add staff to assigned services
+    if (services && services.length > 0) {
+      const Service = require("../models/Service");
+      await Service.updateMany(
+        { _id: { $in: services } },
+        { $addToSet: { assignedStaff: staff._id } }
+      );
+    }
+
     const safeStaff = await Staff.findById(staff._id).select("-password").populate("services");
 
     res.status(201).json({
@@ -174,6 +183,32 @@ router.put("/:id", auth(["admin", "manager"]), async (req, res) => {
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
+    // BIDIRECTIONAL SYNC: Update Service.assignedStaff when services changes
+    if (req.body.services !== undefined) {
+      const Service = require("../models/Service");
+
+      const oldServiceIds = (staff.services || []).map(id => id.toString());
+      const newServiceIds = req.body.services.map(id => id.toString());
+
+      // Remove staff from services they're no longer assigned to
+      const removedServices = oldServiceIds.filter(id => !newServiceIds.includes(id));
+      if (removedServices.length > 0) {
+        await Service.updateMany(
+          { _id: { $in: removedServices } },
+          { $pull: { assignedStaff: staff._id } }
+        );
+      }
+
+      // Add staff to newly assigned services
+      const addedServices = newServiceIds.filter(id => !oldServiceIds.includes(id));
+      if (addedServices.length > 0) {
+        await Service.updateMany(
+          { _id: { $in: addedServices } },
+          { $addToSet: { assignedStaff: staff._id } }
+        );
+      }
+    }
+
     const updated = await Staff.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -227,15 +262,8 @@ router.delete("/:id", auth(["admin", "manager"]), async (req, res) => {
 /* =====================================================
    REORDER STAFF
 ===================================================== */
-router.put("/reorder", auth(["admin"]), async (req, res) => {
+router.put("/reorder", auth(["admin", "manager"]), async (req, res) => {
   try {
-
-    const bulk = req.body.order.map(o => ({
-      updateOne: {
-        filter: { _id: o.id },
-        update: { order: o.order }
-      }
-    }));
 
     const validStaff = await Staff.find({
       _id: { $in: req.body.order.map(o => o.id) },
@@ -245,6 +273,19 @@ router.put("/reorder", auth(["admin"]), async (req, res) => {
     if (validStaff.length !== req.body.order.length) {
       return res.status(403).json({ message: "Unauthorized" });
     }
+
+    // Prevent reordering managers
+    const hasManager = validStaff.some(s => s.role === "manager");
+    if (hasManager) {
+      return res.status(400).json({ message: "Manager cannot be reordered" });
+    }
+
+    const bulk = req.body.order.map(o => ({
+      updateOne: {
+        filter: { _id: o.id },
+        update: { order: o.order }
+      }
+    }));
 
     await Staff.bulkWrite(bulk);
 

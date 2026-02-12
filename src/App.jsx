@@ -165,9 +165,9 @@ function App() {
                 isLoggedIn
                   ? <Navigate to={dashboardLink} replace />
                   : <LoginPage
-                      setIsLoggedIn={setIsLoggedIn}
-                      setCurrentUser={setCurrentUser}
-                    />
+                    setIsLoggedIn={setIsLoggedIn}
+                    setCurrentUser={setCurrentUser}
+                  />
               }
             />
 
@@ -177,9 +177,9 @@ function App() {
                 isLoggedIn
                   ? <Navigate to={dashboardLink} replace />
                   : <SignupPage
-                      setIsLoggedIn={setIsLoggedIn}
-                      setCurrentUser={setCurrentUser}
-                    />
+                    setIsLoggedIn={setIsLoggedIn}
+                    setCurrentUser={setCurrentUser}
+                  />
               }
             />
 
@@ -227,7 +227,7 @@ function App() {
               path="/reports"
               element={
                 <RequireRole roles={["admin", "manager"]}>
-                  <Reports />
+                  <Reports activeSalon={activeSalon} />
                 </RequireRole>
               }
             />

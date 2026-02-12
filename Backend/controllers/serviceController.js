@@ -69,6 +69,15 @@ exports.addService = async (req, res) => {
       isFeatured: req.body.isFeatured || false
     });
 
+    // BIDIRECTIONAL SYNC: Add service to assigned staff
+    if (req.body.assignedStaff && req.body.assignedStaff.length > 0) {
+      const Staff = require("../models/Staff");
+      await Staff.updateMany(
+        { _id: { $in: req.body.assignedStaff } },
+        { $addToSet: { services: service._id } }
+      );
+    }
+
     const populated = await service.populate("categoryId").populate("assignedStaff");
 
     res.status(201).json(populated);
@@ -108,13 +117,39 @@ exports.updateService = async (req, res) => {
       );
     }
 
+    // BIDIRECTIONAL SYNC: Update Staff.services when assignedStaff changes
+    if (req.body.assignedStaff !== undefined) {
+      const Staff = require("../models/Staff");
+
+      const oldStaffIds = service.assignedStaff.map(id => id.toString());
+      const newStaffIds = req.body.assignedStaff.map(id => id.toString());
+
+      // Remove service from staff who are no longer assigned
+      const removedStaff = oldStaffIds.filter(id => !newStaffIds.includes(id));
+      if (removedStaff.length > 0) {
+        await Staff.updateMany(
+          { _id: { $in: removedStaff } },
+          { $pull: { services: service._id } }
+        );
+      }
+
+      // Add service to newly assigned staff
+      const addedStaff = newStaffIds.filter(id => !oldStaffIds.includes(id));
+      if (addedStaff.length > 0) {
+        await Staff.updateMany(
+          { _id: { $in: addedStaff } },
+          { $addToSet: { services: service._id } }
+        );
+      }
+    }
+
     const updated = await Service.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     )
-    .populate("categoryId")
-    .populate("assignedStaff");
+      .populate("categoryId")
+      .populate("assignedStaff");
 
     res.json(updated);
 

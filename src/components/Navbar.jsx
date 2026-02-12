@@ -28,44 +28,43 @@ export function Navbar({
 
   /* ================= AUTH HEADER ================= */
   const authHeader = () => ({
-    Authorization: `Bearer ${
-      localStorage.getItem("token")
-    }`
+    Authorization: `Bearer ${localStorage.getItem("token")
+      }`
   });
 
   /* ================= FETCH SALONS ================= */
   const fetchSalons = async () => {
-  try {
-    const res = await fetch(SALON_API, {
-      headers: authHeader()
-    });
+    try {
+      const res = await fetch(SALON_API, {
+        headers: authHeader()
+      });
 
-    if (!res.ok) {
-      console.error("Status:", res.status);
-      const text = await res.text();
-      console.error("Response:", text);
-      return;
+      if (!res.ok) {
+        console.error("Status:", res.status);
+        const text = await res.text();
+        console.error("Response:", text);
+        return;
+      }
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+
+      setSalons(list);
+
+      if (list.length && !activeSalon) {
+        setActiveSalon(list[0]._id);
+      }
+
+    } catch (err) {
+      console.error("Network error:", err);
     }
+  };
 
-    const data = await res.json();
-    const list = Array.isArray(data) ? data : [];
-
-    setSalons(list);
-
-    if (list.length && !activeSalon) {
-      setActiveSalon(list[0]._id);
-    }
-
-  } catch (err) {
-    console.error("Network error:", err);
-  }
-};
-
-useEffect(() => {
-  if (!isLoggedIn) return;
-  fetchSalons();
-  // eslint-disable-next-line
-}, [isLoggedIn]);
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetchSalons();
+    // eslint-disable-next-line
+  }, [isLoggedIn]);
 
   /* ================= THEME ================= */
   const applyTheme = (t) => {
@@ -129,6 +128,15 @@ useEffect(() => {
               >
                 Add Appointment
               </Link>
+
+              {currentUser?.role === "admin" && (
+                <Link
+                  to="/plans"
+                  className={`nav-link ${location.pathname === "/plans" ? "active" : ""}`}
+                >
+                  Plans
+                </Link>
+              )}
             </>
           )}
         </div>

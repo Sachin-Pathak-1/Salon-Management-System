@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import api from "../api";
 
@@ -10,9 +11,17 @@ export function Settings() {
 
   /* ================= THEME ================= */
 
+  const [currentUser] = useState(
+    JSON.parse(localStorage.getItem("currentUser") || "null")
+  );
+
+  const isAdmin = currentUser?.role === "admin";
+
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") || "light"
   );
+
+
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -88,7 +97,9 @@ export function Settings() {
 
   useEffect(() => {
     fetchSalons();
-    fetchPlanInfo();
+    if (isAdmin) {
+      fetchPlanInfo();
+    }
   }, []);
 
   /* ================= DRAG & SAVE ORDER ================= */
@@ -157,25 +168,36 @@ export function Settings() {
         await api.post("/salons/add", payload);
         showToast("Salon added");
       }
+
+      // Close immediate for better UX
+      setShowForm(false);
+
+      // Refresh in background
+      fetchSalons();
+      fetchPlanInfo();
+
     } catch (err) {
       showToast(err?.response?.data?.message || "Failed to save salon");
       return;
     }
-
-    setShowForm(false);
-    fetchSalons();
-    fetchPlanInfo();
   };
 
   /* ================= DELETE ================= */
 
   const deleteSalon = async (id) => {
     if (!window.confirm("Delete salon?")) return;
-    await api.delete(`/salons/${id}`);
-    showToast("Salon deleted");
-    setShowDetails(false);
-    fetchSalons();
-    fetchPlanInfo();
+
+    try {
+      await api.delete(`/salons/${id}`);
+      showToast("Salon deleted");
+      setShowDetails(false);
+
+      // Ensure refresh
+      fetchSalons();
+      fetchPlanInfo();
+    } catch (err) {
+      showToast("Failed to delete salon");
+    }
   };
 
   /* ================= UI ================= */
@@ -201,94 +223,108 @@ export function Settings() {
               {theme === "light" ? "Dark" : "Light"}
             </button>
 
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setForm(emptyForm);
-                setShowForm(true);
-              }}
-              className="btn-primary"
-            >
-              + Add Salon
-            </button>
+            {isAdmin && (
+              <>
+                {!planInfo?.selectedPlan ? (
+                  <Link to="/plans" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block', textAlign: 'center' }}>
+                    Select Plan to Add Salon
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setForm(emptyForm);
+                      setShowForm(true);
+                    }}
+                    className="btn-primary"
+                  >
+                    + Add Salon
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
         {/* EMERGENCY */}
-        <div className="bg-(--gray-100) p-4 rounded mb-8">
-          <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={emergencyCloseAll}
-              className="bg-red-600 text-white px-4 py-2 rounded"
-            >
-              🚨 Emergency Close All
-            </button>
+        {isAdmin && (
+          <div className="p-4 rounded mb-8" style={{ backgroundColor: 'var(--gray-100)' }}>
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={emergencyCloseAll}
+                className="bg-red-600 text-white px-4 py-2 rounded"
+              >
+                🚨 Emergency Close All
+              </button>
 
-            <button
-              onClick={reopenAll}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-              ✅ Reopen All
-            </button>
+              <button
+                onClick={reopenAll}
+                className="bg-green-600 text-white px-4 py-2 rounded"
+              >
+                ✅ Reopen All
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         {/* PLAN USAGE */}
-        <div className="bg-(--gray-100) p-4 md:p-5 rounded-2xl mb-8 border border-(--border-light)">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-base font-semibold">Plan Usage</h2>
-            {planInfo?.selectedPlan && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600">
-                {planInfo.selectedPlan.name}
-              </span>
+        {isAdmin && (
+          <div className="p-4 md:p-5 rounded-2xl mb-8 border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-base font-semibold">Plan Usage</h2>
+              {planInfo?.selectedPlan && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600">
+                  {planInfo.selectedPlan.name}
+                </span>
+              )}
+            </div>
+
+            {planInfo?.selectedPlan ? (
+              <>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Used <span className="font-semibold">{planInfo.salonsAdded}</span>
+                  </div>
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Limit <span className="font-semibold">{planInfo.salonLimit}</span>
+                  </div>
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Remaining <span className="font-semibold text-emerald-600">{planInfo.salonsRemaining}</span>
+                  </div>
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Total <span className="font-semibold">Rs. {planInfo.totalPrice}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500"
+                      style={{
+                        width: `${Math.min(
+                          (planInfo.salonsAdded / (planInfo.salonLimit || 1)) * 100,
+                          100
+                        )}%`
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 text-[11px] opacity-70 flex flex-wrap gap-x-3">
+                    <span>{planInfo.salonsAdded} / {planInfo.salonLimit} salons</span>
+                    <span>Per Branch: Rs. {planInfo.pricePerBranch}</span>
+                    <span>
+                      Selected: {planInfo.selectedPlanAt
+                        ? new Date(planInfo.selectedPlanAt).toLocaleDateString()
+                        : "N/A"}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm mt-2" style={{ color: 'var(--text)' }}>
+                No plan selected yet. Choose a plan to enable salon limits.
+              </div>
             )}
           </div>
-
-          {planInfo?.selectedPlan ? (
-            <>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
-                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
-                  Used <span className="font-semibold">{planInfo.salonsAdded}</span>
-                </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
-                  Limit <span className="font-semibold">{planInfo.salonLimit}</span>
-                </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
-                  Remaining <span className="font-semibold text-emerald-600">{planInfo.salonsRemaining}</span>
-                </div>
-                <div className="bg-(--background) border border-(--border-light) rounded-full px-3 py-1">
-                  Total <span className="font-semibold">Rs. {planInfo.totalPrice}</span>
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500"
-                    style={{
-                      width: `${Math.min(
-                        (planInfo.salonsAdded / (planInfo.salonLimit || 1)) * 100,
-                        100
-                      )}%`
-                    }}
-                  />
-                </div>
-                <div className="mt-2 text-[11px] opacity-70 flex flex-wrap gap-x-3">
-                  <span>{planInfo.salonsAdded} / {planInfo.salonLimit} salons</span>
-                  <span>Per Branch: Rs. {planInfo.pricePerBranch}</span>
-                  <span>
-                    Selected: {planInfo.selectedPlanAt
-                      ? new Date(planInfo.selectedPlanAt).toLocaleDateString()
-                      : "N/A"}
-                  </span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-sm text-(--text) mt-2">
-              No plan selected yet. Choose a plan to enable salon limits.
-            </div>
-          )}
-        </div>
+        )}
 
         {/* SALON CARDS */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-10">
@@ -301,70 +337,70 @@ export function Settings() {
           ) : (
             salons.map((s, i) => (
 
-            <div
-              key={s._id}
-              draggable
-              onDragStart={() => setDragIndex(i)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => handleDrop(i)}
-              onClick={() => {
-                setSelected(s);
-                setShowDetails(true);
-              }}
-              className="bg-(--gray-100) border rounded-xl p-8 cursor-pointer hover:shadow"
-            >
+              <div
+                key={s._id}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(i)}
+                onClick={() => {
+                  setSelected(s);
+                  setShowDetails(true);
+                }}
+                className="border rounded-xl p-8 cursor-pointer hover:shadow"
+                style={{ backgroundColor: 'var(--gray-100)' }}
+              >
 
-              {/* ORDER NUMBER */}
-              <div className="w-12 h-12 rounded-full bg-(--primary)
-                text-white flex items-center justify-center mx-auto mb-4">
-                {i + 1}
-              </div>
+                {/* ORDER NUMBER */}
+                <div className="w-12 h-12 rounded-full text-white flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: 'var(--primary)' }}>
+                  {i + 1}
+                </div>
 
-              {/* IMAGE */}
-              {s.logo && (
-                <img
-                  src={s.logo}
-                  className="w-full h-40 object-cover rounded-lg mb-4"
-                />
-              )}
-
-              {/* NAME */}
-              <h3 className="text-center font-semibold">
-                {s.name}
-                {s.isPrimary && (
-                  <span className="ml-2 text-xs bg-green-500 text-white px-2 rounded">
-                    PRIMARY
-                  </span>
+                {/* IMAGE */}
+                {s.logo && (
+                  <img
+                    src={s.logo}
+                    className="w-full h-40 object-cover rounded-lg mb-4"
+                  />
                 )}
-              </h3>
 
-              {/* ADDRESS */}
-              <p className="text-center opacity-80 mt-2">
-                {s.address}
-              </p>
+                {/* NAME */}
+                <h3 className="text-center font-semibold">
+                  {s.name}
+                  {s.isPrimary && (
+                    <span className="ml-2 text-xs bg-green-500 text-white px-2 rounded">
+                      PRIMARY
+                    </span>
+                  )}
+                </h3>
 
-              {/* HOURS */}
-              <p className="text-center mt-2">
-                ⏱ {s.openingTime} - {s.closingTime}
-              </p>
+                {/* ADDRESS */}
+                <p className="text-center opacity-80 mt-2">
+                  {s.address}
+                </p>
 
-              {/* STATUS */}
-              <p className="text-center mt-2">
-                <span className={`px-2 py-1 text-xs rounded
-                  ${
-                    s.status === "open"
+                {/* HOURS */}
+                <p className="text-center mt-2">
+                  ⏱ {s.openingTime} - {s.closingTime}
+                </p>
+
+                {/* STATUS */}
+                <p className="text-center mt-2">
+                  <span className={`px-2 py-1 text-xs rounded
+                  ${s.status === "open"
                       ? "bg-green-500"
                       : s.status === "closed"
-                      ? "bg-red-500"
-                      : "bg-yellow-500"
-                  } text-white`}>
-                  {s.status}
-                </span>
-              </p>
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
+                    } text-white`}>
+                    {s.status}
+                  </span>
+                </p>
 
-            </div>
+              </div>
 
-          ))
+            ))
           )}
 
         </div>
@@ -378,16 +414,16 @@ export function Settings() {
       {/* ================= DETAILS MODAL ================= */}
 
       {showDetails && selected && (
-        <Modal title="Salon Details" close={()=>setShowDetails(false)}>
+        <Modal title="Salon Details" close={() => setShowDetails(false)}>
 
-          <Detail label="Name" value={selected.name}/>
-          <Detail label="Owner" value={selected.ownerName}/>
-          <Detail label="Contact" value={selected.contact}/>
-          <Detail label="Email" value={selected.email}/>
+          <Detail label="Name" value={selected.name} />
+          <Detail label="Owner" value={selected.ownerName} />
+          <Detail label="Contact" value={selected.contact} />
+          <Detail label="Email" value={selected.email} />
           <Detail label="Hours"
             value={`${selected.openingTime} - ${selected.closingTime}`}
           />
-          <Detail label="Status" value={selected.status}/>
+          <Detail label="Status" value={selected.status} />
           <Detail
             label="Holidays"
             value={(selected.holidays || []).join(", ")}
@@ -396,11 +432,11 @@ export function Settings() {
           <div className="flex justify-end gap-3 mt-4">
 
             <button
-              onClick={()=>{
+              onClick={() => {
                 setEditingId(selected._id);
                 setForm({
                   ...selected,
-                  holidays:(selected.holidays||[]).join(", ")
+                  holidays: (selected.holidays || []).join(", ")
                 });
                 setShowDetails(false);
                 setShowForm(true);
@@ -410,12 +446,15 @@ export function Settings() {
               Edit
             </button>
 
-            <button
-              onClick={()=>deleteSalon(selected._id)}
-              className="btn-outline text-(--danger)"
-            >
-              Delete
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => deleteSalon(selected._id)}
+                className="btn-outline"
+                style={{ color: 'var(--danger)' }}
+              >
+                Delete
+              </button>
+            )}
 
           </div>
 
@@ -427,26 +466,26 @@ export function Settings() {
       {showForm && (
         <Modal
           title={editingId ? "Edit Salon" : "Add Salon"}
-          close={()=>setShowForm(false)}
+          close={() => setShowForm(false)}
         >
 
           <form
-            onSubmit={(e)=>{e.preventDefault();saveSalon();}}
+            onSubmit={(e) => { e.preventDefault(); saveSalon(); }}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
 
-            <Input name="name" placeholder="Salon Name" form={form} setForm={setForm}/>
-            <Input name="ownerName" placeholder="Owner Name" form={form} setForm={setForm}/>
+            <Input name="name" placeholder="Salon Name" form={form} setForm={setForm} />
+            <Input name="ownerName" placeholder="Owner Name" form={form} setForm={setForm} />
 
-            <Input name="contact" placeholder="Contact" form={form} setForm={setForm}/>
-            <Input name="email" placeholder="Email" form={form} setForm={setForm}/>
+            <Input name="contact" placeholder="Contact" form={form} setForm={setForm} />
+            <Input name="email" placeholder="Email" form={form} setForm={setForm} />
 
-            <Input name="openingTime" type="time" form={form} setForm={setForm}/>
-            <Input name="closingTime" type="time" form={form} setForm={setForm}/>
+            <Input name="openingTime" type="time" form={form} setForm={setForm} />
+            <Input name="closingTime" type="time" form={form} setForm={setForm} />
 
             <select
               value={form.status}
-              onChange={(e)=>setForm({...form,status:e.target.value})}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
               className="input-themed"
             >
               <option value="open">Open</option>
@@ -454,19 +493,19 @@ export function Settings() {
               <option value="temporarily-closed">Temporarily Closed</option>
             </select>
 
-            <Input name="logo" placeholder="Logo URL" form={form} setForm={setForm}/>
+            <Input name="logo" placeholder="Logo URL" form={form} setForm={setForm} />
 
             <textarea
               placeholder="Address"
               value={form.address}
-              onChange={(e)=>setForm({...form,address:e.target.value})}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
               className="md:col-span-2 input-themed resize-none"
             />
 
             <textarea
               placeholder="Holidays (yyyy-mm-dd, comma separated)"
               value={form.holidays}
-              onChange={(e)=>setForm({...form,holidays:e.target.value})}
+              onChange={(e) => setForm({ ...form, holidays: e.target.value })}
               className="md:col-span-2 input-themed resize-none"
             />
 
@@ -474,13 +513,13 @@ export function Settings() {
               <input
                 type="checkbox"
                 checked={form.isPrimary}
-                onChange={(e)=>setForm({...form,isPrimary:e.target.checked})}
+                onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })}
               />
               Set as Primary Salon
             </label>
 
             {form.logo && (
-              <img src={form.logo} className="w-24 h-24 rounded"/>
+              <img src={form.logo} className="w-24 h-24 rounded" />
             )}
 
             <div className="md:col-span-2 flex justify-end">
@@ -506,7 +545,7 @@ function Modal({ title, close, children }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-start pt-20 z-50">
       <div className="modal-card w-full max-w-xl max-h-[80vh] flex flex-col">
-        <div className="flex justify-between px-5 py-3 border-b sticky top-0 bg-(--background)">
+        <div className="flex justify-between px-5 py-3 border-b sticky top-0" style={{ backgroundColor: 'var(--background)' }}>
           <h2>{title}</h2>
           <button onClick={close}>✕</button>
         </div>
@@ -527,13 +566,13 @@ function Detail({ label, value }) {
   );
 }
 
-function Input({ name, placeholder, form, setForm, type="text" }) {
+function Input({ name, placeholder, form, setForm, type = "text" }) {
   return (
     <input
       type={type}
       placeholder={placeholder}
       value={form[name] || ""}
-      onChange={(e)=>setForm({...form,[name]:e.target.value})}
+      onChange={(e) => setForm({ ...form, [name]: e.target.value })}
       className="input-themed"
     />
   );

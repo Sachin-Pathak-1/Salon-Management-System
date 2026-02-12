@@ -22,7 +22,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   return (
     <div>
-       <div className="flex flex-col gap-10 min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10 items-center transition-colors duration-300 ease">
+      <div className="flex flex-col gap-10 min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10 items-center transition-colors duration-300 ease">
         {/* Welcome Section */}
         <div className="bg-[var(--gray-100)] w-full max-w-4xl mx-auto p-8 flex flex-col gap-5 rounded-lg border border-[var(--border-light)] text-[var(--text)] shadow-sm transition-all duration-300 ease">
           <h2 className="text-2xl font-bold text-[var(--text)]">Welcome to Salon Dashboard!</h2>
@@ -32,7 +32,7 @@ export function Dashboard() {
             <p className="text-[var(--gray-700)]">Manage your salon's operations, appointments, and customer experience.</p>
           </div>
 
-          <button className="bg-[var(--primary)] text-white border-none px-4 py-2.5 rounded font-bold cursor-pointer w-fit transition-all duration-300 ease hover:bg-[var(--secondary)]" onClick={() => navigate(`/Appointments/`)} >View Appointments</button>
+          <button className="bg-[var(--primary)] text-white border-none px-4 py-2.5 rounded font-bold cursor-pointer w-fit transition-all duration-300 ease hover:bg-[var(--secondary)]" onClick={() => navigate("/appointments")} >View Appointments</button>
 
           <div className="flex justify-between gap-6">
             <div>
@@ -113,9 +113,9 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-        <Footer />
+      <Footer />
     </div>
-     
-      
+
+
   );
 }
