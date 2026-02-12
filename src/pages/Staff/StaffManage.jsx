@@ -20,7 +20,7 @@ export default function Staff({ activeSalon}) {
     gender: "",
     dob: "",
     address: "",
-    isManager: false
+    role: "staff"
   };
 
   const [staff, setStaff] = useState([]);
@@ -117,11 +117,17 @@ export default function Staff({ activeSalon}) {
     e.preventDefault();
     const { password, ...safeForm } = form;
 
-    await fetch(`${STAFF_API}/${selected._id}`, {
+    const res = await fetch(`${STAFF_API}/${selected._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify(safeForm)
     });
+
+    const data = await res.json();
+    
+    if (!res.ok) {
+      return showToast(data.message || "Update failed");
+    }
 
     showToast("Staff updated");
     setShowEdit(false);
@@ -148,7 +154,7 @@ export default function Staff({ activeSalon}) {
 
   const deleteStaff = async () => {
 
-    if (selected?.isManager) {
+    if (selected?.role === "manager") {
       return showToast("Manager cannot be deleted");
     }
 
@@ -285,7 +291,7 @@ export default function Staff({ activeSalon}) {
                 {filtered.map((s, index) => (
                   <tr
                     key={s._id}
-                    draggable={!s.isManager}
+                    draggable={s.role !== "manager"}
                     onDragStart={()=>setDragIndex(index)}
                     onDragOver={(e)=>e.preventDefault()}
                     onDrop={()=>handleDrop(index)}
@@ -300,7 +306,7 @@ export default function Staff({ activeSalon}) {
                       <div>
                         <div className="flex gap-2 items-center">
                           {s.name}
-                          {s.isManager && (
+                          {s.role === "manager" && (
                             <span className="text-xs text-yellow-500">★ Manager</span>
                           )}
                         </div>
@@ -314,7 +320,7 @@ export default function Staff({ activeSalon}) {
                     <td className="p-3 capitalize">{s.status}</td>
                     <td className="p-3 flex gap-2">
                       <button
-                        onClick={(e) => { e.stopPropagation(); setForm(s); setShowEdit(true); }}
+                        onClick={(e) => { e.stopPropagation(); setSelected(s); setForm({...emptyForm, ...s}); setShowEdit(true); }}
                         className="bg-(--primary) text-white px-3 py-1 rounded-lg text-xs">
                         Edit
                       </button>
@@ -337,7 +343,7 @@ export default function Staff({ activeSalon}) {
       {/* ADD */}
       {showAdd &&
         <Modal title="Add Staff" close={()=>setShowAdd(false)}>
-          <StaffForm form={form} handleChange={handleChange} submit={addStaff}/>
+          <StaffForm form={form} handleChange={handleChange} setForm={setForm} submit={addStaff}/>
         </Modal>
       }
 
@@ -353,12 +359,12 @@ export default function Staff({ activeSalon}) {
           <Detail label="Shift" value={selected.shift}/>
           <Detail label="Salary" value={selected.salary}/>
           <Detail label="Status" value={selected.status}/>
-          <Detail label="Manager" value={selected.isManager ? "Yes" : "No"}/>
+          <Detail label="Manager" value={selected.role === "manager" ? "Yes" : "No"}/>
           <Detail label="Address" value={selected.address}/>
 
           <div className="flex justify-end gap-3 mt-4">
             <button
-              onClick={()=>{ setForm(selected); setShowEdit(true); }}
+              onClick={()=>{ setForm({...emptyForm, ...selected}); setShowEdit(true); }}
               className="bg-(--primary) text-white px-4 py-2 rounded-lg">
               Edit
             </button>
@@ -375,7 +381,7 @@ export default function Staff({ activeSalon}) {
       {/* EDIT */}
       {showEdit &&
         <Modal title="Edit Staff" close={()=>setShowEdit(false)}>
-          <StaffForm form={form} handleChange={handleChange} submit={updateStaff}/>
+          <StaffForm form={form} handleChange={handleChange} setForm={setForm} submit={updateStaff}/>
         </Modal>
       }
 
@@ -420,7 +426,7 @@ function Detail({ label, value }) {
   );
 }
 
-function StaffForm({ form, handleChange, submit }) {
+function StaffForm({ form, handleChange, setForm, submit }) {
   return (
     <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
@@ -454,11 +460,15 @@ function StaffForm({ form, handleChange, submit }) {
       <label className="md:col-span-2 flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          name="isManager"
-          checked={form.isManager || false}
-          onChange={handleChange}
+          checked={form.role === "manager"}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              role: e.target.checked ? "manager" : "staff"
+            })
+          }
         />
-        Set as Manager (only one per salon)
+        <span>Set as Manager</span>
       </label>
 
       <textarea
@@ -538,7 +548,7 @@ function AccessControlModal({ staff, updateAccess }) {
                 onChange={() => handleToggle(tab.key)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-(--gray-200) rounded-full peer peer-focus:ring-4 peer-focus:ring-(--primary)/25 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
+              <div className="w-11 h-6 bg-(--gray-200) rounded-full peer peer-focus:ring-4 peer-focus:ring-(--primary)/25 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
             </div>
           </label>
         ))}

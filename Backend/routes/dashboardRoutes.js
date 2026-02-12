@@ -1,17 +1,35 @@
 const router = require("express").Router();
 const Service = require("../models/Service");
 const auth = require("../middleware/auth");
+const Appointment = require("../models/Appointment");
 
 /* STAFF STATS */
 router.get("/staff-stats", auth(["staff", "manager"]), async (req, res) => {
-  res.json({ message: "Staff dashboard stats retrieved successfully" });
   try {
-    const totalServices = await Service.countDocuments();
+    
+    const salonId = req.user.salonId;
+    const totalServices = await Service.countDocuments({ salonId });
+    const todayAppointments = await Service.countDocuments({
+      salonId,
+      date: {
+        $gte: new Date().setHours(0, 0, 0, 0),
+        $lt: new Date().setHours(23, 59, 59, 999)
+      }
+    });
+    const completed = await Appointment.countDocuments({
+      salonId,
+      status: "completed"
+    });
+    const pending = await Appointment.countDocuments({
+      salonId,
+      status: "pending"
+    });
 
     res.json({
-      todayAppointments: 0,
-      completed: 0,
-      pending: totalServices
+      todayAppointments,
+      completed,
+      pending,
+      totalServices
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });

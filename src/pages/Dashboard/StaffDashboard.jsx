@@ -72,12 +72,12 @@ export function StaffDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10">
+    <div className="min-h-screen bg-(--background) text-(--text) px-4 py-10">
       <div className="max-w-4xl mx-auto flex flex-col gap-10">
 
-        <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
+        <div className="bg-(--gray-100) p-8 rounded-lg border border-(--border-light)">
           <h1 className="text-3xl font-bold">Staff Dashboard</h1>
-          <p className="text-[var(--gray-700)]">
+          <p className="text-(--gray-700)">
             Overview of salon activities and services
           </p>
         </div>
@@ -126,8 +126,8 @@ export function StaffDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-[var(--gray-100)] border border-[var(--border-light)] rounded-lg p-6 text-center">
-      <p className="text-sm text-[var(--gray-700)]">{title}</p>
+    <div className="bg-(--gray-100) border border-(--border-light) rounded-lg p-6 text-center">
+      <p className="text-sm text-(--gray-700)">{title}</p>
       <h2 className="text-3xl font-bold">{value}</h2>
     </div>
   );
@@ -135,18 +135,18 @@ function StatCard({ title, value }) {
 
 function DashboardTable({ title, data, emptyText, render }) {
   return (
-    <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
+    <div className="bg-(--gray-100) p-8 rounded-lg border border-(--border-light)">
       <h2 className="text-xl font-semibold mb-4">{title}</h2>
 
       {data.length === 0 ? (
-        <p className="text-sm text-center text-[var(--gray-700)]">
+        <p className="text-sm text-center text-(--gray-700)">
           {emptyText}
         </p>
       ) : (
         data.map((item, i) => (
           <div
             key={i}
-            className="flex justify-between border-t border-[var(--border-light)] py-2 text-sm"
+            className="flex justify-between border-t border-(--border-light) py-2 text-sm"
           >
             {render(item)}
           </div>

@@ -22,8 +22,9 @@ export function Navbar({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isAdmin = currentUser?.role === "admin";
-  const dashboardLink = isAdmin ? "/dashboard" : "/staff-dashboard";
+  let dashboardLink = "/staff-dashboard";
+  if (currentUser?.role === "admin") dashboardLink = "/dashboard";
+  if (currentUser?.role === "manager") dashboardLink = "/manager-dashboard";
 
   /* ================= AUTH HEADER ================= */
   const authHeader = () => ({

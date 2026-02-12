@@ -181,7 +181,7 @@ export function Services({ activeSalon }) {
 
   /* ================= UI (UNCHANGED) ================= */
   return (
-    <div className="min-h-screen w-full bg-[var(--background)] px-6 md:px-10 py-10">
+    <div className="min-h-screen w-full bg-(--background) px-6 md:px-10 py-10">
 
       {toast && (
         <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded-lg z-50">
@@ -213,7 +213,7 @@ export function Services({ activeSalon }) {
               onClick={() => setActiveCategory(c)}
               className={`px-4 py-2 rounded-full
                 ${activeCategory === c
-                  ? "bg-[var(--primary)] text-white"
+                  ? "bg-(--primary) text-white"
                   : "border"}`}
             >
               {c}
@@ -227,13 +227,13 @@ export function Services({ activeSalon }) {
             placeholder="Search service..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border px-4 py-3 rounded-xl w-64 bg-[var(--background)]"
+            className="border px-4 py-3 rounded-xl w-64 bg-(--background)"
           />
 
           {isAdmin && (
             <button
               onClick={() => setShowModal(true)}
-              className="bg-[var(--primary)] text-white px-6 py-3 rounded-xl"
+              className="bg-(--primary) text-white px-6 py-3 rounded-xl"
             >
               + Add Service
             </button>
@@ -249,7 +249,7 @@ export function Services({ activeSalon }) {
               onDragStart={() => setDragId(s._id)}
               onDragOver={e => e.preventDefault()}
               onDrop={() => handleDrop(s._id)}
-              className={`bg-[var(--gray-100)] border rounded-xl p-8
+              className={`bg-(--gray-100) border rounded-xl p-8
                 ${s.status === "inactive" ? "opacity-40" : ""}
                 ${s.isFeatured ? "ring-2 ring-yellow-400" : "cursor-move"}`}
             >
@@ -260,7 +260,7 @@ export function Services({ activeSalon }) {
                 {s.isFeatured ? "⭐" : "☆"}
               </div>
 
-              <div className="w-12 h-12 bg-[var(--primary)] text-white
+              <div className="w-12 h-12 bg-(--primary) text-white
                 rounded-full flex items-center justify-center mx-auto mb-4">
                 {index + 1}
               </div>
@@ -287,15 +287,15 @@ export function Services({ activeSalon }) {
                       setForm({ ...emptyForm, ...s });
                       setShowModal(true);
                     }}
-                    className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg"
+                    className="bg-(--primary) text-white px-4 py-2 rounded-lg"
                   >
                     Edit
                   </button>
 
                   <button
                     onClick={() => handleDelete(s._id)}
-                    className="border border-[var(--danger)] text-[var(--danger)]
-                      hover:bg-[var(--danger)] hover:text-white
+                    className="border border-(--danger) text-(--danger)
+                      hover:bg-(--danger) hover:text-white
                       px-4 py-2 rounded-lg transition"
                   >
                     Delete
@@ -311,7 +311,7 @@ export function Services({ activeSalon }) {
       {/* MODAL */}
       {showModal && isAdmin && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-[var(--gray-100)] w-full max-w-xl p-8 rounded-xl">
+          <div className="bg-(--gray-100) w-full max-w-xl p-8 rounded-xl">
             <h2 className="text-xl font-bold mb-6">
               {editId ? "Edit Service" : "Add Service"}
             </h2>
@@ -377,7 +377,7 @@ export function Services({ activeSalon }) {
                 </button>
 
                 <button type="submit"
-                  className="bg-[var(--primary)] text-white px-6 py-2 rounded-lg">
+                  className="bg-(--primary) text-white px-6 py-2 rounded-lg">
                   Save
                 </button>
               </div>

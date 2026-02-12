@@ -1,8 +1,6 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
-console.log("JWT_SECRET:", JWT_SECRET); // Debugging line
-
 module.exports = (allowedRoles = []) => {
   return (req, res, next) => {
 
