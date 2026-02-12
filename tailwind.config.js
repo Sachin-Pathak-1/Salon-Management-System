@@ -16,8 +16,9 @@ export default {
         text: "var(--text)",
         primary: "var(--primary)",
         secondary: "var(--secondary)",
-        gray100: "var(--gray-100)",
-        borderLight: "var(--border-light)",
+        danger: "var(--danger)",
+        "gray-100": "var(--gray-100)",
+        "border-light": "var(--border-light)",
       }
     },
   },

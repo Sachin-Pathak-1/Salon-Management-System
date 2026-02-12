@@ -1,11 +1,10 @@
-const Service = require("../models/Service");
+const Category = require("../models/Category");
 
 /* ==================================================
-   GET SERVICES (Salon Isolated)
+   GET CATEGORIES (Salon Isolated)
 ================================================== */
-exports.getServices = async (req, res) => {
+exports.getCategories = async (req, res) => {
   try {
-
     let filter = {};
 
     // Manager & Staff → locked to their salon
@@ -21,31 +20,27 @@ exports.getServices = async (req, res) => {
       filter.salonId = req.query.salonId;
     }
 
-    const services = await Service
+    const categories = await Category
       .find(filter)
-      .populate("categoryId")
-      .populate("assignedStaff")
-      .sort({ isFeatured: -1, order: 1 });
+      .sort({ order: 1 });
 
-    res.json(services);
+    res.json(categories);
 
   } catch (err) {
-    console.error("GET SERVICES ERROR:", err);
-    res.status(500).json({ message: "Failed to load services" });
+    console.error("GET CATEGORIES ERROR:", err);
+    res.status(500).json({ message: "Failed to load categories" });
   }
 };
 
-
 /* ==================================================
-   ADD SERVICE
+   ADD CATEGORY
 ================================================== */
-exports.addService = async (req, res) => {
+exports.addCategory = async (req, res) => {
   try {
+    const { salonId, name } = req.body;
 
-    const { salonId } = req.body;
-
-    if (!salonId) {
-      return res.status(400).json({ message: "SalonId required" });
+    if (!salonId || !name) {
+      return res.status(400).json({ message: "SalonId and name required" });
     }
 
     // Manager can only add to their salon
@@ -56,130 +51,102 @@ exports.addService = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized salon access" });
     }
 
-    const last = await Service
+    const last = await Category
       .find({ salonId })
       .sort({ order: -1 })
       .limit(1);
 
     const nextOrder = last.length ? last[0].order + 1 : 0;
 
-    const service = await Service.create({
+    const category = await Category.create({
       ...req.body,
-      order: nextOrder,
-      isFeatured: req.body.isFeatured || false
+      order: nextOrder
     });
 
-    const populated = await service.populate("categoryId").populate("assignedStaff");
-
-    res.status(201).json(populated);
+    res.status(201).json(category);
 
   } catch (err) {
-    console.error("ADD SERVICE ERROR:", err);
+    console.error("ADD CATEGORY ERROR:", err);
     res.status(500).json({ message: "Add failed" });
   }
 };
 
-
 /* ==================================================
-   UPDATE SERVICE
+   UPDATE CATEGORY
 ================================================== */
-exports.updateService = async (req, res) => {
+exports.updateCategory = async (req, res) => {
   try {
+    const category = await Category.findById(req.params.id);
 
-    const service = await Service.findById(req.params.id);
-
-    if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
 
     // Prevent cross-salon updates
     if (
       (req.user.role === "manager" || req.user.role === "staff") &&
-      service.salonId.toString() !== req.user.salonId
+      category.salonId.toString() !== req.user.salonId
     ) {
       return res.status(403).json({ message: "Unauthorized update" });
     }
 
-    // Only one featured per salon
-    if (req.body.isFeatured === true) {
-      await Service.updateMany(
-        { salonId: service.salonId },
-        { isFeatured: false }
-      );
-    }
-
-    const updated = await Service.findByIdAndUpdate(
+    const updated = await Category.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
-    )
-    .populate("categoryId")
-    .populate("assignedStaff");
+    );
 
     res.json(updated);
 
   } catch (err) {
-    console.error("UPDATE SERVICE ERROR:", err);
+    console.error("UPDATE CATEGORY ERROR:", err);
     res.status(500).json({ message: "Update failed" });
   }
 };
 
-
 /* ==================================================
-   DELETE SERVICE
+   DELETE CATEGORY
 ================================================== */
-exports.deleteService = async (req, res) => {
+exports.deleteCategory = async (req, res) => {
   try {
+    const category = await Category.findById(req.params.id);
 
-    const service = await Service.findById(req.params.id);
-
-    if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
 
     if (
       (req.user.role === "manager" || req.user.role === "staff") &&
-      service.salonId.toString() !== req.user.salonId
+      category.salonId.toString() !== req.user.salonId
     ) {
       return res.status(403).json({ message: "Unauthorized delete" });
     }
 
-    await Service.findByIdAndDelete(req.params.id);
+    await Category.findByIdAndDelete(req.params.id);
 
     res.json({ message: "Deleted successfully" });
 
   } catch (err) {
-    console.error("DELETE SERVICE ERROR:", err);
+    console.error("DELETE CATEGORY ERROR:", err);
     res.status(500).json({ message: "Delete failed" });
   }
 };
 
-
 /* ==================================================
-   REORDER SERVICES
+   REORDER CATEGORIES
 ================================================== */
-exports.reorderServices = async (req, res) => {
+exports.reorderCategories = async (req, res) => {
   try {
-
     const ids = req.body.order.map(o => o.id);
+    const categories = await Category.find({ _id: { $in: ids } });
 
-    const services = await Service.find({ _id: { $in: ids } });
+    // Ensure all categories belong to same salon
+    const salonId = categories[0]?.salonId;
 
-    // Ensure all services belong to same salon
-    const salonId = services[0]?.salonId;
-
-    for (let s of services) {
-      if (s.salonId.toString() !== salonId.toString()) {
+    for (let c of categories) {
+      if (c.salonId.toString() !== salonId.toString()) {
         return res.status(400).json({ message: "Invalid reorder request" });
       }
-    }
-
-    // Prevent featured reorder
-    const featured = services.find(s => s.isFeatured);
-    if (featured) {
-      return res.status(400).json({
-        message: "Featured service cannot be reordered"
-      });
     }
 
     const bulk = req.body.order.map(o => ({
@@ -189,7 +156,7 @@ exports.reorderServices = async (req, res) => {
       }
     }));
 
-    await Service.bulkWrite(bulk);
+    await Category.bulkWrite(bulk);
 
     res.json({ message: "Order saved" });
 

@@ -26,7 +26,8 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
       status,
       gender,
       dob,
-      address
+      address,
+      services = []
     } = req.body;
 
     if (!name || !email || !password || !salonId) {
@@ -84,6 +85,7 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
       gender,
       dob,
       address,
+      services,
       adminId:
         req.user.role === "admin"
           ? req.user.id
@@ -95,7 +97,7 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
       $addToSet: { staff: staff._id }
     });
 
-    const safeStaff = await Staff.findById(staff._id).select("-password");
+    const safeStaff = await Staff.findById(staff._id).select("-password").populate("services");
 
     res.status(201).json({
       message: "Staff created successfully",
@@ -130,7 +132,8 @@ router.get("/", auth(["admin", "manager"]), async (req, res) => {
 
     const staff = await Staff.find(query)
       .sort({ role: -1, order: 1 })
-      .select("-password");
+      .select("-password")
+      .populate("services");
 
     res.json(staff);
 
@@ -175,7 +178,7 @@ router.put("/:id", auth(["admin", "manager"]), async (req, res) => {
       req.params.id,
       req.body,
       { new: true }
-    ).select("-password");
+    ).select("-password").populate("services");
 
     res.json({
       message: "Staff updated successfully",

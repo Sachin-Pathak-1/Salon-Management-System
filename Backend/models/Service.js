@@ -6,7 +6,13 @@ const ServiceSchema = new mongoose.Schema({
   description: String,
   price: Number,
   duration: String,
-  category: String,
+  
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    required: true
+  },
+
   imageUrl: String,
 
   status: {
