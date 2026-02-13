@@ -4,9 +4,15 @@ const ServiceSchema = new mongoose.Schema({
 
   name: String,
   description: String,
-  price: String,
+  price: Number,
   duration: String,
-  category: String,
+  
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    required: true
+  },
+
   imageUrl: String,
 
   status: {
@@ -20,6 +26,11 @@ const ServiceSchema = new mongoose.Schema({
     ref: "Salon",
     required: true
   },
+
+  assignedStaff: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Staff"
+  }],
 
   isFeatured: {
     type: Boolean,

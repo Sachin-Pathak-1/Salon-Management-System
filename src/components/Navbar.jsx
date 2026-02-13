@@ -22,50 +22,49 @@ export function Navbar({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isAdmin = currentUser?.role === "admin";
-  const dashboardLink = isAdmin ? "/dashboard" : "/staff-dashboard";
+  let dashboardLink = "/staff-dashboard";
+  if (currentUser?.role === "admin") dashboardLink = "/dashboard";
+  if (currentUser?.role === "manager") dashboardLink = "/manager-dashboard";
 
   /* ================= AUTH HEADER ================= */
   const authHeader = () => ({
-    Authorization: `Bearer ${
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("staffToken")
-    }`
+    Authorization: `Bearer ${localStorage.getItem("token")
+      }`
   });
 
   /* ================= FETCH SALONS ================= */
   const fetchSalons = async () => {
-  try {
-    const res = await fetch(SALON_API, {
-      headers: authHeader()
-    });
+    try {
+      const res = await fetch(SALON_API, {
+        headers: authHeader()
+      });
 
-    if (!res.ok) {
-      console.error("Status:", res.status);
-      const text = await res.text();
-      console.error("Response:", text);
-      return;
+      if (!res.ok) {
+        console.error("Status:", res.status);
+        const text = await res.text();
+        console.error("Response:", text);
+        return;
+      }
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+
+      setSalons(list);
+
+      if (list.length && !activeSalon) {
+        setActiveSalon(list[0]._id);
+      }
+
+    } catch (err) {
+      console.error("Network error:", err);
     }
+  };
 
-    const data = await res.json();
-    const list = Array.isArray(data) ? data : [];
-
-    setSalons(list);
-
-    if (list.length && !activeSalon) {
-      setActiveSalon(list[0]._id);
-    }
-
-  } catch (err) {
-    console.error("Network error:", err);
-  }
-};
-
-useEffect(() => {
-  if (!isLoggedIn) return;
-  fetchSalons();
-  // eslint-disable-next-line
-}, [isLoggedIn]);
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetchSalons();
+    // eslint-disable-next-line
+  }, [isLoggedIn]);
 
   /* ================= THEME ================= */
   const applyTheme = (t) => {
@@ -83,8 +82,7 @@ useEffect(() => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("staffToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
     navigate("/");
   };
@@ -130,6 +128,15 @@ useEffect(() => {
               >
                 Add Appointment
               </Link>
+
+              {currentUser?.role === "admin" && (
+                <Link
+                  to="/plans"
+                  className={`nav-link ${location.pathname === "/plans" ? "active" : ""}`}
+                >
+                  Plans
+                </Link>
+              )}
             </>
           )}
         </div>

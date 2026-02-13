@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.js";
 
-/* Plan features (same in light & dark mode) */
+/* ================= PLAN FEATURES ================= */
+
 const planFeatures = {
   Basic: [
     "Single Salon Dashboard",
@@ -32,6 +33,23 @@ const planFeatures = {
 export function ViewPlan() {
   const navigate = useNavigate();
 
+  /* ================= ROLE CHECK ================= */
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const isAdmin = currentUser?.role === "admin";
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg font-semibold">
+          Access denied. Admin only.
+        </p>
+      </div>
+    );
+  }
+
+  /* ================= STATE ================= */
+
   const [plans, setPlans] = useState([]);
   const [branchCount, setBranchCount] = useState(1);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
@@ -40,10 +58,13 @@ export function ViewPlan() {
   const [selectionInfo, setSelectionInfo] = useState(null);
   const [salonsAddedCount, setSalonsAddedCount] = useState(0);
 
+  /* ================= LOAD DATA ================= */
+
   useEffect(() => {
     const fetchPlans = async () => {
       try {
         setLoadError("");
+
         const [plansRes, selectionRes, salonsRes] = await Promise.all([
           api.get("/plans"),
           api.get("/plans/selection"),
@@ -74,6 +95,8 @@ export function ViewPlan() {
     fetchPlans();
   }, []);
 
+  /* ================= DERIVED STATE ================= */
+
   const selectedPlan = useMemo(
     () => plans.find((p) => p._id === selectedPlanId) || null,
     [plans, selectedPlanId]
@@ -89,26 +112,38 @@ export function ViewPlan() {
 
   const formatCurrency = (v) => `Rs. ${v.toFixed(2)}`;
 
+  /* ================= SELECT PLAN ================= */
+
   const handleSelectPlan = async (plan) => {
+
+    // Auto-correct branch count if exceeding max
+    if (plan.maxBranches && branchCount > plan.maxBranches) {
+      setBranchCount(plan.maxBranches);
+      return;
+    }
+
     if (!isBranchCountValid(plan)) {
       setSaveMessage(`Max ${plan.maxBranches} salons allowed.`);
       return;
     }
 
-    const salonsAdded = selectionInfo?.salonsAdded ?? salonsAddedCount ?? 0;
+    const salonsAdded =
+      selectionInfo?.salonsAdded ?? salonsAddedCount ?? 0;
+
     if (salonsAdded > branchCount) {
-      setSaveMessage("Branch count cannot be less than salons already added.");
+      setSaveMessage(
+        "Branch count cannot be less than salons already added."
+      );
       return;
     }
 
     try {
       setSaveMessage("");
+
       await api.post("/plans/select", {
         planId: plan._id,
         branchCount,
       });
-
-      setSelectedPlanId(plan._id);
 
       const [selectionRes, salonsRes] = await Promise.all([
         api.get("/plans/selection"),
@@ -120,34 +155,40 @@ export function ViewPlan() {
         Array.isArray(salonsRes.data) ? salonsRes.data.length : 0
       );
 
+      setSelectedPlanId(plan._id);
       setSaveMessage("Plan saved successfully.");
     } catch (err) {
       setSaveMessage(
-        err?.response?.data?.message || "Failed to save plan selection."
+        err?.response?.data?.message ||
+        "Failed to save plan selection."
       );
     }
   };
 
+  /* ================= RENDER ================= */
+
   return (
     <div className="min-h-screen bg-background px-4 py-10 transition-colors">
-      {/* Header */}
+
+      {/* HEADER */}
       <div className="max-w-6xl mx-auto mb-10">
         <button
           onClick={() => navigate(-1)}
-          className="text-(--primary) font-medium mb-4 hover:underline"
+          className="font-medium mb-4 hover:underline"
+          style={{ color: 'var(--primary)' }}
         >
-          ← Back to Services
+          ← Back
         </button>
 
         <h1 className="text-4xl font-serif font-bold text-text">
           Salon Membership Plans
         </h1>
-        <p className="text-(--gray-700) mt-2 max-w-xl">
-          Choose a plan that suits your beauty needs.
+        <p className="mt-2 max-w-xl" style={{ color: 'var(--gray-700)' }}>
+          Choose a plan that suits your business needs.
         </p>
       </div>
 
-      {/* Branch Count */}
+      {/* BRANCH COUNT */}
       <div className="max-w-6xl mx-auto mb-8">
         <label className="block text-sm font-semibold text-text mb-2">
           Number of salons to add
@@ -161,11 +202,12 @@ export function ViewPlan() {
             onChange={(e) =>
               setBranchCount(Math.max(1, Number(e.target.value) || 1))
             }
-            className="w-36 rounded-lg border border-(--border-light) bg-background px-3 py-2 text-text"
+            className="w-36 rounded-lg border bg-background px-3 py-2 text-text"
+            style={{ borderColor: 'var(--border-light)' }}
           />
 
           {selectedPlan && (
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+            <div className="text-sm text-gray-700">
               Total for {selectedPlan.name}:{" "}
               <span className="font-semibold text-pink-500">
                 {formatCurrency(totalPrice)}
@@ -187,60 +229,71 @@ export function ViewPlan() {
         </div>
       )}
 
-      {/* Plans */}
+      {/* PLAN CARDS */}
       <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
-        {plans.map((plan) => (
-          <div
-            key={plan._id}
-            className={`rounded-2xl p-6 border bg-background
-              border-(--border-light) shadow-md
-              transition-all duration-300
-              hover:scale-105 hover:shadow-xl hover:border-(--primary)`}
-          >
-            <h2 className="text-2xl font-serif font-bold text-text">
-              {plan.name}
-            </h2>
+        {plans.map((plan) => {
 
-            <p className="text-(--gray-700) mt-1">
-              {plan.description}
-            </p>
+          const isCurrent =
+            selectionInfo?.selectedPlan?._id === plan._id;
 
-            <div className="mt-4 text-3xl font-bold text-(--primary)">
-              {formatCurrency(Number(plan.price) || 0)}
-              <span className="block text-sm font-medium text-(--gray-700)">
-                per salon
-              </span>
-            </div>
+          const isUpgrade =
+            selectedPlan &&
+            Number(plan.price) > Number(selectedPlan.price);
 
-            <ul className="mt-6 space-y-3">
-              {(planFeatures[plan.name] || ["Core salon services"]).map(
-                (feature, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-2 text-text"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-(--primary)"></span>
-                    {feature}
-                  </li>
-                )
-              )}
-            </ul>
-
-            <button
-              onClick={() => handleSelectPlan(plan)}
-              disabled={!isBranchCountValid(plan)}
-            className={`mt-8 w-full rounded-xl py-3 font-semibold transition
-                ${
-                  selectedPlanId === plan._id
-                    ? "bg-(--primary) text-white"
-                    : "border border-(--primary) text-(--primary) hover:bg-(--background)"
-                }`}
+          return (
+            <div
+              key={plan._id}
+              className={`rounded-2xl p-6 border bg-background shadow-md
+                transition-all duration-300
+                hover:scale-105 hover:shadow-xl
+                ${isCurrent ? "ring-2" : ""}`}
+              style={{ borderColor: isCurrent ? 'var(--primary)' : 'var(--border-light)' }}
             >
-              {selectedPlanId === plan._id ? "Selected" : "Choose Plan"}
-            </button>
-          </div>
-        ))}
+              <h2 className="text-2xl font-serif font-bold text-text">
+                {plan.name}
+              </h2>
+
+              <p className="mt-1" style={{ color: 'var(--gray-700)' }}>
+                {plan.description}
+              </p>
+
+              <div className="mt-4 text-3xl font-bold" style={{ color: 'var(--primary)' }}>
+                {formatCurrency(Number(plan.price) || 0)}
+                <span className="block text-sm font-medium" style={{ color: 'var(--gray-700)' }}>
+                  per salon
+                </span>
+              </div>
+
+              <ul className="mt-6 space-y-3">
+                {(planFeatures[plan.name] || ["Core salon services"])
+                  .map((feature, i) => (
+                    <li key={i}
+                      className="flex items-center gap-2 text-text">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--primary)' }}></span>
+                      {feature}
+                    </li>
+                  ))}
+              </ul>
+
+              <button
+                onClick={() => handleSelectPlan(plan)}
+                disabled={!isBranchCountValid(plan)}
+                className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isCurrent ? "text-white" : "border"
+                  }`}
+                style={isCurrent ? { backgroundColor: 'var(--primary)' } : { borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              >
+                {isCurrent
+                  ? "Selected"
+                  : isUpgrade
+                    ? "Upgrade Plan"
+                    : "Switch Plan"}
+              </button>
+
+            </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }

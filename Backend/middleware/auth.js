@@ -1,26 +1,37 @@
 const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
-module.exports = (req, res, next) => {
+module.exports = (allowedRoles = []) => {
+  return (req, res, next) => {
 
-  const header = req.headers.authorization;
+    const header = req.headers.authorization;
 
-  if (!header) {
-    return res.status(401).json({ message: "No token" });
-  }
+    if (!header || !header.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided" });
+    }
 
-  const token = header.split(" ")[1];
+    const token = header.split(" ")[1];
 
-  try {
-    const decoded = jwt.verify(token, "mysecretkey");
+    try {
+      const decoded = jwt.verify(
+        token,
+        JWT_SECRET
+      );
 
-    req.userId = decoded.id;
-    req.userRole = decoded.role;
-    req.userSalonId = decoded.salonId;
+      req.user = decoded;
+      // { id, role, salonId }
 
-    next();
+      if (
+        allowedRoles.length &&
+        !allowedRoles.includes(decoded.role)
+      ) {
+        return res.status(403).json({ message: "Access denied" });
+      }
 
-  } catch (err) {
-    console.error("AUTH ERROR:", err.message);
-    res.status(401).json({ message: "Invalid token" });
-  }
+      next();
+
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  };
 };
