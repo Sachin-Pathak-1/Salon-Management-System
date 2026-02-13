@@ -37,6 +37,7 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Dashboard") && <Item to={dashboardLink} icon="🏠" label="Dashboard" open={open} />}
         {hasAccess("Services") && <Item to="/services" icon="🛠️" label="Services" open={open} />}
         {hasAccess("Appointments") && <Item to="/appointments" icon="📅" label="Appointments" open={open} />}
+        {hasAccess("Attendance") && <Item to={isAdmin ? "/attendance-report" : "/attendance"} icon="📝" label="Attendance" open={open} />}
 
         {hasAccess("Clients") && <Item to="/customers" icon="👥" label="Clients" open={open} />}
         {hasAccess("Staff") && <Item to="/staff" icon="👥" label="Staff" open={open} />}
@@ -44,7 +45,7 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Reports") && <Item to="/reports" icon="📊" label="Reports" open={open} />}
         {hasAccess("Billing") && <Item to="/paymenthistory" icon="💸" label="Billing" open={open} />}
 
-        {hasAccess("Profile") && <Item to="/profilepage" icon="👤" label="Profile" open={open} />}
+        {hasAccess("Profile") && <Item to="/profile" icon="👤" label="Profile" open={open} />}
 
         {hasAccess("Settings") && <Item to="/settings" icon="⚙️" label="Settings" open={open} />}
 

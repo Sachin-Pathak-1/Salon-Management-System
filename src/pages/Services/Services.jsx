@@ -27,6 +27,7 @@ export function Services({ activeSalon }) {
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showManageCategories, setShowManageCategories] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [editServiceId, setEditServiceId] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -42,6 +43,8 @@ export function Services({ activeSalon }) {
     name: "",
     description: "",
     price: "",
+    priceMale: "",
+    priceFemale: "",
     duration: "",
     categoryId: "",
     imageUrl: "",
@@ -191,6 +194,8 @@ export function Services({ activeSalon }) {
         body: JSON.stringify({
           ...serviceForm,
           price: Number(serviceForm.price),
+          priceMale: Number(serviceForm.priceMale),
+          priceFemale: Number(serviceForm.priceFemale),
           duration: Number(serviceForm.duration),
           salonId: activeSalon
         })
@@ -326,11 +331,11 @@ export function Services({ activeSalon }) {
               {isAdmin && (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setShowCategoryModal(true)}
+                    onClick={() => setShowManageCategories(true)}
                     className="text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all duration-200"
                     style={{ backgroundColor: 'var(--secondary)' }}
                   >
-                    + Category
+                    Manage Categories
                   </button>
                   <button
                     onClick={() => setShowServiceModal(true)}
@@ -351,7 +356,9 @@ export function Services({ activeSalon }) {
                 <tr className="border-b" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
                   <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Service</th>
                   <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Category</th>
-                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Price</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Normal Price</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Male Price</th>
+                  <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Female Price</th>
                   <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Duration</th>
                   <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Status</th>
                   <th className="p-4 text-left font-semibold" style={{ opacity: 0.7 }}>Staff</th>
@@ -396,6 +403,8 @@ export function Services({ activeSalon }) {
                         </span>
                       </td>
                       <td className="p-4 font-semibold" style={{ color: 'var(--success)' }}>₹{s.price}</td>
+                      <td className="p-4 font-semibold" style={{ color: 'var(--primary)' }}>₹{s.priceMale || 0}</td>
+                      <td className="p-4 font-semibold" style={{ color: 'var(--accent)' }}>₹{s.priceFemale || 0}</td>
                       <td className="p-4" style={{ opacity: 0.7 }}>{s.duration} mins</td>
                       <td className="p-4">
                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium capitalize`}
@@ -459,57 +468,6 @@ export function Services({ activeSalon }) {
 
         </div>
 
-        {/* CATEGORIES SECTION */}
-        {isAdmin && (
-          <div className="mt-8 rounded-2xl p-6 md:p-8 shadow-sm border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Categories Manager</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map(c => (
-                <div
-                  key={c._id}
-                  className="p-5 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition-shadow"
-                  style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}
-                >
-                  <div className="flex-1">
-                    <div className="font-semibold text-lg" style={{ color: 'var(--text)' }}>{c.icon} {c.name}</div>
-                    <small className="block mt-1" style={{ opacity: 0.7 }}>{c.description}</small>
-                    <div className={`inline-flex mt-2 px-2 py-1 rounded-full text-xs font-medium capitalize`}
-                      style={{
-                        backgroundColor: c.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'var(--gray-100)',
-                        color: c.status === 'active' ? 'var(--success)' : 'var(--text)'
-                      }}>
-                      {c.status}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-3" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditCategoryId(c._id);
-                        setCategoryForm(c);
-                        setShowCategoryModal(true);
-                      }}
-                      className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                      style={{ backgroundColor: 'var(--primary)' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c._id); }}
-                      className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
-                      style={{ backgroundColor: 'var(--danger)' }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* SERVICE DETAILS MODAL */}
@@ -535,15 +493,24 @@ export function Services({ activeSalon }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Price</label>
-                  <div className="font-bold text-xl mt-1" style={{ color: 'var(--success)' }}>₹{selected.price}</div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Normal Price</label>
+                  <div className="font-bold text-lg mt-1" style={{ color: 'var(--success)' }}>₹{selected.price}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Duration</label>
-                  <div className="font-semibold text-lg mt-1" style={{ color: 'var(--text)' }}>{selected.duration} mins</div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Male Price</label>
+                  <div className="font-bold text-lg mt-1" style={{ color: 'var(--primary)' }}>₹{selected.priceMale || 0}</div>
                 </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Female Price</label>
+                  <div className="font-bold text-lg mt-1" style={{ color: 'var(--accent)' }}>₹{selected.priceFemale || 0}</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide" style={{ opacity: 0.7 }}>Duration</label>
+                <div className="font-semibold text-lg mt-1" style={{ color: 'var(--text)' }}>{selected.duration} mins</div>
               </div>
 
               <div>
@@ -694,7 +661,75 @@ export function Services({ activeSalon }) {
         </div>
       )}
 
-      {/* SERVICE MODAL */}
+      {/* MANAGE CATEGORIES MODAL */}
+      {showManageCategories && isAdmin && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowManageCategories(false)}>
+          <div className="border w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Manage Categories</h2>
+              <button
+                onClick={() => setShowManageCategories(false)}
+                className="text-2xl opacity-50 hover:opacity-100"
+              >✕</button>
+            </div>
+
+            <div className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map(c => (
+                  <div
+                    key={c._id}
+                    className="p-5 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition-shadow"
+                    style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg" style={{ color: 'var(--text)' }}>{c.icon} {c.name}</div>
+                      <small className="block mt-1" style={{ opacity: 0.7 }}>{c.description}</small>
+                      <div className={`inline-flex mt-2 px-2 py-1 rounded-full text-xs font-medium capitalize`}
+                        style={{
+                          backgroundColor: c.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'var(--gray-100)',
+                          color: c.status === 'active' ? 'var(--success)' : 'var(--text)'
+                        }}>
+                        {c.status}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-3" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditCategoryId(c._id);
+                          setCategoryForm(c);
+                          setShowCategoryModal(true);
+                        }}
+                        className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
+                        style={{ backgroundColor: 'var(--primary)' }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c._id); }}
+                        className="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
+                        style={{ backgroundColor: 'var(--danger)' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end" style={{ borderColor: 'var(--border-light)' }}>
+              <button
+                onClick={() => setShowCategoryModal(true)}
+                className="text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
+                style={{ backgroundColor: 'var(--secondary)' }}
+              >
+                + Add New Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showServiceModal && isAdmin && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={closeServiceModal}>
           <div className="w-full max-w-2xl flex flex-col max-h-[85vh] rounded-2xl shadow-2xl border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
@@ -717,26 +752,37 @@ export function Services({ activeSalon }) {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Category</label>
-                <select
-                  name="categoryId"
-                  value={serviceForm.categoryId}
-                  onChange={handleServiceChange}
-                  className="input-themed w-full px-4 py-3 rounded-xl"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.filter(c => c.status === "active").map(c => (
-                    <option key={c._id} value={c._id}>
-                      {c.icon} {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    name="categoryId"
+                    value={serviceForm.categoryId}
+                    onChange={handleServiceChange}
+                    className="input-themed flex-1 px-4 py-3 rounded-xl"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categories.filter(c => c.status === "active").map(c => (
+                      <option key={c._id} value={c._id}>
+                        {c.icon} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryModal(true)}
+                    className="aspect-square bg-purple-100 text-purple-700 w-12 rounded-xl flex items-center justify-center font-bold text-xl hover:bg-purple-200"
+                    title="Add New Category"
+                    style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' }}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Price (₹)</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Normal Price (₹)</label>
                 <input
                   name="price"
                   type="number"
@@ -745,6 +791,30 @@ export function Services({ activeSalon }) {
                   placeholder="500"
                   className="input-themed w-full px-4 py-3 rounded-xl"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Male Price (₹)</label>
+                <input
+                  name="priceMale"
+                  type="number"
+                  value={serviceForm.priceMale}
+                  onChange={handleServiceChange}
+                  placeholder="400"
+                  className="input-themed w-full px-4 py-3 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Female Price (₹)</label>
+                <input
+                  name="priceFemale"
+                  type="number"
+                  value={serviceForm.priceFemale}
+                  onChange={handleServiceChange}
+                  placeholder="600"
+                  className="input-themed w-full px-4 py-3 rounded-xl"
                 />
               </div>
 

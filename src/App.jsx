@@ -9,11 +9,10 @@ import { FloatingSideBar } from "./components/FloatingSideBar";
 
 import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
 import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
-import { ProfilePage } from "./pages/LadingPage/ProfilePage/ProfilePage.jsx";
-import { ActivityPage } from "./pages/LadingPage/Activity/ActivityPage.jsx";
-import { HistoryPage } from "./pages/LadingPage/History/HistoryPage.jsx";
-import { CustomerList } from "./pages/LadingPage/CustomerList/CustomerList.jsx";
-import { CustomerDetails } from "./pages/LadingPage/CustomerDetails/CustomerDetails.jsx";
+import { ActivityPage } from "./pages/Activity/ActivityPage.jsx";
+import { HistoryPage } from "./pages/History/HistoryPage.jsx";
+import { CustomerList } from "./pages/Customers/CustomerList.jsx";
+import { CustomerDetails } from "./pages/Customers/CustomerDetails.jsx";
 import { Home } from "./pages/LadingPage/Home/Home.jsx";
 import { LPServices } from "./pages/LadingPage/Services/Services.jsx";
 import { About } from "./pages/LadingPage/About/About.jsx";
@@ -35,6 +34,8 @@ import { HelpPage } from "./pages/Support/HelpPage.jsx";
 import StaffManage from "./pages/Staff/StaffManage.jsx";
 import { ViewPlan } from "./pages/Plans/Plans.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
+import ManagerAttendance from "./pages/Attendance/ManagerAttendance.jsx";
+import AttendanceReport from "./pages/Attendance/AttendanceReport.jsx";
 
 function App() {
 
@@ -43,7 +44,13 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  const [activeSalon, setActiveSalon] = useState("");
+  const [activeSalon, setActiveSalon] = useState(localStorage.getItem("activeSalon") || "");
+
+  useEffect(() => {
+    if (activeSalon) {
+      localStorage.setItem("activeSalon", activeSalon);
+    }
+  }, [activeSalon]);
 
   /* ============================================
      RESTORE AUTH ON REFRESH (SAFE VERSION)
@@ -323,6 +330,24 @@ function App() {
             />
 
             <Route
+              path="/attendance"
+              element={
+                <RequireRole roles={["manager"]}>
+                  <ManagerAttendance />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/attendance-report"
+              element={
+                <RequireRole roles={["admin", "manager"]}>
+                  <AttendanceReport activeSalon={activeSalon} />
+                </RequireRole>
+              }
+            />
+
+            <Route
               path="/profile"
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>
@@ -331,17 +356,6 @@ function App() {
               }
             />
 
-            <Route
-              path="/profilepage"
-              element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
-                  <ProfilePage
-                    isLoggedIn={isLoggedIn}
-                    currentUser={currentUser}
-                  />
-                </RequireRole>
-              }
-            />
 
             <Route
               path="/activity"

@@ -69,6 +69,14 @@ export function Navbar({
   /* ================= THEME ================= */
   const applyTheme = (t) => {
     document.documentElement.setAttribute("data-theme", t);
+
+    // Sync with Tailwind 'class' mode
+    if (t === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     localStorage.setItem("theme", t);
     setTheme(t);
   };

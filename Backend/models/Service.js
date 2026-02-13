@@ -5,8 +5,10 @@ const ServiceSchema = new mongoose.Schema({
   name: String,
   description: String,
   price: Number,
+  priceMale: Number,
+  priceFemale: Number,
   duration: String,
-  
+
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",

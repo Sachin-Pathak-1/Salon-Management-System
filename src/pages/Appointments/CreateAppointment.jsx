@@ -227,10 +227,10 @@ export default function CreateAppointment() {
                       </h3>
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${salon.status === "open"
-                            ? "bg-[var(--success)]/15 text-[var(--success)] border-[var(--success)]/30"
-                            : salon.status === "closed"
-                              ? "bg-[var(--danger)]/15 text-[var(--danger)] border-[var(--danger)]/30"
-                              : "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/30"
+                          ? "bg-[var(--success)]/15 text-[var(--success)] border-[var(--success)]/30"
+                          : salon.status === "closed"
+                            ? "bg-[var(--danger)]/15 text-[var(--danger)] border-[var(--danger)]/30"
+                            : "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/30"
                           }`}
                       >
                         {salon.status}
@@ -277,8 +277,8 @@ export default function CreateAppointment() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                      style={{ 
-                        backgroundColor: 'var(--gray-100)', 
+                      style={{
+                        backgroundColor: 'var(--gray-100)',
                         borderColor: 'var(--border-light)',
                         color: 'var(--text)'
                       }}
@@ -293,8 +293,8 @@ export default function CreateAppointment() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                      style={{ 
-                        backgroundColor: 'var(--gray-100)', 
+                      style={{
+                        backgroundColor: 'var(--gray-100)',
                         borderColor: 'var(--border-light)',
                         color: 'var(--text)'
                       }}
@@ -309,8 +309,8 @@ export default function CreateAppointment() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                      style={{ 
-                        backgroundColor: 'var(--gray-100)', 
+                      style={{
+                        backgroundColor: 'var(--gray-100)',
                         borderColor: 'var(--border-light)',
                         color: 'var(--text)'
                       }}
@@ -340,8 +340,8 @@ export default function CreateAppointment() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                      style={{ 
-                        backgroundColor: 'var(--gray-100)', 
+                      style={{
+                        backgroundColor: 'var(--gray-100)',
                         borderColor: 'var(--border-light)',
                         color: 'var(--text)'
                       }}
@@ -356,8 +356,8 @@ export default function CreateAppointment() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                      style={{ 
-                        backgroundColor: 'var(--gray-100)', 
+                      style={{
+                        backgroundColor: 'var(--gray-100)',
                         borderColor: 'var(--border-light)',
                         color: 'var(--text)'
                       }}
@@ -382,8 +382,8 @@ export default function CreateAppointment() {
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                  style={{ 
-                    backgroundColor: 'var(--gray-100)', 
+                  style={{
+                    backgroundColor: 'var(--gray-100)',
                     borderColor: 'var(--border-light)',
                     color: 'var(--text)'
                   }}
@@ -413,8 +413,8 @@ export default function CreateAppointment() {
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2"
-                  style={{ 
-                    backgroundColor: 'var(--gray-100)', 
+                  style={{
+                    backgroundColor: 'var(--gray-100)',
                     borderColor: 'var(--border-light)',
                     color: 'var(--text)'
                   }}
@@ -422,7 +422,7 @@ export default function CreateAppointment() {
                   <option value="">Choose Service</option>
                   {services.map(service => (
                     <option key={service._id} value={service._id}>
-                      {service.name} - Rs {service.price} {service.duration ? `(${service.duration})` : ''}
+                      {service.name} - ₹{service.price} (N) / ₹{service.priceMale || 0} (M) / ₹{service.priceFemale || 0} (F)
                     </option>
                   ))}
                 </select>
@@ -445,8 +445,8 @@ export default function CreateAppointment() {
                   placeholder="Add any special requests or notes..."
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2 resize-none"
-                  style={{ 
-                    backgroundColor: 'var(--gray-100)', 
+                  style={{
+                    backgroundColor: 'var(--gray-100)',
                     borderColor: 'var(--border-light)',
                     color: 'var(--text)'
                   }}
