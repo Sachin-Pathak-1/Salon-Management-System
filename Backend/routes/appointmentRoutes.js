@@ -283,4 +283,24 @@ router.delete("/:id", auth(["admin"]), async (req, res) => {
   }
 });
 
+/* ============================
+   GET SALON DETAILS (STAFF & SERVICES)
+============================ */
+router.get("/salon/:salonId/details", auth(), async (req, res) => {
+  try {
+    const { salonId } = req.params;
+
+    // Get active staff for this salon
+    const staff = await Staff.find({ salonId, status: "active" });
+
+    // Get active services for this salon
+    const services = await Service.find({ salonId, status: "active" });
+
+    res.json({ staff, services });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
