@@ -16,6 +16,7 @@ router.get("/me", auth(), async (req, res) => {
     res.json(staff);
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -52,6 +53,7 @@ router.put("/update", auth(["staff", "manager"]), async (req, res) => {
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

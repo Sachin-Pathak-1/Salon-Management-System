@@ -18,17 +18,21 @@ router.get("/profile", auth(["admin"]), async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      contact: user.contact || ""
+      contact: user.contact || "",
+      address: user.address || ""
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 router.put("/update", auth(["admin"]), async (req, res) => {
   try {
-    const { name, contact } = req.body;
+    const fs = require('fs');
+    fs.appendFileSync('debug_log.txt', JSON.stringify({ user: req.user, body: req.body }, null, 2) + '\n');
+    const { name, contact, address } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -37,6 +41,7 @@ router.put("/update", auth(["admin"]), async (req, res) => {
 
     if (name) user.name = name;
     if (contact !== undefined) user.contact = contact;
+    if (address !== undefined) user.address = address;
 
     await user.save();
 
@@ -47,11 +52,13 @@ router.put("/update", auth(["admin"]), async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        contact: user.contact
+        contact: user.contact,
+        address: user.address
       }
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
