@@ -62,9 +62,13 @@ export function Settings() {
 
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
   const [selected, setSelected] = useState(null);
+
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileForm, setProfileForm] = useState({ name: "", contact: "" });
 
   const [dragIndex, setDragIndex] = useState(null);
 
@@ -95,8 +99,24 @@ export function Settings() {
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const endpoint = isAdmin ? "/adminProfile/profile" : "/staffProfile/me";
+      const res = await api.get(endpoint);
+      const data = res.data;
+      setUserProfile(data);
+      setProfileForm({
+        name: data.name || "",
+        contact: data.contact || ""
+      });
+    } catch (err) {
+      console.error("Failed to fetch user profile:", err);
+    }
+  };
+
   useEffect(() => {
     fetchSalons();
+    fetchUserProfile();
     if (isAdmin) {
       fetchPlanInfo();
     }
@@ -182,8 +202,6 @@ export function Settings() {
     }
   };
 
-  /* ================= DELETE ================= */
-
   const deleteSalon = async (id) => {
     if (!window.confirm("Delete salon?")) return;
 
@@ -197,6 +215,24 @@ export function Settings() {
       fetchPlanInfo();
     } catch (err) {
       showToast("Failed to delete salon");
+    }
+  };
+
+  const saveProfile = async () => {
+    try {
+      const endpoint = isAdmin ? "/adminProfile/update" : "/staffProfile/update";
+      await api.put(endpoint, profileForm);
+      showToast("Profile updated");
+      setShowProfileForm(false);
+      fetchUserProfile();
+
+      // Also update localStorage to reflect changes in Navbar etc
+      const stored = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      stored.name = profileForm.name;
+      localStorage.setItem("currentUser", JSON.stringify(stored));
+
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Failed to update profile");
     }
   };
 
@@ -325,6 +361,37 @@ export function Settings() {
             )}
           </div>
         )}
+
+        {/* PROFILE SETTINGS */}
+        <div className="p-6 md:p-8 rounded-2xl mb-8 border shadow-sm" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Personal Profile</h2>
+              <p className="text-sm opacity-70">Manage your account information</p>
+            </div>
+            <button
+              onClick={() => setShowProfileForm(true)}
+              className="btn-primary px-5 py-2 rounded-xl text-sm font-semibold"
+            >
+              Edit Profile
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-light)]">
+              <label className="text-xs font-bold uppercase opacity-70 block mb-1">Full Name</label>
+              <div className="font-semibold">{userProfile?.name || "Loading..."}</div>
+            </div>
+            <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-light)]">
+              <label className="text-xs font-bold uppercase opacity-70 block mb-1">Email Address</label>
+              <div className="font-semibold opacity-70">{userProfile?.email || "Loading..."}</div>
+            </div>
+            <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-light)]">
+              <label className="text-xs font-bold uppercase opacity-70 block mb-1">Contact Number</label>
+              <div className="font-semibold">{userProfile?.contact || "—"}</div>
+            </div>
+          </div>
+        </div>
 
         {/* SALON CARDS */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-10">
@@ -530,6 +597,73 @@ export function Settings() {
 
           </form>
 
+        </Modal>
+      )}
+
+      {/* ================= PROFILE FORM MODAL ================= */}
+
+      {showProfileForm && (
+        <Modal
+          title="Edit Personal Profile"
+          close={() => setShowProfileForm(false)}
+        >
+          <form
+            onSubmit={(e) => { e.preventDefault(); saveProfile(); }}
+            className="flex flex-col gap-5 px-2"
+          >
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Full Name</label>
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                className="input-themed w-full p-4 rounded-xl border-2"
+                style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Email Address</label>
+              <input
+                type="email"
+                value={userProfile?.email || ""}
+                disabled
+                className="input-themed w-full p-4 rounded-xl border-2 opacity-60 cursor-not-allowed"
+                style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text)' }}>Contact Number</label>
+              <input
+                type="text"
+                placeholder="Contact Number"
+                value={profileForm.contact}
+                onChange={(e) => setProfileForm({ ...profileForm, contact: e.target.value })}
+                className="input-themed w-full p-4 rounded-xl border-2"
+                style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)' }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 pt-5 border-t" style={{ borderColor: 'var(--border-light)' }}>
+              <button
+                type="button"
+                onClick={() => setShowProfileForm(false)}
+                className="border-2 rounded-xl text-sm font-semibold px-6 py-2.5 transition-colors"
+                style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--background)', color: 'var(--text)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-primary px-8 py-2.5 rounded-xl shadow-lg font-semibold text-sm transition-all hover:opacity-90 active:scale-95"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 
