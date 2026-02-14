@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
   },
 
   contact: String,
+  address: String,
 
   /* =========================
      PLAN / SUBSCRIPTION

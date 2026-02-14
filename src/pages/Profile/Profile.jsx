@@ -7,6 +7,20 @@ const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    contact: "",
+    address: "",
+    gender: "",
+    dob: ""
+  });
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
 
   const fetchProfile = async () => {
     try {
@@ -15,6 +29,13 @@ const Profile = () => {
       const endpoint = isAdmin ? "/adminProfile/profile" : "/staffProfile/me";
       const res = await api.get(endpoint);
       setUser(res.data);
+      setProfileForm({
+        name: res.data.name || "",
+        contact: res.data.contact || "",
+        address: res.data.address || "",
+        gender: res.data.gender || "",
+        dob: res.data.dob || ""
+      });
     } catch (err) {
       console.error("Failed to fetch profile:", err);
     } finally {
@@ -25,6 +46,40 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setProfileForm({
+      name: user.name || "",
+      contact: user.contact || "",
+      address: user.address || "",
+      gender: user.gender || "",
+      dob: user.dob || ""
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      const isAdmin = storedUser.role === "admin";
+      const endpoint = isAdmin ? "/adminProfile/update" : "/staffProfile/update";
+
+      await api.put(endpoint, profileForm);
+      showToast("Profile updated successfully");
+      setIsEditing(false);
+      fetchProfile();
+
+      // Update localStorage for navbar etc
+      storedUser.name = profileForm.name;
+      localStorage.setItem("currentUser", JSON.stringify(storedUser));
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Failed to update profile");
+    }
+  };
 
   if (loading) {
     return (
@@ -50,6 +105,12 @@ const Profile = () => {
 
   return (
     <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--text)] font-['Inter'] transition-colors duration-300 ease">
+      {/* TOAST */}
+      {toast && (
+        <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded z-[100] shadow-2xl">
+          {toast}
+        </div>
+      )}
 
       <main className="flex-1 py-10 px-4 md:px-10 lg:px-20">
         <div className="max-w-6xl mx-auto">
@@ -67,7 +128,18 @@ const Profile = () => {
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight">{user.name}</h1>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                    className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight bg-[var(--background)] border border-[var(--primary)] rounded-lg px-2 w-full max-w-md focus:outline-none"
+                    placeholder="Full Name"
+                    autoFocus
+                  />
+                ) : (
+                  <h1 className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight">{user.name}</h1>
+                )}
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center mb-3">
                   <span className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--background)] border border-[var(--border-light)] text-sm font-medium">
                     <span>📧</span> {user.email}
@@ -81,13 +153,30 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="mt-4 md:mt-0">
-                <button
-                  onClick={() => navigate("/settings")}
-                  className="flex items-center gap-2 bg-[var(--text)] text-[var(--background)] px-7 py-3.5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg group"
-                >
-                  <span className="transition-transform group-hover:rotate-12">✏️</span> Edit Profile
-                </button>
+              <div className="mt-4 md:mt-0 flex gap-3">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleCancel}
+                      className="flex items-center gap-2 bg-[var(--background)] text-[var(--text)] border-2 border-[var(--border-light)] px-5 py-3 rounded-2xl font-bold transition-all hover:bg-[var(--gray-100)] active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="flex items-center gap-2 bg-[var(--primary)] text-white px-7 py-3 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      Save Changes
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleEdit}
+                    className="flex items-center gap-2 bg-[var(--text)] text-[var(--background)] px-7 py-3.5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg group"
+                  >
+                    <span className="transition-transform group-hover:rotate-12">✏️</span> Edit Profile
+                  </button>
+                )}
               </div>
             </div>
           </header>
@@ -130,11 +219,56 @@ const Profile = () => {
                   Personal Information
                 </h2>
                 <div className="space-y-4">
-                  <ProfileInfoRow label="Full Name" value={user.name} />
-                  <ProfileInfoRow label="Email Address" value={user.email} />
-                  <ProfileInfoRow label="Contact Number" value={user.contact || "Not provided"} />
+                  <ProfileInfoRow
+                    label="Full Name"
+                    value={user.name}
+                    isEditing={isEditing}
+                    editValue={profileForm.name}
+                    onEditChange={(val) => setProfileForm({ ...profileForm, name: val })}
+                  />
+                  <ProfileInfoRow
+                    label="Email Address"
+                    value={user.email}
+                    isEditing={isEditing}
+                    editValue={user.email}
+                    disabled
+                  />
+                  <ProfileInfoRow
+                    label="Contact Number"
+                    value={user.contact || "Not provided"}
+                    isEditing={isEditing}
+                    editValue={profileForm.contact}
+                    onEditChange={(val) => setProfileForm({ ...profileForm, contact: val })}
+                  />
+                  <ProfileInfoRow
+                    label="Address"
+                    value={user.address || "Not provided"}
+                    isEditing={isEditing}
+                    editValue={profileForm.address}
+                    onEditChange={(val) => setProfileForm({ ...profileForm, address: val })}
+                  />
+                  {user.role !== 'admin' && (
+                    <>
+                      <ProfileInfoRow
+                        label="Gender"
+                        value={user.gender || "Not provided"}
+                        isEditing={isEditing}
+                        editValue={profileForm.gender}
+                        onEditChange={(val) => setProfileForm({ ...profileForm, gender: val })}
+                        type="select"
+                        options={["male", "female", "other"]}
+                      />
+                      <ProfileInfoRow
+                        label="Date of Birth"
+                        value={user.dob || "Not provided"}
+                        isEditing={isEditing}
+                        editValue={profileForm.dob}
+                        onEditChange={(val) => setProfileForm({ ...profileForm, dob: val })}
+                        type="date"
+                      />
+                    </>
+                  )}
                   <ProfileInfoRow label="Role" value={user.role} badge />
-                  <ProfileInfoRow label="Location" value={user.address || "Mumbai, India"} />
                   <ProfileInfoRow label="Member Since" value={joinDate} />
                 </div>
               </div>
@@ -180,10 +314,34 @@ const StatCard = ({ icon, label, value, themeColor }) => (
   </div>
 );
 
-const ProfileInfoRow = ({ label, value, badge }) => (
+const ProfileInfoRow = ({ label, value, badge, isEditing, editValue, onEditChange, disabled, type = "text", options = [] }) => (
   <div className="flex justify-between items-center py-4.5 border-b border-[var(--border-light)] last:border-0 group">
     <span className="font-bold text-sm text-[var(--text)] opacity-70 group-hover:opacity-100 transition-opacity">{label}</span>
-    {badge ? (
+    {isEditing && !badge ? (
+      <div className="flex-1 max-w-md ml-10">
+        {type === "select" ? (
+          <select
+            value={editValue}
+            onChange={(e) => onEditChange(e.target.value)}
+            disabled={disabled}
+            className="w-full p-2 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-sm focus:outline-none focus:border-[var(--primary)]"
+          >
+            <option value="">Select {label}</option>
+            {options.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={type}
+            value={editValue}
+            onChange={(e) => onEditChange(e.target.value)}
+            disabled={disabled}
+            className={`w-full p-2 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-sm focus:outline-none ${disabled ? "opacity-50 cursor-not-allowed" : "focus:border-[var(--primary)]"}`}
+          />
+        )}
+      </div>
+    ) : badge ? (
       <span className="px-3.5 py-1.5 rounded-full bg-[var(--primary)] text-white font-black uppercase text-[11px] tracking-widest shadow-sm">
         {value}
       </span>
