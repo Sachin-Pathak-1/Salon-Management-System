@@ -11,6 +11,14 @@ const router = express.Router();
    HELPER FUNCTIONS
 ============================ */
 
+const resolveAdminId = (user) => {
+  if (user.role === "admin") return user.id;
+  if ((user.role === "manager" || user.role === "staff") && user.adminId) {
+    return user.adminId;
+  }
+  return null;
+};
+
 // Convert "HH:MM" to minutes
 const timeToMinutes = (time) => {
   const [hours, minutes] = time.split(":").map(Number);
@@ -208,10 +216,21 @@ router.post("/create", auth(["admin"]), async (req, res) => {
 ============================ */
 router.get("/", auth(), async (req, res) => {
   try {
-    const query = { adminId: req.user.id };
+    const adminId = resolveAdminId(req.user);
+    if (!adminId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
 
-    if (req.query.salonId) query.salonId = req.query.salonId;
-    if (req.query.staffId) query.staffId = req.query.staffId;
+    const query = { adminId };
+
+    if (req.user.role === "manager" || req.user.role === "staff") {
+      if (req.user.salonId) query.salonId = req.user.salonId;
+      if (req.user.role === "staff") query.staffId = req.user.id;
+    } else {
+      if (req.query.salonId) query.salonId = req.query.salonId;
+      if (req.query.staffId) query.staffId = req.query.staffId;
+    }
+
     if (req.query.status) query.status = req.query.status;
 
     const appointments = await Appointment.find(query)

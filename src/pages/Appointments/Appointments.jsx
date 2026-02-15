@@ -9,6 +9,13 @@ const SELECTED_SALON_KEY = "selectedSalonId";
 export default function AdminAppointments() {
   const navigate = useNavigate();
 
+  const normalizeAppointments = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.appointments)) return payload.appointments;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+  };
+
   const [appointments, setAppointments] = useState([]);
   const [salons, setSalons] = useState([]);
   const [selectedSalonId, setSelectedSalonId] = useState(
@@ -22,7 +29,7 @@ export default function AdminAppointments() {
     const fetchAppointments = async () => {
       try {
         const response = await api.get('/appointments');
-        setAppointments(response.data);
+        setAppointments(normalizeAppointments(response.data));
       } catch (err) {
         setError('Failed to load appointments');
         console.error('Error loading appointments:', err);
@@ -79,10 +86,12 @@ export default function AdminAppointments() {
     try {
       await api.put(`/appointments/${id}/status`, { status: newStatus });
       // Update local state
-      setAppointments(
-        appointments.map((apt) =>
-          apt._id === id ? { ...apt, status: newStatus } : apt
-        )
+      setAppointments((prev) =>
+        Array.isArray(prev)
+          ? prev.map((apt) =>
+              apt._id === id ? { ...apt, status: newStatus } : apt
+            )
+          : []
       );
     } catch (err) {
       console.error('Error updating appointment status:', err);
@@ -97,9 +106,11 @@ export default function AdminAppointments() {
       : appointment.salonId._id || "";
   };
 
+  const safeAppointments = Array.isArray(appointments) ? appointments : [];
+
   const filteredAppointments = selectedSalonId
-    ? appointments.filter((appointment) => getSalonId(appointment) === selectedSalonId)
-    : appointments;
+    ? safeAppointments.filter((appointment) => getSalonId(appointment) === selectedSalonId)
+    : safeAppointments;
 
   const selectedSalonName =
     salons.find((s) => s._id === selectedSalonId)?.name || "Selected salon";

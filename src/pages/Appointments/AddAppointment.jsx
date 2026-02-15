@@ -4,6 +4,14 @@ import api from '../../api';
 
 export default function AddAppointment() {
   const navigate = useNavigate();
+
+  const normalizeSalons = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.salons)) return payload.salons;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+  };
+
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,7 +21,7 @@ export default function AddAppointment() {
     const fetchSalons = async () => {
       try {
         const response = await api.get('/salons/get');
-        setSalons(response.data);
+        setSalons(normalizeSalons(response.data));
       } catch (err) {
         setError('Failed to load salons');
         console.error('Error loading salons:', err);
@@ -39,6 +47,8 @@ export default function AddAppointment() {
   if (loading) return <div>Loading salons...</div>;
   if (error) return <div>{error}</div>;
 
+  const safeSalons = Array.isArray(salons) ? salons : [];
+
   return (
     <div className="admin-layout">
       <main className="admin-main-content">
@@ -56,12 +66,12 @@ export default function AddAppointment() {
           )}
 
           <div className="salons-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {salons.length === 0 ? (
+            {safeSalons.length === 0 ? (
               <p className="col-span-full text-center opacity-70">
                 No salons found.
               </p>
             ) : (
-              salons.map((salon) => {
+              safeSalons.map((salon) => {
                 const isUnavailable = salon.status !== "open";
 
                 return (
