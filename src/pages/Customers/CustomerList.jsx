@@ -1,15 +1,70 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../api';
 
 export function CustomerList() {
   const navigate = useNavigate();
-  const [customers] = useState([
-    { id: 1, name: 'John Smith', email: 'john@example.com', phone: '+1-234-567-8900', status: 'Active', services: 5 },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', phone: '+1-234-567-8901', status: 'Active', services: 3 },
-    { id: 3, name: 'Michael Brown', email: 'michael@example.com', phone: '+1-234-567-8902', status: 'Inactive', services: 2 },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', phone: '+1-234-567-8903', status: 'Active', services: 7 },
-    { id: 5, name: 'Robert Wilson', email: 'robert@example.com', phone: '+1-234-567-8904', status: 'Active', services: 4 },
-  ]);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchCustomersFromAppointments = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const activeSalon = localStorage.getItem('activeSalon');
+        const response = await api.get('/appointments', {
+          params: activeSalon ? { salonId: activeSalon } : {}
+        });
+
+        setAppointments(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error('Error loading customers:', err);
+        setError('Failed to load customers from appointments');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomersFromAppointments();
+  }, []);
+
+  const customers = useMemo(() => {
+    const grouped = new Map();
+
+    appointments.forEach((appointment) => {
+      const key = appointment.customerEmail || `${appointment.customerName}-${appointment.customerContact}`;
+      const existing = grouped.get(key);
+      const serviceName = appointment.serviceId?.name;
+      const isCancelled = appointment.status === 'cancelled';
+
+      if (!existing) {
+        grouped.set(key, {
+          id: key,
+          name: appointment.customerName || 'N/A',
+          email: appointment.customerEmail || 'N/A',
+          phone: appointment.customerContact || 'N/A',
+          status: isCancelled ? 'Inactive' : 'Active',
+          servicesSet: serviceName ? new Set([serviceName]) : new Set()
+        });
+        return;
+      }
+
+      if (serviceName) existing.servicesSet.add(serviceName);
+      if (!isCancelled) existing.status = 'Active';
+    });
+
+    return Array.from(grouped.values()).map((customer) => ({
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      status: customer.status,
+      services: customer.servicesSet.size
+    }));
+  }, [appointments]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] px-5 py-10 text-[var(--text)] transition-colors duration-300">
@@ -19,7 +74,12 @@ export function CustomerList() {
             <h1 className="text-4xl font-extrabold text-[var(--text)] mb-2">Customers</h1>
             <p className="text-[var(--text)] opacity-70 text-sm">Manage and view all your customers</p>
           </div>
-          <button className="px-6 py-3 bg-[var(--primary)] text-white border-none rounded-xl font-bold cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:opacity-90">+ Add Customer</button>
+          <button
+            disabled
+            className="px-6 py-3 bg-[var(--gray-300)] text-[var(--text)] border-none rounded-xl font-bold cursor-not-allowed opacity-70"
+          >
+            Synced from Appointments
+          </button>
         </div>
 
         <div className="bg-[var(--gray-100)] rounded-xl overflow-hidden shadow-md">
@@ -35,7 +95,27 @@ export function CustomerList() {
               </tr>
             </thead>
             <tbody>
-              {customers.map(customer => (
+              {loading && (
+                <tr>
+                  <td colSpan="6" className="px-5 py-6 text-sm text-center opacity-80">Loading customers...</td>
+                </tr>
+              )}
+
+              {!loading && error && (
+                <tr>
+                  <td colSpan="6" className="px-5 py-6 text-sm text-center text-red-500">{error}</td>
+                </tr>
+              )}
+
+              {!loading && !error && customers.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-5 py-6 text-sm text-center opacity-80">
+                    No customer data found in appointments.
+                  </td>
+                </tr>
+              )}
+
+              {!loading && !error && customers.map(customer => (
                 <tr key={customer.id} className="transition-all duration-300 hover:bg-[var(--hover-bg)]">
                   <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.name}</td>
                   <td className="px-5 py-4 border-b border-[var(--border-light)] text-[var(--text)] opacity-85 text-sm md:px-2 md:py-3">{customer.email}</td>
