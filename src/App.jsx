@@ -314,7 +314,7 @@ function App() {
             <Route
               path="/staff"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole roles={["admin","manager"]}>
                   <StaffManage activeSalon={activeSalon} />
                 </RequireRole>
               }
