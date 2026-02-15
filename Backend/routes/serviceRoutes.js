@@ -11,9 +11,9 @@ const {
 } = require("../controllers/serviceController");
 
 router.get("/", auth(), getServices);
-router.post("/", auth(["admin"]), addService);
-router.put("/reorder", auth(["admin"]), reorderServices);
-router.put("/:id", auth(["admin"]), updateService);
-router.delete("/:id", auth(["admin"]), deleteService);
+router.post("/", auth(["admin", "manager"]), addService);
+router.put("/reorder", auth(["admin", "manager"]), reorderServices);
+router.put("/:id", auth(["admin", "manager"]), updateService);
+router.delete("/:id", auth(["admin", "manager"]), deleteService);
 
 module.exports = router;

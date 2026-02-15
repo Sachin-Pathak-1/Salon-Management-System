@@ -4,6 +4,7 @@ import React from "react";
 
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
+import { ToastProvider } from "./context/ToastContext";
 
 /* ================= LANDING PAGES ================= */
 
@@ -132,7 +133,7 @@ function App() {
   ============================================ */
 
   return (
-    <>
+    <ToastProvider>
       <Navbar
         isLoggedIn={isLoggedIn}
         setIsLoggedIn={setIsLoggedIn}
@@ -314,7 +315,7 @@ function App() {
             <Route
               path="/staff"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole roles={["admin", "manager"]}>
                   <StaffManage activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -379,7 +380,7 @@ function App() {
 
         </div>
       </div>
-    </>
+    </ToastProvider>
   );
 }
 

@@ -1,5 +1,13 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
+const fs = require("fs");
+const path = require("path");
+
+const logPath = "d:/Intern/Services-Management-System/Backend/deletion_debug.log";
+const debugLog = (msg) => {
+  const time = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${time}] ${msg}\n`);
+};
 
 module.exports = (allowedRoles = []) => {
   return (req, res, next) => {
@@ -7,6 +15,7 @@ module.exports = (allowedRoles = []) => {
     const header = req.headers.authorization;
 
     if (!header || !header.startsWith("Bearer ")) {
+      debugLog("AUTH FAILED: No token or Bearer header");
       return res.status(401).json({ message: "No token provided" });
     }
 
@@ -25,8 +34,11 @@ module.exports = (allowedRoles = []) => {
         allowedRoles.length &&
         !allowedRoles.includes(decoded.role)
       ) {
+        debugLog(`AUTH FAILED: Access Denied. Role ${decoded.role} not in [${allowedRoles.join(",")}] | Path: ${req.originalUrl}`);
         return res.status(403).json({ message: "Access denied" });
       }
+
+      debugLog(`AUTH SUCCESS: Role: ${decoded.role} | Path: ${req.originalUrl}`);
 
       next();
 

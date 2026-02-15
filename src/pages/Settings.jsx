@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import api from "../api";
+import { useToast } from "../context/ToastContext";
 
 /* ======================================================
    SETTINGS PAGE
 ====================================================== */
 
 export function Settings() {
+  const { showToast } = useToast();
 
   /* ================= THEME ================= */
 
@@ -31,14 +33,7 @@ export function Settings() {
   const toggleTheme = () =>
     setTheme(t => (t === "light" ? "dark" : "light"));
 
-  /* ================= TOAST ================= */
-
-  const [toast, setToast] = useState("");
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
+  /* ================= TOAST (Removed local) ================= */
 
   /* ================= STATE ================= */
 
@@ -209,13 +204,6 @@ export function Settings() {
 
   return (
     <div className="min-h-screen px-6 py-10">
-
-      {/* TOAST */}
-      {toast && (
-        <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded">
-          {toast}
-        </div>
-      )}
 
       <div className="max-w-7xl mx-auto">
 
@@ -394,13 +382,13 @@ export function Settings() {
                 {/* STATUS */}
                 <p className="text-center mt-2">
                   <span className={`px-2 py-1 text-xs rounded
-                  ${s.status === "open"
+                  ${s.displayStatus === "open"
                       ? "bg-green-500"
-                      : s.status === "closed"
+                      : s.displayStatus === "closed"
                         ? "bg-red-500"
                         : "bg-yellow-500"
                     } text-white`}>
-                    {s.status}
+                    {s.displayStatus}
                   </span>
                 </p>
 

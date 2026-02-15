@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../context/ToastContext";
 
 const STAFF_API = "http://localhost:5000/api/staff";
 const SERVICES_API = "http://localhost:5000/api/services";
 
 export default function Staff({ activeSalon }) {
+  const { showToast } = useToast();
 
   /* ================= THEME ================= */
   const [theme] = useState(localStorage.getItem("theme") || "light");
@@ -45,8 +47,6 @@ export default function Staff({ activeSalon }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [selected, setSelected] = useState(null);
-
-  const [toast, setToast] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
 
   /* ================= HELPERS ================= */
@@ -54,11 +54,6 @@ export default function Staff({ activeSalon }) {
   const authHeader = () => ({
     Authorization: `Bearer ${localStorage.getItem("token")}`
   });
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
 
   /* ================= LOAD STAFF & SERVICES ================= */
 
@@ -261,15 +256,6 @@ export default function Staff({ activeSalon }) {
 
   return (
     <div className="min-h-screen w-full px-4 md:px-10 py-10" style={{ backgroundColor: 'var(--background)' }}>
-
-      {toast && (
-        <div className="fixed top-5 right-5 px-5 py-3 rounded-xl shadow-lg z-50 animate-fade-in border" style={{ backgroundColor: 'var(--gray-900)', color: 'white', borderColor: 'var(--border-light)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-lg">✓</span>
-            <span className="font-medium">{toast}</span>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-7xl mx-auto" style={{ color: 'var(--text)' }}>
 

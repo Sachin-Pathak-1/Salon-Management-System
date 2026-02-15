@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../context/ToastContext";
+import api from "../../api";
 
 const CATEGORIES_API = "http://localhost:5000/api/categories";
 const SERVICES_API = "http://localhost:5000/api/services";
 const STAFF_API = "http://localhost:5000/api/staff";
 
 export function Services({ activeSalon }) {
+  const { showToast } = useToast();
   /* ================= THEME ================= */
   const [theme] = useState(localStorage.getItem("theme") || "light");
 
@@ -23,7 +26,6 @@ export function Services({ activeSalon }) {
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [toast, setToast] = useState("");
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -62,11 +64,6 @@ export function Services({ activeSalon }) {
     "Cache-Control": "no-store"
   });
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2500);
-  };
-
   const safeFetch = async (url, options = {}) => {
     const res = await fetch(url, { cache: "no-store", ...options });
     if (!res.ok) {
@@ -80,21 +77,24 @@ export function Services({ activeSalon }) {
   useEffect(() => {
     if (!activeSalon) return;
 
-    Promise.all([
-      safeFetch(`${CATEGORIES_API}?salonId=${activeSalon}`, {
-        headers: authHeader()
-      }).catch(() => []),
-      safeFetch(`${SERVICES_API}?salonId=${activeSalon}`, {
-        headers: authHeader()
-      }).catch(() => []),
-      safeFetch(`${STAFF_API}?salonId=${activeSalon}`, {
-        headers: authHeader()
-      }).catch(() => [])
-    ]).then(([cats, svcs, stf]) => {
-      setCategories(Array.isArray(cats) ? cats : []);
-      setServices(Array.isArray(svcs) ? svcs : []);
-      setStaff(Array.isArray(stf) ? stf : []);
-    });
+    const loadData = async () => {
+      try {
+        const [catsRes, svcsRes, stfRes] = await Promise.all([
+          api.get(`/categories?salonId=${activeSalon}`),
+          api.get(`/services?salonId=${activeSalon}`),
+          api.get(`/staff?salonId=${activeSalon}`)
+        ]);
+
+        setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
+        setServices(Array.isArray(svcsRes.data) ? svcsRes.data : []);
+        setStaff(Array.isArray(stfRes.data) ? stfRes.data : []);
+      } catch (err) {
+        console.error("LOAD DATA ERROR:", err);
+        showToast("Failed to load salon data");
+      }
+    };
+
+    loadData();
   }, [activeSalon]);
 
   /* ================= CATEGORY OPERATIONS ================= */
@@ -109,21 +109,14 @@ export function Services({ activeSalon }) {
         ? `${CATEGORIES_API}/${editCategoryId}`
         : CATEGORIES_API;
 
-      await safeFetch(url, {
-        method,
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ ...categoryForm, salonId: activeSalon })
-      });
+      await api[method](url, { ...categoryForm, salonId: activeSalon });
 
-      const refreshed = await safeFetch(
-        `${CATEGORIES_API}?salonId=${activeSalon}`,
-        { headers: authHeader() }
-      );
-      setCategories(refreshed);
+      const res = await api.get(`/categories?salonId=${activeSalon}`);
+      setCategories(res.data);
       closeCategoryModal();
       showToast(editCategoryId ? "Category updated" : "Category added");
     } catch (err) {
-      showToast(err.message || "Failed to save category");
+      showToast(err.response?.data?.message || err.message || "Failed to save category");
     }
   };
 
@@ -178,38 +171,40 @@ export function Services({ activeSalon }) {
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
     if (!isAdmin) return;
+    if (!activeSalon) return showToast("Please select a salon first");
     if (!serviceForm.name || !serviceForm.categoryId) {
       return showToast("Name and category required");
     }
 
     try {
-      const method = editServiceId ? "PUT" : "POST";
-      const url = editServiceId
-        ? `${SERVICES_API}/${editServiceId}`
-        : SERVICES_API;
+      const url = editServiceId ? `/services/${editServiceId}` : "/services";
+      const method = editServiceId ? "put" : "post";
 
-      await safeFetch(url, {
-        method,
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({
-          ...serviceForm,
-          price: Number(serviceForm.price),
-          priceMale: Number(serviceForm.priceMale),
-          priceFemale: Number(serviceForm.priceFemale),
-          duration: Number(serviceForm.duration),
-          salonId: activeSalon
-        })
-      });
+      const payload = {
+        ...serviceForm,
+        price: Number(serviceForm.price),
+        priceMale: Number(serviceForm.priceMale || 0),
+        priceFemale: Number(serviceForm.priceFemale || 0),
+        duration: Number(serviceForm.duration),
+        salonId: activeSalon
+      };
 
-      const refreshed = await safeFetch(
-        `${SERVICES_API}?salonId=${activeSalon}`,
-        { headers: authHeader() }
-      );
-      setServices(refreshed);
+      await api[method](url, payload);
+
+      // Close modal and show success immediately
       closeServiceModal();
       showToast(editServiceId ? "Service updated" : "Service added");
+
+      // Attempt to refresh in background
+      try {
+        const res = await api.get(`/services?salonId=${activeSalon}`);
+        setServices(res.data);
+      } catch (err) {
+        console.error("Refresh failed:", err);
+      }
     } catch (err) {
-      showToast(err.message || "Failed to save service");
+      console.error("SERVICE SUBMIT ERROR:", err.response?.data || err);
+      showToast(err.response?.data?.message || err.message || "Failed to save service");
     }
   };
 
@@ -283,15 +278,6 @@ export function Services({ activeSalon }) {
   /* ================= UI ================= */
   return (
     <div className="min-h-screen w-full px-4 md:px-10 py-10" style={{ backgroundColor: 'var(--background)' }}>
-      {toast && (
-        <div className="fixed top-5 right-5 px-5 py-3 rounded-xl shadow-lg z-50 animate-fade-in border" style={{ backgroundColor: 'var(--gray-900)', color: 'white', borderColor: 'var(--border-light)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-lg">✓</span>
-            <span className="font-medium">{toast}</span>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto" style={{ color: 'var(--text)' }}>
         {/* HEADER */}
         <div className="mb-8">
@@ -577,7 +563,7 @@ export function Services({ activeSalon }) {
 
       {/* CATEGORY MODAL */}
       {showCategoryModal && isAdmin && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={closeCategoryModal}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in" onClick={closeCategoryModal}>
           <div className="border w-full max-w-xl rounded-2xl shadow-2xl" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>

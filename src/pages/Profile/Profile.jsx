@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import InfoRow from "../../components/InfoRow";
 
 const Profile = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,12 +17,6 @@ const Profile = () => {
     gender: "",
     dob: ""
   });
-  const [toast, setToast] = useState("");
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
 
   const fetchProfile = async () => {
     try {
@@ -105,13 +101,6 @@ const Profile = () => {
 
   return (
     <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--text)] font-['Inter'] transition-colors duration-300 ease">
-      {/* TOAST */}
-      {toast && (
-        <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded z-[100] shadow-2xl">
-          {toast}
-        </div>
-      )}
-
       <main className="flex-1 py-10 px-4 md:px-10 lg:px-20">
         <div className="max-w-6xl mx-auto">
           {/* HEADER CARD */}

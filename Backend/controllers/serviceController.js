@@ -1,4 +1,12 @@
 const Service = require("../models/Service");
+const fs = require("fs");
+const path = require("path");
+
+const logPath = "d:/Intern/Services-Management-System/Backend/deletion_debug.log";
+const debugLog = (msg) => {
+  const time = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${time}] ${msg}\n`);
+};
 
 /* ==================================================
    GET SERVICES (Salon Isolated)
@@ -43,16 +51,19 @@ exports.addService = async (req, res) => {
   try {
 
     const { salonId } = req.body;
+    debugLog(`ADD SERVICE REQUEST: Body: ${JSON.stringify(req.body)} | User: ${req.user.id}, Role: ${req.user.role}, Salon: ${req.user.salonId}`);
 
     if (!salonId) {
+      debugLog("ADD SERVICE FAILED: SalonId missing in request body");
       return res.status(400).json({ message: "SalonId required" });
     }
 
     // Manager can only add to their salon
     if (
       (req.user.role === "manager" || req.user.role === "staff") &&
-      req.user.salonId !== salonId
+      req.user.salonId.toString() !== salonId.toString()
     ) {
+      debugLog(`ADD SERVICE FAILED: Unauthorized salon access. UserSalon: ${req.user.salonId}, ReqSalon: ${salonId}`);
       return res.status(403).json({ message: "Unauthorized salon access" });
     }
 
@@ -78,13 +89,15 @@ exports.addService = async (req, res) => {
       );
     }
 
-    const populated = await service.populate("categoryId").populate("assignedStaff");
+    const populated = await service.populate(["categoryId", "assignedStaff"]);
 
+    debugLog(`Service created successfully: ${service._id}`);
     res.status(201).json(populated);
 
   } catch (err) {
+    debugLog(`ADD SERVICE ERROR: ${err.stack || err.message}`);
     console.error("ADD SERVICE ERROR:", err);
-    res.status(500).json({ message: "Add failed" });
+    res.status(500).json({ message: err.message || "Add failed" });
   }
 };
 

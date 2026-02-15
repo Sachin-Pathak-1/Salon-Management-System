@@ -1,4 +1,14 @@
 const Category = require("../models/Category");
+const Service = require("../models/Service");
+const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
+
+const logPath = "d:/Intern/Services-Management-System/Backend/deletion_debug.log";
+const debugLog = (msg) => {
+  const time = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${time}] ${msg}\n`);
+};
 
 /* ==================================================
    GET CATEGORIES (Salon Isolated)
@@ -46,8 +56,9 @@ exports.addCategory = async (req, res) => {
     // Manager can only add to their salon
     if (
       (req.user.role === "manager" || req.user.role === "staff") &&
-      req.user.salonId !== salonId
+      req.user.salonId.toString() !== salonId.toString()
     ) {
+      debugLog(`ADD CATEGORY FAILED: Unauthorized. UserSalon: ${req.user.salonId}, ReqSalon: ${salonId}`);
       return res.status(403).json({ message: "Unauthorized salon access" });
     }
 
@@ -66,8 +77,9 @@ exports.addCategory = async (req, res) => {
     res.status(201).json(category);
 
   } catch (err) {
+    debugLog(`ADD CATEGORY ERROR: ${err.stack || err.message}`);
     console.error("ADD CATEGORY ERROR:", err);
-    res.status(500).json({ message: "Add failed" });
+    res.status(500).json({ message: err.message || "Add failed" });
   }
 };
 
@@ -122,9 +134,12 @@ exports.deleteCategory = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized delete" });
     }
 
+    // Cascading delete: Remove all services in this category
+    await Service.deleteMany({ categoryId: new mongoose.Types.ObjectId(req.params.id) });
+
     await Category.findByIdAndDelete(req.params.id);
 
-    res.json({ message: "Deleted successfully" });
+    res.json({ message: "Category and associated services deleted successfully" });
 
   } catch (err) {
     console.error("DELETE CATEGORY ERROR:", err);
