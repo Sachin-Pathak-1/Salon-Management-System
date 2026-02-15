@@ -295,7 +295,7 @@ export function Reports({ activeSalon }) {
                       className="flex-1 rounded-sm"
                       style={{
                         height: `${bar.height}%`,
-                        backgroundColor: idx === sparkBars.length - 1 ? "var(--primary)" : "rgba(99, 102, 241, 0.24)"
+                        backgroundColor: "var(--primary)"
                       }}
                     />
                   ))}
@@ -319,7 +319,7 @@ export function Reports({ activeSalon }) {
                         className="flex-1 rounded-sm"
                         style={{
                           height: `${h}%`,
-                          backgroundColor: idx === miniBars.length - 1 ? "var(--primary)" : "rgba(99, 102, 241, 0.18)"
+                          backgroundColor: "var(--primary)"
                         }}
                       />
                     ))}
@@ -342,7 +342,7 @@ export function Reports({ activeSalon }) {
                         className="flex-1 rounded-sm"
                         style={{
                           height: `${Math.max(h - 10, 20)}%`,
-                          backgroundColor: idx === miniBars.length - 1 ? "#9b8df0" : "rgba(155, 141, 240, 0.24)"
+                          backgroundColor: "var(--primary)"
                         }}
                       />
                     ))}
