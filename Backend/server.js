@@ -34,13 +34,14 @@ app.use("/api/adminProfile", require("./routes/adminProfileRoutes"));
 app.use("/api/staffAuth", require("./routes/staffAuth"));
 app.use("/api/staffProfile", require("./routes/staffProfile"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/manager-dashboard", require("./routes/managerDashboardRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/services", require("./routes/serviceRoutes"));
 app.use("/api/salons", require("./routes/salonRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/plans", require("./routes/plansRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
-app.use("/api/attendance", require("./routes/attendanceRoutes"));
-app.use("/api/reports", require("./routes/reportsRoutes"));
+app.use("/api/attendance", require("./routes/attendance"));
 
 // ---------------------
 // SERVER START
@@ -48,4 +49,5 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log("Plans routes loaded at /api/plans");
 });

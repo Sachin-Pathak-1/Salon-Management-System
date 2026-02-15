@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Staff = require("../models/Staff");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 const router = express.Router();
@@ -62,25 +63,34 @@ router.post("/signup", async (req, res) => {
 ====================== */
 router.post("/login", async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     if (!email || !password)
       return res.status(400).json({ message: "Email and password required" });
 
-    const user = await User.findOne({ email });
-    if (!user)
+    // 1️⃣ Check Admin (User)
+    let account = await User.findOne({ email });
+    let roleSource = "admin";
+
+    // 2️⃣ If not admin, check Staff (staff or manager)
+    if (!account) {
+      account = await Staff.findOne({ email });
+      roleSource = "staff";
+    }
+
+    if (!account)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.password);
+    const ok = await bcrypt.compare(password, account.password);
     if (!ok)
       return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
       {
-        id: user._id,
-        role: user.role,
-        salonId: user.salonId || null
+        id: account._id,
+        role: account.role,
+        salonId: account.salonId || null,
+        adminId: account.adminId || null
       },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -89,11 +99,11 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        salonId: user.salonId || null
+        id: account._id,
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        salonId: account.salonId || null
       }
     });
 
@@ -101,5 +111,6 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;

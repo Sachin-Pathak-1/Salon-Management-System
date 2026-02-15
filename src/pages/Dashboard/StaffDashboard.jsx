@@ -72,22 +72,21 @@ export function StaffDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10">
+    <div className="min-h-screen px-4 py-10" style={{ backgroundColor: 'var(--background)', color: 'var(--text)' }}>
       <div className="max-w-4xl mx-auto flex flex-col gap-10">
 
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white p-8 rounded-lg shadow-lg">
+        <div className="p-8 rounded-lg border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
           <h1 className="text-3xl font-bold">Staff Dashboard</h1>
-          <p className="text-white/80">
+          <p style={{ color: 'var(--gray-700)' }}>
             Overview of salon activities and services
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Today's Appointments" value={stats.todayAppointments} icon="📅" />
-          <StatCard title="Completed Services" value={stats.completed} icon="✅" />
-          <StatCard title="Pending Services" value={stats.pending} icon="⏳" />
-          <StatCard title="Total Services" value={stats.totalServices} icon="💼" />
+          <StatCard title="Today's Appointments" value={stats.todayAppointments} />
+          <StatCard title="Completed Services" value={stats.completed} />
+          <StatCard title="Pending Services" value={stats.pending} />
+          <StatCard title="Total Services" value={stats.totalServices} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -125,30 +124,30 @@ export function StaffDashboard() {
   );
 }
 
-function StatCard({ title, value, icon }) {
+function StatCard({ title, value }) {
   return (
-    <div className="bg-white border border-[var(--border-light)] rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow">
-      <div className="text-4xl mb-2">{icon}</div>
-      <p className="text-sm text-[var(--gray-700)]">{title}</p>
-      <h2 className="text-3xl font-bold text-[var(--primary)]">{value}</h2>
+    <div className="border rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
+      <p className="text-sm" style={{ color: 'var(--gray-700)' }}>{title}</p>
+      <h2 className="text-3xl font-bold">{value}</h2>
     </div>
   );
 }
 
 function DashboardTable({ title, data, emptyText, render }) {
   return (
-    <div className="bg-[var(--gray-100)] p-8 rounded-lg border border-[var(--border-light)]">
+    <div className="p-8 rounded-lg border" style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)' }}>
       <h2 className="text-xl font-semibold mb-4">{title}</h2>
 
       {data.length === 0 ? (
-        <p className="text-sm text-center text-[var(--gray-700)]">
+        <p className="text-sm text-center" style={{ color: 'var(--gray-700)' }}>
           {emptyText}
         </p>
       ) : (
         data.map((item, i) => (
           <div
             key={i}
-            className="flex justify-between border-t border-[var(--border-light)] py-2 text-sm"
+            className="flex justify-between border-t py-2 text-sm"
+            style={{ borderColor: 'var(--border-light)' }}
           >
             {render(item)}
           </div>

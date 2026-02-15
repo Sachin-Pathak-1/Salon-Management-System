@@ -16,13 +16,12 @@ export function FloatingSideBar({ currentUser }) {
       className={`
         fixed top-35 left-4 max-h-[65%]
         ${open ? "w-56" : "w-17"}
-        bg-(--gray-100) text-(--text)
-        border border-(--border-light)
-        rounded-2xl shadow-xl
+        border rounded-2xl shadow-xl
         transition-all duration-300
         flex flex-col
         z-50
       `}
+      style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text)', borderColor: 'var(--border-light)' }}
     >
       {/* TOGGLE */}
       <button
@@ -38,8 +37,7 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Dashboard") && <Item to={dashboardLink} icon="🏠" label="Dashboard" open={open} />}
         {hasAccess("Services") && <Item to="/services" icon="🛠️" label="Services" open={open} />}
         {hasAccess("Appointments") && <Item to="/appointments" icon="📅" label="Appointments" open={open} />}
-        {hasAccess("Attendance") && <Item to="/attendance" icon="✅" label="Attendance" open={open} />}
-       
+        {hasAccess("Attendance") && <Item to={isAdmin ? "/attendance-report" : "/attendance"} icon="📝" label="Attendance" open={open} />}
 
         {hasAccess("Clients") && <Item to="/customers" icon="👥" label="Clients" open={open} />}
         {hasAccess("Staff") && <Item to="/staff" icon="👥" label="Staff" open={open} />}
@@ -47,13 +45,13 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Reports") && <Item to="/reports" icon="📊" label="Reports" open={open} />}
         {hasAccess("Billing") && <Item to="/paymenthistory" icon="💸" label="Billing" open={open} />}
 
-        {hasAccess("Profile") && <Item to="/profilepage" icon="👤" label="Profile" open={open} />}
+        {hasAccess("Profile") && <Item to="/profile" icon="👤" label="Profile" open={open} />}
 
         {hasAccess("Settings") && <Item to="/settings" icon="⚙️" label="Settings" open={open} />}
 
         {hasAccess("Support") && <Item to="/support" icon="👨🏿‍💻" label="Support" open={open} />}
       </ul>
-    </div>
+    </div >
   );
 }
 
@@ -62,14 +60,16 @@ function Item({ to, icon, label, open }) {
     <li>
       <Link
         to={to}
-        className={`
-          flex items-center gap-4
-          rounded-xl px-3 py-2
-          text-(--text)
-          hover:bg-(--background) hover:shadow
-          transition-all duration-300
-          
-        `}
+        className="flex items-center gap-4 rounded-xl px-3 py-2 transition-all duration-300"
+        style={{ color: 'var(--text)' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--background)';
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
       >
         {/* ICON */}
         <span className="text-xl w-8 text-center">{icon}</span>

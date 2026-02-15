@@ -28,6 +28,11 @@ const staffSchema = new mongoose.Schema(
     required: true
   },
 
+  services: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service"
+  }],
+
   order: {
     type: Number,
     default: 0
