@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import api from "../../api";
 
-const CATEGORIES_API = "http://localhost:5000/api/categories";
-const SERVICES_API = "http://localhost:5000/api/services";
-const STAFF_API = "http://localhost:5000/api/staff";
+const CATEGORIES_API = "/categories";
+const SERVICES_API = "/services";
+const STAFF_API = "/staff";
 
 export function Services({ activeSalon }) {
   const { showToast } = useToast();
@@ -104,7 +104,7 @@ export function Services({ activeSalon }) {
     if (!categoryForm.name) return showToast("Category name required");
 
     try {
-      const method = editCategoryId ? "PUT" : "POST";
+      const method = editCategoryId ? "put" : "post";
       const url = editCategoryId
         ? `${CATEGORIES_API}/${editCategoryId}`
         : CATEGORIES_API;
@@ -131,17 +131,13 @@ export function Services({ activeSalon }) {
     if (!window.confirm("Delete this category?")) return;
 
     try {
-      await safeFetch(`${CATEGORIES_API}/${id}`, {
-        method: "DELETE",
-        headers: authHeader()
-      });
+      await api.delete(`${CATEGORIES_API}/${id}`);
 
       // Auto-refresh from server
-      const refreshed = await safeFetch(
-        `${CATEGORIES_API}?salonId=${activeSalon}`,
-        { headers: authHeader() }
+      const refreshed = await api.get(
+        `${CATEGORIES_API}?salonId=${activeSalon}`
       );
-      setCategories(refreshed);
+      setCategories(refreshed.data);
 
       if (activeCategory === id) setActiveCategory("All");
       showToast("Category deleted");
@@ -219,17 +215,13 @@ export function Services({ activeSalon }) {
     if (!window.confirm("Delete this service?")) return;
 
     try {
-      await safeFetch(`${SERVICES_API}/${id}`, {
-        method: "DELETE",
-        headers: authHeader()
-      });
+      await api.delete(`${SERVICES_API}/${id}`);
 
       // Auto-refresh from server
-      const refreshed = await safeFetch(
-        `${SERVICES_API}?salonId=${activeSalon}`,
-        { headers: authHeader() }
+      const refreshed = await api.get(
+        `${SERVICES_API}?salonId=${activeSalon}`
       );
-      setServices(refreshed);
+      setServices(refreshed.data);
 
       showToast("Service deleted");
     } catch (err) {
@@ -241,17 +233,12 @@ export function Services({ activeSalon }) {
     if (!isAdmin) return;
 
     try {
-      await safeFetch(`${SERVICES_API}/${s._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ isFeatured: !s.isFeatured })
-      });
+      await api.put(`${SERVICES_API}/${s._id}`, { isFeatured: !s.isFeatured });
 
-      const refreshed = await safeFetch(
-        `${SERVICES_API}?salonId=${activeSalon}`,
-        { headers: authHeader() }
+      const refreshed = await api.get(
+        `${SERVICES_API}?salonId=${activeSalon}`
       );
-      setServices(refreshed);
+      setServices(refreshed.data);
     } catch (err) {
       showToast("Failed to update featured status");
     }
