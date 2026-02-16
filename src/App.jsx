@@ -37,6 +37,7 @@ import { ViewPlan } from "./pages/Plans/Plans.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import ManagerAttendance from "./pages/Attendance/ManagerAttendance.jsx";
 import AttendanceReport from "./pages/Attendance/AttendanceReport.jsx";
+import { Inventory } from "./pages/Inventory/Inventory.jsx";
 
 function App() {
 
@@ -236,6 +237,15 @@ function App() {
               element={
                 <RequireRole roles={["admin", "manager"]}>
                   <Reports activeSalon={activeSalon} />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/inventory"
+              element={
+                <RequireRole roles={["admin", "manager", "staff"]}>
+                  <Inventory activeSalon={activeSalon} />
                 </RequireRole>
               }
             />
