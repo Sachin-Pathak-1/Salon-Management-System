@@ -656,6 +656,7 @@ function AccessControlModal({ staff, updateAccess }) {
     { key: "Staff", label: "Staff" },
     { key: "Plans", label: "Plans" },
     { key: "Reports", label: "Reports" },
+    { key: "Expenses", label: "Expenses" },
     { key: "Billing", label: "Billing" },
     { key: "Profile", label: "Profile" },
     { key: "Settings", label: "Settings" },

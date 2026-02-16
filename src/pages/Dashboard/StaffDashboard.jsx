@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 
 const API = "http://localhost:5000/api/dashboard";
+const EXPENSE_API = "http://localhost:5000/api/expenses";
+const formatCurrency = (value) =>
+  `INR ${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 export function StaffDashboard() {
 
@@ -13,6 +16,12 @@ export function StaffDashboard() {
 
   const [popularServices, setPopularServices] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [expenseSummary, setExpenseSummary] = useState({
+    weeklyExpense: 0,
+    monthlyExpense: 0,
+    annualExpense: 0
+  });
+  const [recentExpenses, setRecentExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,11 +40,14 @@ export function StaffDashboard() {
       const headers = {
         Authorization: `Bearer ${token}`,
       };
+      const activeSalon = JSON.parse(localStorage.getItem("currentUser") || "null")?.salonId;
 
-      const [statsRes, popularRes, activityRes] = await Promise.all([
+      const [statsRes, popularRes, activityRes, expenseSummaryRes, expenseListRes] = await Promise.all([
         fetch(`${API}/staff-stats`, { headers }),
         fetch(`${API}/popular-services`, { headers }),
         fetch(`${API}/recent-activity`, { headers }),
+        activeSalon ? fetch(`${EXPENSE_API}/summary?salonId=${activeSalon}`, { headers }) : Promise.resolve({ ok: false, json: async () => ({}) }),
+        activeSalon ? fetch(`${EXPENSE_API}?salonId=${activeSalon}`, { headers }) : Promise.resolve({ ok: false, json: async () => [] }),
       ]);
 
       if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {
@@ -45,6 +57,8 @@ export function StaffDashboard() {
       const statsData = await statsRes.json();
       const popularData = await popularRes.json();
       const activityData = await activityRes.json();
+      const expenseSummaryData = await expenseSummaryRes.json();
+      const expenseListData = await expenseListRes.json();
 
       setStats({
         todayAppointments: statsData.todayAppointments ?? 0,
@@ -55,6 +69,16 @@ export function StaffDashboard() {
 
       setPopularServices(Array.isArray(popularData) ? popularData : []);
       setRecentActivity(Array.isArray(activityData) ? activityData : []);
+      if (expenseSummaryRes.ok) {
+        setExpenseSummary({
+          weeklyExpense: expenseSummaryData.weeklyExpense || 0,
+          monthlyExpense: expenseSummaryData.monthlyExpense || 0,
+          annualExpense: expenseSummaryData.annualExpense || 0
+        });
+      }
+      if (expenseListRes.ok) {
+        setRecentExpenses(Array.isArray(expenseListData) ? expenseListData.slice(0, 5) : []);
+      }
 
     } catch (err) {
       console.error("Dashboard load failed:", err);
@@ -89,6 +113,12 @@ export function StaffDashboard() {
           <StatCard title="Total Services" value={stats.totalServices} />
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <StatCard title="Weekly Expense" value={formatCurrency(expenseSummary.weeklyExpense)} />
+          <StatCard title="Monthly Expense" value={formatCurrency(expenseSummary.monthlyExpense)} />
+          <StatCard title="Annual Expense" value={formatCurrency(expenseSummary.annualExpense)} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           <DashboardTable
@@ -119,6 +149,21 @@ export function StaffDashboard() {
           />
 
         </div>
+
+        <DashboardTable
+          title="Recent Expenses"
+          data={recentExpenses}
+          emptyText="No recent expenses"
+          render={(item) => (
+            <>
+              <div>
+                <div className="font-semibold">{item.category}</div>
+                <small className="text-gray-400">{item.description || "No description"}</small>
+              </div>
+              <span>{formatCurrency(item.amount)}</span>
+            </>
+          )}
+        />
       </div>
     </div>
   );

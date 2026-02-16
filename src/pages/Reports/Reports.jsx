@@ -11,6 +11,7 @@ import {
 
 const APPOINTMENTS_API = "http://localhost:5000/api/appointments";
 const SERVICES_API = "http://localhost:5000/api/services";
+const EXPENSES_API = "http://localhost:5000/api/expenses";
 
 const formatCurrency = (value) =>
   `INR ${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -36,6 +37,7 @@ const startOfDay = (date) => {
 export function Reports({ activeSalon }) {
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const authHeader = () => ({
@@ -51,16 +53,19 @@ export function Reports({ activeSalon }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [apptRes, servRes] = await Promise.all([
+      const [apptRes, servRes, expRes] = await Promise.all([
         fetch(`${APPOINTMENTS_API}?salonId=${activeSalon}`, { headers: authHeader() }),
-        fetch(`${SERVICES_API}?salonId=${activeSalon}`, { headers: authHeader() })
+        fetch(`${SERVICES_API}?salonId=${activeSalon}`, { headers: authHeader() }),
+        fetch(`${EXPENSES_API}?salonId=${activeSalon}`, { headers: authHeader() })
       ]);
 
       const apptData = await apptRes.json();
       const servData = await servRes.json();
+      const expData = await expRes.json();
 
       setAppointments(Array.isArray(apptData) ? apptData : []);
       setServices(Array.isArray(servData) ? servData : []);
+      setExpenses(Array.isArray(expData) ? expData : []);
     } catch (err) {
       console.error("Failed to load data:", err);
     } finally {
@@ -133,6 +138,28 @@ export function Reports({ activeSalon }) {
   const totalRevenue = appointments
     .filter((a) => a.status === "completed")
     .reduce((sum, a) => sum + (a.totalPrice || 0), 0);
+
+  const thisMonthExpense = expenses
+    .filter((e) => {
+      const d = new Date(e.date);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    })
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const thisWeekExpense = expenses
+    .filter((e) => {
+      const d = startOfDay(e.date);
+      return d >= currentWeekStart && d <= now;
+    })
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const annualExpense = expenses
+    .filter((e) => new Date(e.date).getFullYear() === thisYear)
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const thisMonthNet = thisMonthRevenue - thisMonthExpense;
+  const thisWeekNet = thisWeekRevenue - thisWeekExpense;
+  const annualNet = totalRevenue - annualExpense;
 
   const totalAppointments = appointments.length;
   const completedAppointments = appointments.filter((a) => a.status === "completed").length;
@@ -434,6 +461,24 @@ export function Reports({ activeSalon }) {
               <div className="p-4 rounded-xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }}>
                 <div className="text-sm font-semibold" style={{ opacity: 0.7 }}>Cancelled</div>
                 <div className="text-3xl font-bold mt-2" style={{ color: "var(--danger)" }}>{cancelledAppointments}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="p-4 rounded-xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }}>
+                <div className="text-sm font-semibold" style={{ opacity: 0.7 }}>Weekly Expense / Net</div>
+                <div className="text-lg font-bold mt-2" style={{ color: "var(--danger)" }}>{formatCurrency(thisWeekExpense)}</div>
+                <div className="text-sm mt-1" style={{ opacity: 0.75 }}>Net: {formatCurrency(thisWeekNet)}</div>
+              </div>
+              <div className="p-4 rounded-xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }}>
+                <div className="text-sm font-semibold" style={{ opacity: 0.7 }}>Monthly Expense / Net</div>
+                <div className="text-lg font-bold mt-2" style={{ color: "var(--danger)" }}>{formatCurrency(thisMonthExpense)}</div>
+                <div className="text-sm mt-1" style={{ opacity: 0.75 }}>Net: {formatCurrency(thisMonthNet)}</div>
+              </div>
+              <div className="p-4 rounded-xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }}>
+                <div className="text-sm font-semibold" style={{ opacity: 0.7 }}>Annual Expense / Net</div>
+                <div className="text-lg font-bold mt-2" style={{ color: "var(--danger)" }}>{formatCurrency(annualExpense)}</div>
+                <div className="text-sm mt-1" style={{ opacity: 0.75 }}>Net: {formatCurrency(annualNet)}</div>
               </div>
             </div>
 
