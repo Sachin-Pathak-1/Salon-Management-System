@@ -142,24 +142,41 @@ router.get("/billing-history", auth(["admin"]), async (req, res) => {
 router.post("/select", auth(["admin"]), async (req, res) => {
   try {
     const { planId, branchCount } = req.body;
+    const count = Number(branchCount);
     const isDemoPlan = planId === "demo-plan";
 
     if (isDemoPlan) {
+      const premiumPlan = await Plan.findOne({ name: /^premium$/i }).select("name maxBranches price");
+      const premiumBranchLimit = premiumPlan?.maxBranches ?? 0; // 0 => unlimited in existing app logic
+      const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
+      if (premiumBranchLimit > 0 && existingSalons > premiumBranchLimit) {
+        return res.status(400).json({
+          message: "You already have more salons than Premium plan allows"
+        });
+      }
+
       const demoAccessUntil = new Date(Date.now() + DEMO_DURATION_MS);
+      const selectedAt = new Date();
       await User.findByIdAndUpdate(
         req.user.id,
-        { demoAccessUntil },
+        {
+          selectedPlanId: null,
+          planBranchLimit: premiumBranchLimit,
+          planPricePerBranch: premiumPlan?.price || 0,
+          selectedPlanAt: selectedAt,
+          demoAccessUntil
+        },
         { new: true }
       );
 
       return res.json({
         message: "Demo plan activated for 2 minutes.",
         isDemoPlan: true,
+        grantedFromPlan: premiumPlan?.name || "Premium",
+        planBranchLimit: premiumBranchLimit,
         demoAccessUntil
       });
     }
-
-    const count = Number(branchCount);
     if (!planId || !Number.isFinite(count) || count < 1) {
       return res.status(400).json({ message: "Plan and branch count required" });
     }
