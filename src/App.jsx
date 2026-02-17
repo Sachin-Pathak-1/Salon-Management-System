@@ -247,6 +247,11 @@ function App() {
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>
                   <Inventory activeSalon={activeSalon} />
+                </RequireRole>
+              }
+            />
+
+            <Route
               path="/expenses"
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>

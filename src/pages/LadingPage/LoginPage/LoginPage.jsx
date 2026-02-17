@@ -15,8 +15,9 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return setError("All fields required");
     }
 
@@ -24,12 +25,10 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
 
     try {
 
-      const url =
-        role === "admin"
-          ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/staffAuth/login";
-
-      const res = await axios.post(url, { email, password });
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email: normalizedEmail, password }
+      );
 
       const { token, user } = res.data;
 

@@ -25,8 +25,9 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const normalizedEmail = formData.email.trim().toLowerCase();
 
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !normalizedEmail || !formData.password) {
       return setError("All fields required");
     }
 
@@ -42,7 +43,7 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
         "http://localhost:5000/api/auth/signup",
         {
           name: formData.name,
-          email: formData.email,
+          email: normalizedEmail,
           password: formData.password
         }
       );

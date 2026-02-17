@@ -3,7 +3,13 @@ const mongoose = require("mongoose");
 const appointmentSchema = new mongoose.Schema(
   {
     customerName: { type: String, required: true },
-    customerEmail: { type: String, required: true },
+    customerEmail: {
+      type: String,
+      default: "",
+      required: function () {
+        return !this.isWalkIn;
+      }
+    },
     customerContact: { type: String, required: true },
     date: { type: Date, required: true },
     time: { type: String, required: true },
@@ -33,7 +39,15 @@ const appointmentSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
-    totalPrice: { type: Number, required: true }
+    totalPrice: { type: Number, required: true },
+    isWalkIn: {
+      type: Boolean,
+      default: false
+    },
+    walkInToken: {
+      type: Number,
+      default: null
+    }
   },
   { timestamps: true }
 );
