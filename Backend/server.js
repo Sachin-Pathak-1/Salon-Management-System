@@ -43,6 +43,7 @@ app.use("/api/plans", require("./routes/plansRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
 app.use("/api/attendance", require("./routes/attendance"));
 app.use("/api/inventory", require("./routes/inventoryRoutes"));
+app.use("/api/expenses", require("./routes/expenseRoutes"));
 
 // ---------------------
 // SERVER START

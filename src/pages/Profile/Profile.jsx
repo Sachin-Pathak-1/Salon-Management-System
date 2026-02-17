@@ -117,56 +117,28 @@ const Profile = () => {
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={profileForm.name}
-                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                    className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight bg-[var(--background)] border border-[var(--primary)] rounded-lg px-2 w-full max-w-md focus:outline-none"
-                    placeholder="Full Name"
-                    autoFocus
-                  />
-                ) : (
-                  <h1 className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight">{user.name}</h1>
-                )}
-                <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center mb-3">
-                  <span className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--background)] border border-[var(--border-light)] text-sm font-medium">
-                    <span>📧</span> {user.email}
-                  </span>
-                  <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--primary)] text-white font-bold uppercase tracking-wider text-xs shadow-sm">
-                    {user.role}
-                  </span>
-                </div>
-                <div className="text-[var(--text)] text-sm font-medium opacity-80">
-                  Account Active since {joinDate}
-                </div>
+              <h1 className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight">{user.name}</h1>
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center mb-3">
+                <span className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--background)] border border-[var(--border-light)] text-sm font-medium">
+                  <span>📧</span> {user.email}
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--primary)] text-white font-bold uppercase tracking-wider text-xs shadow-sm">
+                  {user.role}
+                </span>
               </div>
+              <div className="text-[var(--text)] text-sm font-medium opacity-80">
+                Account Active since {joinDate}
+              </div>
+            </div>
 
-              <div className="mt-4 md:mt-0 flex gap-3">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={handleCancel}
-                      className="flex items-center gap-2 bg-[var(--background)] text-[var(--text)] border-2 border-[var(--border-light)] px-5 py-3 rounded-2xl font-bold transition-all hover:bg-[var(--gray-100)] active:scale-95"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      className="flex items-center gap-2 bg-[var(--primary)] text-white px-7 py-3 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg"
-                    >
-                      Save Changes
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={handleEdit}
-                    className="flex items-center gap-2 bg-[var(--text)] text-[var(--background)] px-7 py-3.5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg group"
-                  >
-                    <span className="transition-transform group-hover:rotate-12">✏️</span> Edit Profile
-                  </button>
-                )}
-              </div>
+            <div className="mt-4 md:mt-0 flex gap-3">
+              <button
+                onClick={handleEdit}
+                className="flex items-center gap-2 bg-[var(--text)] text-[var(--background)] px-7 py-3.5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg group"
+              >
+                <span className="transition-transform group-hover:rotate-12">✏️</span> Edit Profile
+              </button>
+            </div>
             </div>
           </header>
 
@@ -211,49 +183,28 @@ const Profile = () => {
                   <ProfileInfoRow
                     label="Full Name"
                     value={user.name}
-                    isEditing={isEditing}
-                    editValue={profileForm.name}
-                    onEditChange={(val) => setProfileForm({ ...profileForm, name: val })}
                   />
                   <ProfileInfoRow
                     label="Email Address"
                     value={user.email}
-                    isEditing={isEditing}
-                    editValue={user.email}
-                    disabled
                   />
                   <ProfileInfoRow
                     label="Contact Number"
                     value={user.contact || "Not provided"}
-                    isEditing={isEditing}
-                    editValue={profileForm.contact}
-                    onEditChange={(val) => setProfileForm({ ...profileForm, contact: val })}
                   />
                   <ProfileInfoRow
                     label="Address"
                     value={user.address || "Not provided"}
-                    isEditing={isEditing}
-                    editValue={profileForm.address}
-                    onEditChange={(val) => setProfileForm({ ...profileForm, address: val })}
                   />
                   {user.role !== 'admin' && (
                     <>
                       <ProfileInfoRow
                         label="Gender"
                         value={user.gender || "Not provided"}
-                        isEditing={isEditing}
-                        editValue={profileForm.gender}
-                        onEditChange={(val) => setProfileForm({ ...profileForm, gender: val })}
-                        type="select"
-                        options={["male", "female", "other"]}
                       />
                       <ProfileInfoRow
                         label="Date of Birth"
                         value={user.dob || "Not provided"}
-                        isEditing={isEditing}
-                        editValue={profileForm.dob}
-                        onEditChange={(val) => setProfileForm({ ...profileForm, dob: val })}
-                        type="date"
                       />
                     </>
                   )}
@@ -276,6 +227,115 @@ const Profile = () => {
             </section>
           </div>
         </div>
+
+        {/* EDIT PROFILE MODAL */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={handleCancel}>
+            <div className="w-full max-w-xl rounded-2xl shadow-2xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: "var(--border-light)" }}>
+                <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Edit Profile</h2>
+                <button
+                  onClick={handleCancel}
+                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity"
+                >✕</button>
+              </div>
+
+              <div className="grid gap-5 p-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Full Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                    placeholder="Your full name"
+                    className="input-themed w-full px-4 py-3 rounded-xl"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Email Address</label>
+                  <input
+                    type="email"
+                    value={user.email}
+                    disabled
+                    className="input-themed w-full px-4 py-3 rounded-xl opacity-50 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Contact Number</label>
+                  <input
+                    type="tel"
+                    value={profileForm.contact}
+                    onChange={(e) => setProfileForm({ ...profileForm, contact: e.target.value })}
+                    placeholder="Your contact number"
+                    className="input-themed w-full px-4 py-3 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Address</label>
+                  <textarea
+                    value={profileForm.address}
+                    onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                    placeholder="Your address"
+                    className="input-themed w-full px-4 py-3 rounded-xl resize-none"
+                    rows="2"
+                  />
+                </div>
+
+                {user.role !== 'admin' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Gender</label>
+                      <select
+                        value={profileForm.gender}
+                        onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
+                        className="input-themed w-full px-4 py-3 rounded-xl"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Date of Birth</label>
+                      <input
+                        type="date"
+                        value={profileForm.dob}
+                        onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
+                        className="input-themed w-full px-4 py-3 rounded-xl"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: "var(--border-light)" }}>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="px-5 py-2.5 border-2 rounded-xl text-sm font-semibold transition-colors"
+                    style={{ borderColor: "var(--border-light)", backgroundColor: "var(--background)" }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
+                    style={{ backgroundColor: "var(--primary)" }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -303,34 +363,10 @@ const StatCard = ({ icon, label, value, themeColor }) => (
   </div>
 );
 
-const ProfileInfoRow = ({ label, value, badge, isEditing, editValue, onEditChange, disabled, type = "text", options = [] }) => (
+const ProfileInfoRow = ({ label, value, badge }) => (
   <div className="flex justify-between items-center py-4.5 border-b border-[var(--border-light)] last:border-0 group">
     <span className="font-bold text-sm text-[var(--text)] opacity-70 group-hover:opacity-100 transition-opacity">{label}</span>
-    {isEditing && !badge ? (
-      <div className="flex-1 max-w-md ml-10">
-        {type === "select" ? (
-          <select
-            value={editValue}
-            onChange={(e) => onEditChange(e.target.value)}
-            disabled={disabled}
-            className="w-full p-2 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-sm focus:outline-none focus:border-[var(--primary)]"
-          >
-            <option value="">Select {label}</option>
-            {options.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        ) : (
-          <input
-            type={type}
-            value={editValue}
-            onChange={(e) => onEditChange(e.target.value)}
-            disabled={disabled}
-            className={`w-full p-2 rounded-lg border border-[var(--border-light)] bg-[var(--background)] text-sm focus:outline-none ${disabled ? "opacity-50 cursor-not-allowed" : "focus:border-[var(--primary)]"}`}
-          />
-        )}
-      </div>
-    ) : badge ? (
+    {badge ? (
       <span className="px-3.5 py-1.5 rounded-full bg-[var(--primary)] text-white font-black uppercase text-[11px] tracking-widest shadow-sm">
         {value}
       </span>

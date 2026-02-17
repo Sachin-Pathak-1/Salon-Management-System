@@ -67,7 +67,7 @@ const staffSchema = new mongoose.Schema(
 
   access: {
     type: [String],
-    default: ["Dashboard", "Services", "Appointments", "Profile", "Support"]
+    default: ["Dashboard", "Services", "Appointments", "Expenses", "Profile", "Support"]
   }
 },
 { timestamps: true }
