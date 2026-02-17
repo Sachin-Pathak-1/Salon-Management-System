@@ -1,6 +1,11 @@
 import { Footer } from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
+
+const EXPENSE_API = "http://localhost:5000/api/expenses";
+const formatCurrency = (value) =>
+  `INR ${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 
 const PopularServices = [
@@ -20,6 +25,48 @@ const RecentActivities = [
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [activeSalon] = useState(localStorage.getItem("activeSalon") || "");
+  const [expenseSummary, setExpenseSummary] = useState({
+    weeklyExpense: 0,
+    monthlyExpense: 0,
+    annualExpense: 0
+  });
+  const [recentExpenses, setRecentExpenses] = useState([]);
+
+  useEffect(() => {
+    const loadExpenses = async () => {
+      if (!activeSalon) return;
+      try {
+        const headers = {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        };
+        const [summaryRes, listRes] = await Promise.all([
+          fetch(`${EXPENSE_API}/summary?salonId=${activeSalon}`, { headers }),
+          fetch(`${EXPENSE_API}?salonId=${activeSalon}`, { headers })
+        ]);
+
+        const summaryData = await summaryRes.json();
+        const listData = await listRes.json();
+
+        if (summaryRes.ok) {
+          setExpenseSummary({
+            weeklyExpense: summaryData.weeklyExpense || 0,
+            monthlyExpense: summaryData.monthlyExpense || 0,
+            annualExpense: summaryData.annualExpense || 0
+          });
+        }
+
+        if (listRes.ok) {
+          setRecentExpenses(Array.isArray(listData) ? listData.slice(0, 5) : []);
+        }
+      } catch (err) {
+        console.error("Failed to load expenses:", err);
+      }
+    };
+
+    loadExpenses();
+  }, [activeSalon]);
+
   return (
     <div>
       <div className="flex flex-col gap-10 min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-10 items-center transition-colors duration-300 ease">
@@ -62,6 +109,68 @@ export function Dashboard() {
               </ul>
             </div>
           </div>
+        </div>
+
+        <div className="bg-[var(--gray-100)] w-full max-w-4xl mx-auto p-8 flex flex-col gap-5 rounded-lg border border-[var(--border-light)] text-[var(--text)] shadow-sm transition-all duration-300 ease">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-[var(--text)]">Expense Overview</h3>
+            <button
+              className="bg-[var(--primary)] text-white border-none px-4 py-2.5 rounded font-bold cursor-pointer w-fit transition-all duration-300 ease hover:bg-[var(--secondary)]"
+              onClick={() => navigate("/expenses")}
+            >
+              Manage Expenses
+            </button>
+          </div>
+
+          {!activeSalon ? (
+            <p className="text-sm text-[var(--gray-700)]">Select a salon to view expenses.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border border-[var(--border-light)] rounded-lg p-4 bg-[var(--background)]">
+                  <p className="text-sm text-[var(--gray-700)]">Weekly Expense</p>
+                  <p className="text-lg font-bold">{formatCurrency(expenseSummary.weeklyExpense)}</p>
+                </div>
+                <div className="border border-[var(--border-light)] rounded-lg p-4 bg-[var(--background)]">
+                  <p className="text-sm text-[var(--gray-700)]">Monthly Expense</p>
+                  <p className="text-lg font-bold">{formatCurrency(expenseSummary.monthlyExpense)}</p>
+                </div>
+                <div className="border border-[var(--border-light)] rounded-lg p-4 bg-[var(--background)]">
+                  <p className="text-sm text-[var(--gray-700)]">Annual Expense</p>
+                  <p className="text-lg font-bold">{formatCurrency(expenseSummary.annualExpense)}</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-light)]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border-light)] bg-[var(--background)]">
+                      <th className="p-3 text-left">Date</th>
+                      <th className="p-3 text-left">Category</th>
+                      <th className="p-3 text-left">Amount</th>
+                      <th className="p-3 text-left">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentExpenses.length === 0 ? (
+                      <tr>
+                        <td className="p-3 text-[var(--gray-700)]" colSpan={4}>No expenses found.</td>
+                      </tr>
+                    ) : (
+                      recentExpenses.map((expense) => (
+                        <tr key={expense._id} className="border-b border-[var(--border-light)] bg-[var(--background)]">
+                          <td className="p-3">{new Date(expense.date).toLocaleDateString("en-IN")}</td>
+                          <td className="p-3">{expense.category}</td>
+                          <td className="p-3 font-semibold">{formatCurrency(expense.amount)}</td>
+                          <td className="p-3">{expense.description || "-"}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Quick Note */}
