@@ -218,22 +218,16 @@ export function Settings() {
 
             {isAdmin && (
               <>
-                {!planInfo?.selectedPlan ? (
-                  <Link to="/plans" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block', textAlign: 'center' }}>
-                    Select Plan to Add Salon
-                  </Link>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingId(null);
-                      setForm(emptyForm);
-                      setShowForm(true);
-                    }}
-                    className="btn-primary"
-                  >
-                    + Add Salon
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm(emptyForm);
+                    setShowForm(true);
+                  }}
+                  className="btn-primary"
+                >
+                  + Add Salon
+                </button>
               </>
             )}
           </div>
@@ -313,7 +307,7 @@ export function Settings() {
               </>
             ) : (
               <div className="text-sm mt-2" style={{ color: 'var(--text)' }}>
-                No plan selected yet. Choose a plan to enable salon limits.
+                No plan selected yet. You can still add salons; limits apply after selecting a plan.
               </div>
             )}
           </div>
@@ -326,7 +320,7 @@ export function Settings() {
           {salons.length === 0 ? (
             <div className="col-span-full text-center py-10">
               <p className="text-gray-500">No salons added yet.</p>
-              <p className="text-gray-400 text-sm">Select a plan and add your first salon to get started.</p>
+              <p className="text-gray-400 text-sm">Add your first salon to get started.</p>
             </div>
           ) : (
             salons.map((s, i) => (

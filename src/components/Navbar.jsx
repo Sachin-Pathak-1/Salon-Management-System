@@ -14,6 +14,7 @@ export function Navbar({
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [salons, setSalons] = useState([]);
+  const [salonsLoading, setSalonsLoading] = useState(false);
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") ||
     (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
@@ -21,6 +22,7 @@ export function Navbar({
 
   const navigate = useNavigate();
   const location = useLocation();
+  const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
 
   let dashboardLink = "/staff-dashboard";
   if (currentUser?.role === "admin") dashboardLink = "/dashboard";
@@ -35,6 +37,7 @@ export function Navbar({
   /* ================= FETCH SALONS ================= */
   const fetchSalons = async () => {
     try {
+      setSalonsLoading(true);
       const res = await fetch(SALON_API, {
         headers: authHeader()
       });
@@ -43,6 +46,7 @@ export function Navbar({
         console.error("Status:", res.status);
         const text = await res.text();
         console.error("Response:", text);
+        setSalons([]);
         return;
       }
 
@@ -65,6 +69,9 @@ export function Navbar({
 
     } catch (err) {
       console.error("Network error:", err);
+      setSalons([]);
+    } finally {
+      setSalonsLoading(false);
     }
   };
 
@@ -103,6 +110,7 @@ export function Navbar({
     localStorage.removeItem("activeSalon");
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("activeSalon");
     navigate("/");
   };
 
@@ -179,6 +187,16 @@ export function Navbar({
                 ))}
               </select>
             </div>
+          )}
+
+          {isLoggedIn && isAdminOrOwner && !salonsLoading && salons.length === 0 && (
+            <button
+              type="button"
+              onClick={() => navigate("/settings")}
+              className="nav-btn"
+            >
+              Add Salon
+            </button>
           )}
 
           {/* Theme Toggle */}
