@@ -44,6 +44,22 @@ const getCurrentHHMM = () => {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 };
 
+const toId = (value) => String(value || "");
+
+const isStaffAssignedToService = (staff, service) => {
+  if (!staff || !service) return false;
+
+  const serviceId = toId(service._id);
+  const staffId = toId(staff._id);
+  const staffServices = Array.isArray(staff.services) ? staff.services : [];
+  const assignedStaff = Array.isArray(service.assignedStaff) ? service.assignedStaff : [];
+
+  const mappedFromStaff = staffServices.some((id) => toId(id) === serviceId);
+  const mappedFromService = assignedStaff.some((id) => toId(id) === staffId);
+
+  return mappedFromStaff || mappedFromService;
+};
+
 const resolveAdminId = async (user) => {
   if (user.role === "admin") return user.id;
   if (user.adminId) return user.adminId;
@@ -198,6 +214,12 @@ router.post("/create", auth(["admin", "manager"]), async (req, res) => {
       });
     }
 
+    if (!isStaffAssignedToService(staff, service)) {
+      return res.status(400).json({
+        message: "Selected staff is not assigned to this service."
+      });
+    }
+
     const price = service.price && service.price > 0 ? service.price : 50;
 
     const existingAppointment = await Appointment.findOne({
@@ -294,6 +316,10 @@ router.post("/create-walkin", auth(["admin", "manager", "staff"]), async (req, r
     const service = await Service.findOne({ _id: serviceId, salonId, status: "active" });
     if (!service) {
       return res.status(404).json({ message: "Service not found in this salon" });
+    }
+
+    if (!isStaffAssignedToService(staff, service)) {
+      return res.status(400).json({ message: "Selected staff is not assigned to this service." });
     }
 
     const bookingDate = toLocalDateOnly(new Date());

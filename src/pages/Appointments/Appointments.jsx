@@ -31,6 +31,26 @@ export default function AdminAppointments() {
     serviceId: ""
   });
 
+  const toId = (value) => {
+    if (!value) return "";
+    if (typeof value === "object") return String(value._id || value.id || "");
+    return String(value);
+  };
+
+  const isStaffAssignedToService = (member, service) => {
+    if (!member || !service) return false;
+
+    const serviceId = toId(service._id);
+    const staffId = toId(member._id);
+    const memberServices = Array.isArray(member.services) ? member.services : [];
+    const serviceStaff = Array.isArray(service.assignedStaff) ? service.assignedStaff : [];
+
+    const mappedFromStaff = memberServices.some((id) => toId(id) === serviceId);
+    const mappedFromService = serviceStaff.some((id) => toId(id) === staffId);
+
+    return mappedFromStaff || mappedFromService;
+  };
+
   useEffect(() => {
     const fetchInitial = async () => {
       try {
@@ -87,6 +107,19 @@ export default function AdminAppointments() {
     fetchSalonDetails();
   }, [walkInForm.salonId]);
 
+  const selectedWalkInStaff = staffOptions.find((member) => toId(member._id) === toId(walkInForm.staffId));
+  const selectedWalkInService = serviceOptions.find((service) => toId(service._id) === toId(walkInForm.serviceId));
+
+  const filteredWalkInStaff = walkInForm.serviceId
+    ? staffOptions.filter((member) => isStaffAssignedToService(member, selectedWalkInService))
+    : staffOptions;
+
+  const filteredWalkInServices = walkInForm.staffId
+    ? serviceOptions.filter((service) => isStaffAssignedToService(selectedWalkInStaff, service))
+    : serviceOptions;
+
+  const isWalkInServiceUnavailable = Boolean(walkInForm.serviceId) && filteredWalkInStaff.length === 0;
+
   const getStatusColor = (status = "") => {
     switch (String(status).toLowerCase()) {
       case "pending":
@@ -123,6 +156,22 @@ export default function AdminAppointments() {
       if (name === "salonId") {
         next.staffId = "";
         next.serviceId = "";
+      }
+
+      if (name === "staffId" && value && prev.serviceId) {
+        const nextStaff = staffOptions.find((member) => toId(member._id) === toId(value));
+        const currentService = serviceOptions.find((service) => toId(service._id) === toId(prev.serviceId));
+        if (nextStaff && currentService && !isStaffAssignedToService(nextStaff, currentService)) {
+          next.serviceId = "";
+        }
+      }
+
+      if (name === "serviceId" && value && prev.staffId) {
+        const currentStaff = staffOptions.find((member) => toId(member._id) === toId(prev.staffId));
+        const nextService = serviceOptions.find((service) => toId(service._id) === toId(value));
+        if (currentStaff && nextService && !isStaffAssignedToService(currentStaff, nextService)) {
+          next.staffId = "";
+        }
       }
 
       return next;
@@ -338,21 +387,27 @@ export default function AdminAppointments() {
 
                 <select name="staffId" value={walkInForm.staffId} onChange={handleWalkInInput}>
                   <option value="">Select Staff *</option>
-                  {staffOptions.map((staff) => (
+                  {filteredWalkInStaff.map((staff) => (
                     <option key={staff._id} value={staff._id}>
                       {staff.name}
                     </option>
                   ))}
                 </select>
+                {isWalkInServiceUnavailable ? (
+                  <p className="walkin-error">Staff for this service is currently unavailable.</p>
+                ) : null}
 
                 <select name="serviceId" value={walkInForm.serviceId} onChange={handleWalkInInput}>
                   <option value="">Select Service *</option>
-                  {serviceOptions.map((service) => (
+                  {filteredWalkInServices.map((service) => (
                     <option key={service._id} value={service._id}>
                       {service.name} - Rs.{service.price || 0}
                     </option>
                   ))}
                 </select>
+                {walkInForm.staffId && filteredWalkInServices.length === 0 ? (
+                  <p className="walkin-error">No services available for selected staff.</p>
+                ) : null}
               </div>
 
               <textarea
