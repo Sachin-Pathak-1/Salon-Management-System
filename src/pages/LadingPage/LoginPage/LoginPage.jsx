@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
-export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
+export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,8 +38,25 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser }) {
       // ✅ Save user directly (no extra API call)
       localStorage.setItem("currentUser", JSON.stringify(user));
 
+      // Clear any previously selected salon to avoid leaking another user's salon
+      localStorage.removeItem("activeSalon");
+
       setCurrentUser(user);
       setIsLoggedIn(true);
+
+      // Keep branch/salon context aligned with the logged-in account.
+      if (user.role === "manager" || user.role === "staff") {
+        if (user.salonId) {
+          if (setActiveSalon) setActiveSalon(user.salonId);
+          localStorage.setItem("activeSalon", user.salonId);
+        } else {
+          if (setActiveSalon) setActiveSalon("");
+          localStorage.removeItem("activeSalon");
+        }
+      } else {
+        if (setActiveSalon) setActiveSalon("");
+        localStorage.removeItem("activeSalon");
+      }
 
       // Redirect based on role
       if (user.role === "admin") {

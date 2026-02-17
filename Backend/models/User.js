@@ -40,7 +40,50 @@ const userSchema = new mongoose.Schema(
   selectedPlanAt: {
     type: Date,
     default: null
-  }
+  },
+
+  billingHistory: [
+    {
+      planId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Plan",
+        default: null
+      },
+      planName: {
+        type: String,
+        default: ""
+      },
+      branchCount: {
+        type: Number,
+        default: 0
+      },
+      pricePerBranch: {
+        type: Number,
+        default: 0
+      },
+      totalPrice: {
+        type: Number,
+        default: 0
+      },
+      status: {
+        type: String,
+        enum: ["Paid", "Due", "Cancel"],
+        default: "Paid"
+      },
+      issueDate: {
+        type: Date,
+        default: Date.now
+      },
+      dueDate: {
+        type: Date,
+        default: null
+      },
+      paidAt: {
+        type: Date,
+        default: null
+      }
+    }
+  ]
 
 },
 { timestamps: true }

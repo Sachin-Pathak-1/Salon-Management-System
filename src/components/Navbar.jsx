@@ -14,6 +14,7 @@ export function Navbar({
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [salons, setSalons] = useState([]);
+  const [salonsLoading, setSalonsLoading] = useState(false);
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") ||
     (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
@@ -21,6 +22,7 @@ export function Navbar({
 
   const navigate = useNavigate();
   const location = useLocation();
+  const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
 
   let dashboardLink = "/staff-dashboard";
   if (currentUser?.role === "admin") dashboardLink = "/dashboard";
@@ -35,6 +37,7 @@ export function Navbar({
   /* ================= FETCH SALONS ================= */
   const fetchSalons = async () => {
     try {
+      setSalonsLoading(true);
       const res = await fetch(SALON_API, {
         headers: authHeader()
       });
@@ -43,6 +46,7 @@ export function Navbar({
         console.error("Status:", res.status);
         const text = await res.text();
         console.error("Response:", text);
+        setSalons([]);
         return;
       }
 
@@ -51,12 +55,23 @@ export function Navbar({
 
       setSalons(list);
 
-      if (list.length && !activeSalon) {
-        setActiveSalon(list[0]._id);
+      // If no salons returned, clear any previously selected salon (stale value)
+      if (!list.length) {
+        setActiveSalon("");
+        localStorage.removeItem("activeSalon");
+      } else {
+        // If current activeSalon is missing or not in the fetched list, pick the first
+        const found = list.find(s => s._id === activeSalon);
+        if (!activeSalon || !found) {
+          setActiveSalon(list[0]._id);
+        }
       }
 
     } catch (err) {
       console.error("Network error:", err);
+      setSalons([]);
+    } finally {
+      setSalonsLoading(false);
     }
   };
 
@@ -90,8 +105,12 @@ export function Navbar({
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    // Clear selected salon on logout to avoid leaking previous user's salon
+    setActiveSalon("");
+    localStorage.removeItem("activeSalon");
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("activeSalon");
     navigate("/");
   };
 
@@ -168,6 +187,16 @@ export function Navbar({
                 ))}
               </select>
             </div>
+          )}
+
+          {isLoggedIn && isAdminOrOwner && !salonsLoading && salons.length === 0 && (
+            <button
+              type="button"
+              onClick={() => navigate("/settings")}
+              className="nav-btn"
+            >
+              Add Salon
+            </button>
           )}
 
           {/* Theme Toggle */}

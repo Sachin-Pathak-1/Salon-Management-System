@@ -50,6 +50,53 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
   }
 });
 
+// GET /api/plans/billing-history - Get admin billing history
+router.get("/billing-history", auth(["admin"]), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("billingHistory.planId", "name");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const history = Array.isArray(user.billingHistory) ? user.billingHistory : [];
+    let normalized = [...history]
+      .sort((a, b) => new Date(b.issueDate || 0) - new Date(a.issueDate || 0))
+      .map((entry) => ({
+        id: entry._id,
+        planId: entry.planId?._id || entry.planId || null,
+        billFor: entry.planName || entry.planId?.name || "Plan Subscription",
+        issueDate: entry.issueDate,
+        dueDate: entry.dueDate,
+        total: Number(entry.totalPrice) || 0,
+        status: entry.status || "Paid",
+        branchCount: Number(entry.branchCount) || 0,
+        pricePerBranch: Number(entry.pricePerBranch) || 0
+      }));
+
+    if (normalized.length === 0 && user.selectedPlanId) {
+      const selectedPlan = await Plan.findById(user.selectedPlanId).select("name");
+      normalized = [
+        {
+          id: `legacy-${user._id}`,
+          planId: user.selectedPlanId,
+          billFor: `${selectedPlan?.name || "Plan"} Subscription`,
+          issueDate: user.selectedPlanAt || user.updatedAt,
+          dueDate: user.selectedPlanAt || user.updatedAt,
+          total: (Number(user.planPricePerBranch) || 0) * (Number(user.planBranchLimit) || 0),
+          status: "Paid",
+          branchCount: Number(user.planBranchLimit) || 0,
+          pricePerBranch: Number(user.planPricePerBranch) || 0
+        }
+      ];
+    }
+
+    res.json(normalized);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // POST /api/plans/select - Save admin plan selection
 router.post("/select", auth(["admin"]), async (req, res) => {
   try {
@@ -78,13 +125,31 @@ router.post("/select", auth(["admin"]), async (req, res) => {
       });
     }
 
+    const selectedAt = new Date();
+    const dueDate = new Date(selectedAt);
+    dueDate.setDate(dueDate.getDate() + 7);
+    const totalPrice = plan.price * count;
+
     await User.findByIdAndUpdate(
       req.user.id,
       {
         selectedPlanId: plan._id,
         planBranchLimit: count,
         planPricePerBranch: plan.price,
-        selectedPlanAt: new Date()
+        selectedPlanAt: selectedAt,
+        $push: {
+          billingHistory: {
+            planId: plan._id,
+            planName: `${plan.name} Subscription`,
+            branchCount: count,
+            pricePerBranch: plan.price,
+            totalPrice,
+            status: "Paid",
+            issueDate: selectedAt,
+            dueDate,
+            paidAt: selectedAt
+          }
+        }
       },
       { new: true }
     );
@@ -94,7 +159,7 @@ router.post("/select", auth(["admin"]), async (req, res) => {
       planId: plan._id,
       planBranchLimit: count,
       pricePerBranch: plan.price,
-      totalPrice: plan.price * count
+      totalPrice
     });
   } catch (err) {
     console.error(err);
