@@ -49,6 +49,12 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
   const [activeSalon, setActiveSalon] = useState(localStorage.getItem("activeSalon") || "");
 
+  // Callback function to update activeSalon in parent and localStorage
+  const handleSetActiveSalon = (salonId) => {
+    setActiveSalon(salonId);
+    localStorage.setItem("activeSalon", salonId);
+  };
+
   useEffect(() => {
     if (activeSalon) {
       localStorage.setItem("activeSalon", activeSalon);
@@ -143,7 +149,7 @@ function App() {
         setCurrentUser={setCurrentUser}
         dashboardLink={dashboardLink}
         activeSalon={activeSalon}
-        setActiveSalon={setActiveSalon}
+        setActiveSalon={handleSetActiveSalon}
       />
 
       <div style={{ display: "flex" }}>
@@ -177,6 +183,7 @@ function App() {
                   : <LoginPage
                     setIsLoggedIn={setIsLoggedIn}
                     setCurrentUser={setCurrentUser}
+                    setActiveSalon={handleSetActiveSalon}
                   />
               }
             />
@@ -189,6 +196,7 @@ function App() {
                   : <SignupPage
                     setIsLoggedIn={setIsLoggedIn}
                     setCurrentUser={setCurrentUser}
+                    setActiveSalon={handleSetActiveSalon}
                   />
               }
             />
@@ -247,6 +255,11 @@ function App() {
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>
                   <Inventory activeSalon={activeSalon} />
+                </RequireRole>
+              }
+            />
+
+            <Route
               path="/expenses"
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>
@@ -303,7 +316,7 @@ function App() {
             <Route
               path="/paymenthistory"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole roles={["admin"]}>
                   <PaymentHistory />
                 </RequireRole>
               }

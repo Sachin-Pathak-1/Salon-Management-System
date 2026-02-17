@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
-export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
+export function SignupPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
   const [formData, setFormData] = useState({
     name: "",
@@ -55,6 +55,8 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
 
       setCurrentUser(user);
       setIsLoggedIn(true);
+      if (setActiveSalon) setActiveSalon("");
+      localStorage.removeItem("activeSalon");
 
       navigate("/dashboard");
 

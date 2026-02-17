@@ -50,12 +50,6 @@ exports.addSalon = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!adminUser.selectedPlanId || adminUser.planBranchLimit < 1) {
-            return res.status(403).json({
-                message: "Select a plan before adding salons"
-            });
-        }
-
         const salonLimit = adminUser.planBranchLimit || 0;
         if (salonLimit > 0) {
             const existing = await Salon.countDocuments({ adminId: req.user.id });
