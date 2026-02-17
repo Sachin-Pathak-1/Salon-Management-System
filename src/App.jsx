@@ -198,7 +198,7 @@ function App() {
               path="/dashboard"
               element={
                 <RequireRole roles={["admin"]}>
-                  <Dashboard />
+                  <Dashboard activeSalon={activeSalon} />
                 </RequireRole>
               }
             />
@@ -216,7 +216,7 @@ function App() {
               path="/staff-dashboard"
               element={
                 <RequireRole roles={["staff"]}>
-                  <StaffDashboard />
+                  <StaffDashboard activeSalon={activeSalon} />
                 </RequireRole>
               }
             />

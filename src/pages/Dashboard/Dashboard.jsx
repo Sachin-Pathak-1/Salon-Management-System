@@ -23,15 +23,62 @@ const RecentActivities = [
   { profile: "/image.png", name: "Lisa Wong", activity: "Scheduled hair coloring", time: "1 day ago" },
 ];
 
-export function Dashboard() {
+export function Dashboard({ activeSalon: activeSalonProp }) {
   const navigate = useNavigate();
-  const [activeSalon] = useState(localStorage.getItem("activeSalon") || "");
+  const [activeSalon, setActiveSalon] = useState(activeSalonProp || localStorage.getItem("activeSalon") || "");
   const [expenseSummary, setExpenseSummary] = useState({
     weeklyExpense: 0,
     monthlyExpense: 0,
     annualExpense: 0
   });
   const [recentExpenses, setRecentExpenses] = useState([]);
+  const [isSummaryFallbackUsed, setIsSummaryFallbackUsed] = useState(false);
+
+  const calculateSummaryFromList = (expenses = []) => {
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 6);
+    weekStart.setHours(0, 0, 0, 0);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+
+    const weeklyExpense = expenses
+      .filter((expense) => {
+        const date = new Date(expense.date);
+        return date >= weekStart && date <= now;
+      })
+      .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+    const monthlyExpense = expenses
+      .filter((expense) => {
+        const date = new Date(expense.date);
+        return date >= monthStart && date <= now;
+      })
+      .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+    const annualExpense = expenses
+      .filter((expense) => {
+        const date = new Date(expense.date);
+        return date >= yearStart && date <= now;
+      })
+      .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+    return { weeklyExpense, monthlyExpense, annualExpense };
+  };
+
+  useEffect(() => {
+    if (activeSalonProp) {
+      setActiveSalon(activeSalonProp);
+    }
+  }, [activeSalonProp]);
+
+  useEffect(() => {
+    const syncSalon = () => setActiveSalon(localStorage.getItem("activeSalon") || "");
+    window.addEventListener("storage", syncSalon);
+    syncSalon();
+
+    return () => window.removeEventListener("storage", syncSalon);
+  }, []);
 
   useEffect(() => {
     const loadExpenses = async () => {
@@ -47,20 +94,40 @@ export function Dashboard() {
 
         const summaryData = await summaryRes.json();
         const listData = await listRes.json();
+        const safeList = Array.isArray(listData) ? listData : [];
 
         if (summaryRes.ok) {
-          setExpenseSummary({
+          const serverSummary = {
             weeklyExpense: summaryData.weeklyExpense || 0,
             monthlyExpense: summaryData.monthlyExpense || 0,
             annualExpense: summaryData.annualExpense || 0
-          });
+          };
+
+          const fallbackSummary = calculateSummaryFromList(safeList);
+          const isAllZeroFromApi =
+            serverSummary.weeklyExpense === 0 &&
+            serverSummary.monthlyExpense === 0 &&
+            serverSummary.annualExpense === 0 &&
+            safeList.length > 0;
+
+          if (isAllZeroFromApi) {
+            setExpenseSummary(fallbackSummary);
+            setIsSummaryFallbackUsed(true);
+          } else {
+            setExpenseSummary(serverSummary);
+            setIsSummaryFallbackUsed(false);
+          }
+        } else {
+          setExpenseSummary(calculateSummaryFromList(safeList));
+          setIsSummaryFallbackUsed(true);
         }
 
         if (listRes.ok) {
-          setRecentExpenses(Array.isArray(listData) ? listData.slice(0, 5) : []);
+          setRecentExpenses(safeList.slice(0, 5));
         }
       } catch (err) {
         console.error("Failed to load expenses:", err);
+        setIsSummaryFallbackUsed(true);
       }
     };
 
@@ -121,6 +188,11 @@ export function Dashboard() {
               Manage Expenses
             </button>
           </div>
+          {isSummaryFallbackUsed && (
+            <p className="text-xs mt-2" style={{ color: "var(--warning)" }}>
+              Expense summary is currently calculated from recent records due to a summary API mismatch.
+            </p>
+          )}
 
           {!activeSalon ? (
             <p className="text-sm text-[var(--gray-700)]">Select a salon to view expenses.</p>
