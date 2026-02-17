@@ -30,6 +30,14 @@ const planFeatures = {
   ],
 };
 
+const DEMO_PLAN = {
+  _id: "demo-plan",
+  name: "Demo Plan",
+  maxBranches: 1,
+  price: 0,
+  description: "Temporary access for testing the app."
+};
+
 export function ViewPlan() {
   const navigate = useNavigate();
 
@@ -65,16 +73,14 @@ export function ViewPlan() {
       try {
         setLoadError("");
 
-        const [plansRes, selectionRes, salonsRes] = await Promise.all([
+        const [plansRes, selectionRes] = await Promise.all([
           api.get("/plans"),
           api.get("/plans/selection"),
-          api.get("/salons/get"),
         ]);
 
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
-
-        const salonsList = salonsRes.data || [];
-        setSalonsAddedCount(Array.isArray(salonsList) ? salonsList.length : 0);
+        setSelectionInfo(selectionRes?.data || null);
+        setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
 
         if (selectionRes?.data?.selectedPlan) {
           setSelectedPlanId(selectionRes.data.selectedPlan._id);
@@ -102,6 +108,11 @@ export function ViewPlan() {
     [plans, selectedPlanId]
   );
 
+  const plansWithDemo = useMemo(
+    () => [DEMO_PLAN, ...plans],
+    [plans]
+  );
+
   const totalPrice = useMemo(() => {
     if (!selectedPlan) return 0;
     return (Number(selectedPlan.price) || 0) * branchCount;
@@ -115,6 +126,24 @@ export function ViewPlan() {
   /* ================= SELECT PLAN ================= */
 
   const handleSelectPlan = async (plan) => {
+    const isDemoPlan = plan._id === DEMO_PLAN._id;
+
+    if (isDemoPlan) {
+      try {
+        setSaveMessage("");
+        await api.post("/plans/select", { planId: DEMO_PLAN._id, branchCount: 1 });
+        const selectionRes = await api.get("/plans/selection");
+        setSelectionInfo(selectionRes.data || null);
+        setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
+        setSelectedPlanId(null);
+        setSaveMessage("Demo plan activated for 2 minutes.");
+      } catch (err) {
+        setSaveMessage(
+          err?.response?.data?.message || "Failed to activate demo plan."
+        );
+      }
+      return;
+    }
 
     // Auto-correct branch count if exceeding max
     if (plan.maxBranches && branchCount > plan.maxBranches) {
@@ -145,15 +174,10 @@ export function ViewPlan() {
         branchCount,
       });
 
-      const [selectionRes, salonsRes] = await Promise.all([
-        api.get("/plans/selection"),
-        api.get("/salons/get"),
-      ]);
+      const selectionRes = await api.get("/plans/selection");
 
       setSelectionInfo(selectionRes.data || null);
-      setSalonsAddedCount(
-        Array.isArray(salonsRes.data) ? salonsRes.data.length : 0
-      );
+      setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
 
       setSelectedPlanId(plan._id);
       setSaveMessage("Plan saved successfully.");
@@ -186,6 +210,29 @@ export function ViewPlan() {
         <p className="mt-2 max-w-xl" style={{ color: 'var(--gray-700)' }}>
           Choose a plan that suits your business needs.
         </p>
+
+        {selectionInfo?.trial?.trialExpired && (
+          <div className="mt-4 rounded-lg border border-red-400 bg-red-100 text-red-700 px-4 py-3 text-sm">
+            Your 14-day free demo expired on{" "}
+            {selectionInfo?.trial?.trialEndsAt
+              ? new Date(selectionInfo.trial.trialEndsAt).toLocaleDateString()
+              : "N/A"}.
+            Please purchase a plan to continue using the application.
+          </div>
+        )}
+
+        {!selectionInfo?.trial?.trialExpired && !selectionInfo?.trial?.hasActivePlan && (
+          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 px-4 py-3 text-sm">
+            Free demo active. {selectionInfo?.trial?.trialDaysRemaining ?? 0} day(s) remaining.
+          </div>
+        )}
+
+        {selectionInfo?.demo?.demoActive && (
+          <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 px-4 py-3 text-sm">
+            Demo Plan active for {Math.ceil((selectionInfo.demo.demoSecondsRemaining || 0) / 60)} minute(s).
+            It will auto-expire after 2 minutes.
+          </div>
+        )}
       </div>
 
       {/* BRANCH COUNT */}
@@ -231,7 +278,8 @@ export function ViewPlan() {
 
       {/* PLAN CARDS */}
       <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
-        {plans.map((plan) => {
+        {plansWithDemo.map((plan) => {
+          const isDemoPlan = plan._id === DEMO_PLAN._id;
 
           const isCurrent =
             selectionInfo?.selectedPlan?._id === plan._id;
@@ -258,14 +306,16 @@ export function ViewPlan() {
               </p>
 
               <div className="mt-4 text-3xl font-bold" style={{ color: 'var(--primary)' }}>
-                {formatCurrency(Number(plan.price) || 0)}
+                {isDemoPlan ? "Free" : formatCurrency(Number(plan.price) || 0)}
                 <span className="block text-sm font-medium" style={{ color: 'var(--gray-700)' }}>
-                  per salon
+                  {isDemoPlan ? "2 minutes access" : "per salon"}
                 </span>
               </div>
 
               <ul className="mt-6 space-y-3">
-                {(planFeatures[plan.name] || ["Core salon services"])
+                {(isDemoPlan
+                  ? ["Temporary unlocked access", "Auto-expires in 2 minutes", "Use for quick product demo"]
+                  : (planFeatures[plan.name] || ["Core salon services"]))
                   .map((feature, i) => (
                     <li key={i}
                       className="flex items-center gap-2 text-text">
@@ -277,12 +327,14 @@ export function ViewPlan() {
 
               <button
                 onClick={() => handleSelectPlan(plan)}
-                disabled={!isBranchCountValid(plan)}
+                disabled={!isDemoPlan && !isBranchCountValid(plan)}
                 className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isCurrent ? "text-white" : "border"
                   }`}
                 style={isCurrent ? { backgroundColor: 'var(--primary)' } : { borderColor: 'var(--primary)', color: 'var(--primary)' }}
               >
-                {isCurrent
+                {isDemoPlan
+                  ? "Use Demo (2 Min)"
+                  : isCurrent
                   ? "Selected"
                   : isUpgrade
                     ? "Upgrade Plan"

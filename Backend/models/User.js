@@ -42,6 +42,25 @@ const userSchema = new mongoose.Schema(
     default: null
   },
 
+  trialStartAt: {
+    type: Date,
+    default: Date.now
+  },
+
+  trialEndsAt: {
+    type: Date,
+    default: () => {
+      const end = new Date();
+      end.setDate(end.getDate() + 14);
+      return end;
+    }
+  },
+
+  demoAccessUntil: {
+    type: Date,
+    default: null
+  },
+
   billingHistory: [
     {
       planId: {

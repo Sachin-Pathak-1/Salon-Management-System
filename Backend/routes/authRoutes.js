@@ -4,8 +4,24 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Staff = require("../models/Staff");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
+const TRIAL_DAYS = 14;
+const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
+
+const resolveTrialEnd = (adminUser) => {
+  if (adminUser?.trialEndsAt) return new Date(adminUser.trialEndsAt);
+  const start = new Date(adminUser?.trialStartAt || adminUser?.createdAt || new Date());
+  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+};
+
+const isTrialExpired = (adminUser) => {
+  if (!adminUser || adminUser.selectedPlanId) return false;
+  if (adminUser.demoAccessUntil && Date.now() <= new Date(adminUser.demoAccessUntil).getTime()) {
+    return false;
+  }
+  return Date.now() > resolveTrialEnd(adminUser).getTime();
+};
 
 /* ======================
    ADMIN SIGNUP
@@ -30,7 +46,9 @@ router.post("/signup", async (req, res) => {
       name,
       email,
       password: hashed,
-      role: "admin"
+      role: "admin",
+      trialStartAt: new Date(),
+      trialEndsAt: new Date(Date.now() + TRIAL_WINDOW_MS)
     });
 
     const token = jwt.sign(
@@ -49,7 +67,10 @@ router.post("/signup", async (req, res) => {
         id: admin._id,
         name: admin.name,
         email: admin.email,
-        role: admin.role
+        role: admin.role,
+        trialStartAt: admin.trialStartAt,
+        trialEndsAt: admin.trialEndsAt,
+        trialDays: TRIAL_DAYS
       }
     });
 
@@ -85,6 +106,24 @@ router.post("/login", async (req, res) => {
     if (!ok)
       return res.status(400).json({ message: "Invalid credentials" });
 
+    let trialOwner = null;
+    if (roleSource === "admin") {
+      trialOwner = account;
+    } else if (account.adminId) {
+      trialOwner = await User.findById(account.adminId).select(
+        "selectedPlanId trialStartAt trialEndsAt demoAccessUntil createdAt"
+      );
+    }
+
+    if (isTrialExpired(trialOwner)) {
+      return res.status(403).json({
+        code: "TRIAL_EXPIRED",
+        message: "Your 14-day free demo has expired. Please purchase a plan to continue.",
+        trialDays: TRIAL_DAYS,
+        trialEndsAt: resolveTrialEnd(trialOwner)
+      });
+    }
+
     const token = jwt.sign(
       {
         id: account._id,
@@ -103,7 +142,8 @@ router.post("/login", async (req, res) => {
         name: account.name,
         email: account.email,
         role: account.role,
-        salonId: account.salonId || null
+        salonId: account.salonId || null,
+        adminId: account.adminId || null
       }
     });
 
