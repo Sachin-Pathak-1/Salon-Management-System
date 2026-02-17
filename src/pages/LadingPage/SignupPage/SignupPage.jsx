@@ -53,6 +53,9 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser }) {
       localStorage.setItem("token", token);
       localStorage.setItem("currentUser", JSON.stringify(user));
 
+      // Clear any previously selected salon to avoid leaking another user's salon
+      localStorage.removeItem("activeSalon");
+
       setCurrentUser(user);
       setIsLoggedIn(true);
 
