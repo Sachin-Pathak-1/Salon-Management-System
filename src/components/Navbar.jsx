@@ -51,8 +51,16 @@ export function Navbar({
 
       setSalons(list);
 
-      if (list.length && !activeSalon) {
-        setActiveSalon(list[0]._id);
+      // If no salons returned, clear any previously selected salon (stale value)
+      if (!list.length) {
+        setActiveSalon("");
+        localStorage.removeItem("activeSalon");
+      } else {
+        // If current activeSalon is missing or not in the fetched list, pick the first
+        const found = list.find(s => s._id === activeSalon);
+        if (!activeSalon || !found) {
+          setActiveSalon(list[0]._id);
+        }
       }
 
     } catch (err) {
@@ -90,6 +98,9 @@ export function Navbar({
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    // Clear selected salon on logout to avoid leaking previous user's salon
+    setActiveSalon("");
+    localStorage.removeItem("activeSalon");
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
     navigate("/");
