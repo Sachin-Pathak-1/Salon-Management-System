@@ -51,6 +51,7 @@ export function FloatingSideBar({ currentUser }) {
         {hasAccess("Settings") && <Item to="/settings" icon="⚙️" label="Settings" open={open} />}
 
         {hasAccess("Support") && <Item to="/support" icon="👨🏿‍💻" label="Support" open={open} />}
+        {hasAccess("Inventory") && <Item to="/inventory" icon="📦" label="Inventory" open={open} />}
       </ul>
     </div >
   );

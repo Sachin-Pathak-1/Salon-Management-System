@@ -3,10 +3,15 @@ const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 const fs = require("fs");
 const path = require("path");
 
-const logPath = "d:/Intern/Services-Management-System/Backend/deletion_debug.log";
+const logPath = path.join(__dirname, "..", "logs", "deletion_debug.log");
 const debugLog = (msg) => {
-  const time = new Date().toISOString();
-  fs.appendFileSync(logPath, `[${time}] ${msg}\n`);
+  try {
+    fs.mkdirSync(path.dirname(logPath), { recursive: true });
+    const time = new Date().toISOString();
+    fs.appendFileSync(logPath, `[${time}] ${msg}\n`);
+  } catch (err) {
+    console.error("AUTH DEBUG LOG ERROR:", err.message);
+  }
 };
 
 module.exports = (allowedRoles = []) => {
