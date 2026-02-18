@@ -15,8 +15,9 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return setError("All fields required");
     }
 
@@ -24,12 +25,10 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
     try {
 
-      const url =
-        role === "admin"
-          ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/staffAuth/login";
-
-      const res = await axios.post(url, { email, password });
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email: normalizedEmail, password }
+      );
 
       const { token, user } = res.data;
 
@@ -38,6 +37,9 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
       // ✅ Save user directly (no extra API call)
       localStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Clear any previously selected salon to avoid leaking another user's salon
+      localStorage.removeItem("activeSalon");
 
       setCurrentUser(user);
       setIsLoggedIn(true);

@@ -9,18 +9,36 @@ const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
 
-const resolveTrialEnd = (adminUser) => {
-  if (adminUser?.trialEndsAt) return new Date(adminUser.trialEndsAt);
-  const start = new Date(adminUser?.trialStartAt || adminUser?.createdAt || new Date());
-  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const isBcryptHash = (value) =>
+  typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
+
+const verifyAndUpgradePassword = async (account, inputPassword) => {
+  if (isBcryptHash(account.password)) {
+    return bcrypt.compare(inputPassword, account.password);
+  }
+
+  // Legacy support: plain-text passwords are upgraded after first successful login.
+  if (account.password === inputPassword) {
+    account.password = await bcrypt.hash(inputPassword, 10);
+    await account.save();
+    return true;
+  }
+
+  return false;
 };
 
-const isTrialExpired = (adminUser) => {
-  if (!adminUser || adminUser.selectedPlanId) return false;
-  if (adminUser.demoAccessUntil && Date.now() <= new Date(adminUser.demoAccessUntil).getTime()) {
-    return false;
-  }
-  return Date.now() > resolveTrialEnd(adminUser).getTime();
+const findUserByEmailFlexible = async (Model, normalizedEmail) => {
+  let account = await Model.findOne({ email: normalizedEmail })
+    .collation({ locale: "en", strength: 2 });
+
+  if (account) return account;
+
+  // Legacy support: tolerate accidental spaces in stored emails.
+  const emailRegex = new RegExp(`^\\s*${escapeRegex(normalizedEmail)}\\s*$`, "i");
+  return Model.findOne({ email: { $regex: emailRegex } });
 };
 
 /* ======================
@@ -28,14 +46,14 @@ const isTrialExpired = (adminUser) => {
 ====================== */
 router.post("/signup", async (req, res) => {
   try {
-
     const { name, email, password } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ email: normalizedEmail });
     if (exists) {
       return res.status(400).json({ message: "Email already exists" });
     }
@@ -44,7 +62,7 @@ router.post("/signup", async (req, res) => {
 
     const admin = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashed,
       role: "admin",
       trialStartAt: new Date(),
@@ -73,7 +91,6 @@ router.post("/signup", async (req, res) => {
         trialDays: TRIAL_DAYS
       }
     });
-
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -84,27 +101,32 @@ router.post("/signup", async (req, res) => {
 ====================== */
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const rawEmail = String(req.body?.email || "").trim();
+    const password = String(req.body?.password || "");
+    const normalizedEmail = rawEmail.toLowerCase();
 
-    if (!email || !password)
+    if (!rawEmail || !password) {
       return res.status(400).json({ message: "Email and password required" });
-
-    // 1️⃣ Check Admin (User)
-    let account = await User.findOne({ email });
-    let roleSource = "admin";
-
-    // 2️⃣ If not admin, check Staff (staff or manager)
-    if (!account) {
-      account = await Staff.findOne({ email });
-      roleSource = "staff";
     }
 
-    if (!account)
-      return res.status(400).json({ message: "Invalid credentials" });
+    let account = await findUserByEmailFlexible(User, normalizedEmail);
 
-    const ok = await bcrypt.compare(password, account.password);
-    if (!ok)
+    if (!account) {
+      account = await findUserByEmailFlexible(Staff, normalizedEmail);
+    }
+
+    if (!account) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (account.role !== "admin" && account.status === "inactive") {
+      return res.status(403).json({ message: "Staff inactive" });
+    }
+
+    const ok = await verifyAndUpgradePassword(account, password);
+    if (!ok) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     let trialOwner = null;
     if (roleSource === "admin") {
@@ -146,11 +168,9 @@ router.post("/login", async (req, res) => {
         adminId: account.adminId || null
       }
     });
-
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;

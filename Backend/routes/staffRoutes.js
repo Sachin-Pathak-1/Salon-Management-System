@@ -29,12 +29,13 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
       address,
       services = []
     } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!name || !email || !password || !salonId) {
+    if (!name || !normalizedEmail || !password || !salonId) {
       return res.status(400).json({ message: "Required fields missing" });
     }
 
-    const existing = await Staff.findOne({ email });
+    const existing = await Staff.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(400).json({ message: "Email already exists" });
     }
@@ -71,7 +72,7 @@ router.post("/add", auth(["admin", "manager"]), async (req, res) => {
 
     const staff = await Staff.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       salonId,
       role,
@@ -177,6 +178,10 @@ router.put("/:id", auth(["admin", "manager"]), async (req, res) => {
     // Prevent managers from changing role
     if (req.user.role === "manager" && req.body.role && req.body.role !== staff.role) {
       return res.status(403).json({ message: "Only admin can change staff role" });
+    }
+
+    if (req.body.email) {
+      req.body.email = String(req.body.email).trim().toLowerCase();
     }
 
     if (req.body.password) {

@@ -451,8 +451,8 @@ export default function Staff({ activeSalon }) {
 
       {/* EDIT */}
       {showEdit &&
-        <Modal title="Edit Staff" close={() => setShowEdit(false)}>
-          <StaffForm form={form} handleChange={handleChange} setForm={setForm} submit={updateStaff} services={services} onCancel={() => setShowEdit(false)} />
+        <Modal title="Edit Staff" close={() => { setShowEdit(false); setSelected(null); }}>
+          <StaffForm form={form} handleChange={handleChange} setForm={setForm} submit={updateStaff} services={services} onCancel={() => { setShowEdit(false); setSelected(null); }} />
         </Modal>
       }
 

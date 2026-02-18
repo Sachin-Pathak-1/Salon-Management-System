@@ -24,6 +24,26 @@ export default function CreateAppointment() {
     serviceId: ''
   });
 
+  const toId = (value) => {
+    if (!value) return '';
+    if (typeof value === 'object') return String(value._id || value.id || '');
+    return String(value);
+  };
+
+  const isStaffAssignedToService = (member, service) => {
+    if (!member || !service) return false;
+
+    const serviceId = toId(service._id);
+    const staffId = toId(member._id);
+    const memberServices = Array.isArray(member.services) ? member.services : [];
+    const serviceStaff = Array.isArray(service.assignedStaff) ? service.assignedStaff : [];
+
+    const mappedFromStaff = memberServices.some((id) => toId(id) === serviceId);
+    const mappedFromService = serviceStaff.some((id) => toId(id) === staffId);
+
+    return mappedFromStaff || mappedFromService;
+  };
+
   useEffect(() => {
     const fetchSalonDetails = async () => {
       try {
@@ -45,12 +65,45 @@ export default function CreateAppointment() {
     fetchSalonDetails();
   }, [salonId]);
 
+  const selectedStaff = staff.find((member) => toId(member._id) === toId(formData.staffId));
+  const selectedService = services.find((service) => toId(service._id) === toId(formData.serviceId));
+
+  const filteredStaff = formData.serviceId
+    ? staff.filter((member) => isStaffAssignedToService(member, selectedService))
+    : staff;
+
+  const filteredServices = formData.staffId
+    ? services.filter((service) => isStaffAssignedToService(selectedStaff, service))
+    : services;
+
+  const isSelectedServiceUnavailable = Boolean(formData.serviceId) && filteredStaff.length === 0;
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const next = {
+        ...prev,
+        [name]: value
+      };
+
+      if (name === 'staffId' && value && prev.serviceId) {
+        const nextStaff = staff.find((member) => toId(member._id) === toId(value));
+        const currentService = services.find((service) => toId(service._id) === toId(prev.serviceId));
+        if (nextStaff && currentService && !isStaffAssignedToService(nextStaff, currentService)) {
+          next.serviceId = '';
+        }
+      }
+
+      if (name === 'serviceId' && value && prev.staffId) {
+        const currentStaff = staff.find((member) => toId(member._id) === toId(prev.staffId));
+        const nextService = services.find((service) => toId(service._id) === toId(value));
+        if (currentStaff && nextService && !isStaffAssignedToService(currentStaff, nextService)) {
+          next.staffId = '';
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -389,12 +442,17 @@ export default function CreateAppointment() {
                   }}
                 >
                   <option value="">Choose Staff</option>
-                  {staff.map(member => (
+                  {filteredStaff.map(member => (
                     <option key={member._id} value={member._id}>
                       {member.name} {member.designation ? `(${member.designation})` : ''}
                     </option>
                   ))}
                 </select>
+                {isSelectedServiceUnavailable && (
+                  <p className="mt-2 text-sm" style={{ color: 'var(--danger)' }}>
+                    Staff for this service is currently unavailable.
+                  </p>
+                )}
               </div>
 
               {/* Service */}
@@ -420,12 +478,17 @@ export default function CreateAppointment() {
                   }}
                 >
                   <option value="">Choose Service</option>
-                  {services.map(service => (
+                  {filteredServices.map(service => (
                     <option key={service._id} value={service._id}>
                       {service.name} - ₹{service.price} (N) / ₹{service.priceMale || 0} (M) / ₹{service.priceFemale || 0} (F)
                     </option>
                   ))}
                 </select>
+                {formData.staffId && filteredServices.length === 0 && (
+                  <p className="mt-2 text-sm" style={{ color: 'var(--danger)' }}>
+                    No services available for selected staff.
+                  </p>
+                )}
               </div>
 
               {/* Notes */}

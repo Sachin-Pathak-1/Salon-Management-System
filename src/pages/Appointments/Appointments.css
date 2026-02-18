@@ -51,6 +51,86 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.tabs-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.tab-btn {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 0.5rem;
+  background: var(--gray-100);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.walkin-form {
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background: var(--gray-200);
+}
+
+.walkin-form h3 {
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+
+.walkin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.walkin-grid input,
+.walkin-grid select,
+.walkin-form textarea {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: var(--gray-100);
+  color: var(--text);
+}
+
+.walkin-form textarea {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: 0.75rem;
+}
+
+.walkin-submit {
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.walkin-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.walkin-error {
+  color: #b91c1c;
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+}
+
 .search-input,
 .filter-select {
   padding: 0.5rem 1rem;
@@ -139,4 +219,14 @@ body {
   cursor: pointer;
   background: var(--gray-100);
   color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .walkin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointments-controls {
+    flex-direction: column;
+  }
 }

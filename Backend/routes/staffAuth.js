@@ -9,30 +9,60 @@ const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
 
-const resolveTrialEnd = (adminUser) => {
-  if (adminUser?.trialEndsAt) return new Date(adminUser.trialEndsAt);
-  const start = new Date(adminUser?.trialStartAt || adminUser?.createdAt || new Date());
-  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const isBcryptHash = (value) =>
+  typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
+
+const verifyAndUpgradePassword = async (staff, inputPassword) => {
+  if (isBcryptHash(staff.password)) {
+    return bcrypt.compare(inputPassword, staff.password);
+  }
+
+  if (staff.password === inputPassword) {
+    staff.password = await bcrypt.hash(inputPassword, 10);
+    await staff.save();
+    return true;
+  }
+
+  return false;
+};
+
+const findStaffByEmailFlexible = async (normalizedEmail) => {
+  let staff = await Staff.findOne({ email: normalizedEmail })
+    .collation({ locale: "en", strength: 2 });
+
+  if (staff) return staff;
+
+  const emailRegex = new RegExp(`^\\s*${escapeRegex(normalizedEmail)}\\s*$`, "i");
+  return Staff.findOne({ email: { $regex: emailRegex } });
 };
 
 router.post("/login", async (req, res) => {
   try {
+    const rawEmail = String(req.body?.email || "").trim();
+    const password = String(req.body?.password || "");
+    const normalizedEmail = rawEmail.toLowerCase();
 
-    const { email, password } = req.body;
-
-    if (!email || !password)
+    if (!rawEmail || !password) {
       return res.status(400).json({ message: "Email and password required" });
+    }
 
-    const staff = await Staff.findOne({ email });
-    if (!staff)
+    const staff = await findStaffByEmailFlexible(normalizedEmail);
+
+    if (!staff) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    if (staff.status === "inactive")
+    if (staff.status === "inactive") {
       return res.status(403).json({ message: "Staff inactive" });
+    }
 
-    const isMatch = await bcrypt.compare(password, staff.password);
-    if (!isMatch)
+    const isMatch = await verifyAndUpgradePassword(staff, password);
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const adminUser = await User.findById(staff.adminId).select(
       "selectedPlanId trialStartAt trialEndsAt demoAccessUntil createdAt"
@@ -50,9 +80,8 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         id: staff._id,
-        role: staff.role,   // dynamic (staff or manager)
-        salonId: staff.salonId,
-        adminId: staff.adminId
+        role: staff.role,
+        salonId: staff.salonId
       },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -70,7 +99,6 @@ router.post("/login", async (req, res) => {
         access: staff.access
       }
     });
-
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

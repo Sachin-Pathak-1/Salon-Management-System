@@ -5,7 +5,7 @@ const EXPENSE_API = "http://localhost:5000/api/expenses";
 const formatCurrency = (value) =>
   `INR ${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
-export function StaffDashboard() {
+export function StaffDashboard({ activeSalon }) {
 
   const [stats, setStats] = useState({
     todayAppointments: 0,
@@ -40,14 +40,14 @@ export function StaffDashboard() {
       const headers = {
         Authorization: `Bearer ${token}`,
       };
-      const activeSalon = JSON.parse(localStorage.getItem("currentUser") || "null")?.salonId;
+      const resolvedSalonId = activeSalon || JSON.parse(localStorage.getItem("currentUser") || "null")?.salonId;
 
       const [statsRes, popularRes, activityRes, expenseSummaryRes, expenseListRes] = await Promise.all([
         fetch(`${API}/staff-stats`, { headers }),
         fetch(`${API}/popular-services`, { headers }),
         fetch(`${API}/recent-activity`, { headers }),
-        activeSalon ? fetch(`${EXPENSE_API}/summary?salonId=${activeSalon}`, { headers }) : Promise.resolve({ ok: false, json: async () => ({}) }),
-        activeSalon ? fetch(`${EXPENSE_API}?salonId=${activeSalon}`, { headers }) : Promise.resolve({ ok: false, json: async () => [] }),
+        resolvedSalonId ? fetch(`${EXPENSE_API}/summary?salonId=${resolvedSalonId}`, { headers }) : Promise.resolve({ ok: false, json: async () => ({}) }),
+        resolvedSalonId ? fetch(`${EXPENSE_API}?salonId=${resolvedSalonId}`, { headers }) : Promise.resolve({ ok: false, json: async () => [] }),
       ]);
 
       if (!statsRes.ok || !popularRes.ok || !activityRes.ok) {

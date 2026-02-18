@@ -25,8 +25,9 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const normalizedEmail = formData.email.trim().toLowerCase();
 
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !normalizedEmail || !formData.password) {
       return setError("All fields required");
     }
 
@@ -42,7 +43,7 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
         "http://localhost:5000/api/auth/signup",
         {
           name: formData.name,
-          email: formData.email,
+          email: normalizedEmail,
           password: formData.password
         }
       );
@@ -52,6 +53,9 @@ export function SignupPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
       // ✅ Save ONE token only
       localStorage.setItem("token", token);
       localStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Clear any previously selected salon to avoid leaking another user's salon
+      localStorage.removeItem("activeSalon");
 
       setCurrentUser(user);
       setIsLoggedIn(true);
