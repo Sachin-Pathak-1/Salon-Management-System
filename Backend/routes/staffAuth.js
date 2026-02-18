@@ -2,7 +2,10 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Staff = require("../models/Staff");
+const User = require("../models/User");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
+const TRIAL_DAYS = 14;
+const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
 
@@ -61,6 +64,19 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    const adminUser = await User.findById(staff.adminId).select(
+      "selectedPlanId trialStartAt trialEndsAt demoAccessUntil createdAt"
+    );
+    const demoActive = adminUser?.demoAccessUntil && Date.now() <= new Date(adminUser.demoAccessUntil).getTime();
+    if (adminUser && !adminUser.selectedPlanId && !demoActive && Date.now() > resolveTrialEnd(adminUser).getTime()) {
+      return res.status(403).json({
+        code: "TRIAL_EXPIRED",
+        message: "Your salon's 14-day free demo has expired. Please ask the owner to purchase a plan.",
+        trialDays: TRIAL_DAYS,
+        trialEndsAt: resolveTrialEnd(adminUser)
+      });
+    }
+
     const token = jwt.sign(
       {
         id: staff._id,
@@ -79,6 +95,7 @@ router.post("/login", async (req, res) => {
         email: staff.email,
         role: staff.role,
         salonId: staff.salonId,
+        adminId: staff.adminId,
         access: staff.access
       }
     });

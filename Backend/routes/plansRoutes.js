@@ -3,8 +3,33 @@ const Plan = require('../models/Plans');
 const User = require("../models/User");
 const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
+const TRIAL_DAYS = 14;
+const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+const DEMO_DURATION_MINUTES = 2;
+const DEMO_DURATION_MS = DEMO_DURATION_MINUTES * 60 * 1000;
 
 const router = express.Router();
+
+const resolveTrialEnd = (user) => {
+  if (user?.trialEndsAt) return new Date(user.trialEndsAt);
+  const start = new Date(user?.trialStartAt || user?.createdAt || new Date());
+  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+};
+
+const getDemoInfo = (user) => {
+  const demoEndsAt = user?.demoAccessUntil ? new Date(user.demoAccessUntil) : null;
+  const demoActive = demoEndsAt ? Date.now() <= demoEndsAt.getTime() : false;
+  const demoSecondsRemaining = demoActive
+    ? Math.max(Math.ceil((demoEndsAt.getTime() - Date.now()) / 1000), 0)
+    : 0;
+
+  return {
+    durationMinutes: DEMO_DURATION_MINUTES,
+    demoEndsAt,
+    demoActive,
+    demoSecondsRemaining
+  };
+};
 
 // GET /api/plans - Get all plans
 router.get('/', auth(["admin"]), async (req, res) => {
@@ -32,6 +57,13 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
     const salonsAdded = await Salon.countDocuments({ adminId: req.user.id });
     const salonLimit = user.planBranchLimit || 0;
     const remaining = salonLimit ? Math.max(salonLimit - salonsAdded, 0) : 0;
+    const trialEndsAt = resolveTrialEnd(user);
+    const hasActivePlan = Boolean(user.selectedPlanId);
+    const demo = getDemoInfo(user);
+    const trialExpired = !hasActivePlan && !demo.demoActive && Date.now() > trialEndsAt.getTime();
+    const trialStartAt = user.trialStartAt || user.createdAt || null;
+    const msLeft = Math.max(trialEndsAt.getTime() - Date.now(), 0);
+    const trialDaysRemaining = trialExpired ? 0 : Math.ceil(msLeft / (24 * 60 * 60 * 1000));
 
     const response = {
       selectedPlan,
@@ -40,7 +72,16 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
       salonsRemaining: remaining,
       pricePerBranch: user.planPricePerBranch || 0,
       totalPrice: (user.planPricePerBranch || 0) * (user.planBranchLimit || 0),
-      selectedPlanAt: user.selectedPlanAt
+      selectedPlanAt: user.selectedPlanAt,
+      trial: {
+        trialDays: TRIAL_DAYS,
+        trialStartAt,
+        trialEndsAt,
+        trialExpired,
+        trialDaysRemaining,
+        hasActivePlan
+      },
+      demo
     };
     console.log("Response:", response);
     res.json(response);
@@ -101,8 +142,41 @@ router.get("/billing-history", auth(["admin"]), async (req, res) => {
 router.post("/select", auth(["admin"]), async (req, res) => {
   try {
     const { planId, branchCount } = req.body;
-
     const count = Number(branchCount);
+    const isDemoPlan = planId === "demo-plan";
+
+    if (isDemoPlan) {
+      const premiumPlan = await Plan.findOne({ name: /^premium$/i }).select("name maxBranches price");
+      const premiumBranchLimit = premiumPlan?.maxBranches ?? 0; // 0 => unlimited in existing app logic
+      const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
+      if (premiumBranchLimit > 0 && existingSalons > premiumBranchLimit) {
+        return res.status(400).json({
+          message: "You already have more salons than Premium plan allows"
+        });
+      }
+
+      const demoAccessUntil = new Date(Date.now() + DEMO_DURATION_MS);
+      const selectedAt = new Date();
+      await User.findByIdAndUpdate(
+        req.user.id,
+        {
+          selectedPlanId: null,
+          planBranchLimit: premiumBranchLimit,
+          planPricePerBranch: premiumPlan?.price || 0,
+          selectedPlanAt: selectedAt,
+          demoAccessUntil
+        },
+        { new: true }
+      );
+
+      return res.json({
+        message: "Demo plan activated for 2 minutes.",
+        isDemoPlan: true,
+        grantedFromPlan: premiumPlan?.name || "Premium",
+        planBranchLimit: premiumBranchLimit,
+        demoAccessUntil
+      });
+    }
     if (!planId || !Number.isFinite(count) || count < 1) {
       return res.status(400).json({ message: "Plan and branch count required" });
     }
@@ -137,6 +211,7 @@ router.post("/select", auth(["admin"]), async (req, res) => {
         planBranchLimit: count,
         planPricePerBranch: plan.price,
         selectedPlanAt: selectedAt,
+        demoAccessUntil: null,
         $push: {
           billingHistory: {
             planId: plan._id,
