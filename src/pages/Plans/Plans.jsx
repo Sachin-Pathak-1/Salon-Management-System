@@ -8,7 +8,7 @@ const planFeatures = {
   "Demo Plan": [
     "Premium features unlocked",
     "Free temporary usage",
-    "2 minute activation window"
+    "14 days activation"
   ],
   Basic: [
     "Single Salon Dashboard",
@@ -40,7 +40,7 @@ const DEMO_PLAN = {
   name: "Demo Plan",
   maxBranches: 0,
   price: 0,
-  description: "Free Premium access for 2 minutes."
+  description: "Free Premium access for 14 Days."
 };
 
 export function ViewPlan() {
@@ -72,10 +72,12 @@ export function ViewPlan() {
   const [selectionInfo, setSelectionInfo] = useState(null);
   const [salonsAddedCount, setSalonsAddedCount] = useState(0);
 
-  const plansWithDemo = useMemo(
-    () => [DEMO_PLAN, ...plans],
-    [plans]
-  );
+  const plansWithDemo = useMemo(() => {
+    const demoEligible = selectionInfo?.demo?.demoEligible;
+    const demoActive = selectionInfo?.demo?.demoActive;
+    const includeDemo = demoActive || demoEligible === undefined || Boolean(demoEligible);
+    return includeDemo ? [DEMO_PLAN, ...plans] : plans;
+  }, [plans, selectionInfo?.demo?.demoEligible, selectionInfo?.demo?.demoActive]);
 
   /* ================= LOAD DATA ================= */
 
@@ -91,6 +93,11 @@ export function ViewPlan() {
       setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
       setSelectionInfo(selectionRes?.data || null);
       setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
+      if (selectionRes?.data?.demo?.demoEndsAt) {
+        localStorage.setItem("demoPlanEndsAt", selectionRes.data.demo.demoEndsAt);
+      } else {
+        localStorage.removeItem("demoPlanEndsAt");
+      }
 
       if (selectionRes?.data?.selectedPlan) {
         setSelectedPlanId(selectionRes.data.selectedPlan._id);
@@ -130,15 +137,18 @@ export function ViewPlan() {
       if (demoExpiryAlertedRef.current) return;
       demoExpiryAlertedRef.current = true;
 
+      localStorage.removeItem("demoPlanEndsAt");
       setSelectedPlanId(null);
       setSaveMessage("Demo plan expired. Please upgrade to continue.");
-      window.alert("Demo plan expired. Please upgrade your plan.");
       await fetchPlansData();
+      if (window.location.pathname !== "/plans") {
+        navigate("/plans", { replace: true });
+      }
     }, delayMs);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectionInfo?.demo?.demoActive, selectionInfo?.demo?.demoEndsAt]);
+  }, [selectionInfo?.demo?.demoActive, selectionInfo?.demo?.demoEndsAt, navigate]);
 
   /* ================= DERIVED STATE ================= */
 
@@ -189,14 +199,24 @@ export function ViewPlan() {
 
       await api.post("/plans/select", {
         planId: plan._id,
-        branchCount,
+        branchCount: isDemoPlan ? 1 : branchCount,
       });
 
       const selectionRes = await api.get("/plans/selection");
       setSelectionInfo(selectionRes.data || null);
       setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
+      if (selectionRes?.data?.demo?.demoEndsAt) {
+        localStorage.setItem("demoPlanEndsAt", selectionRes.data.demo.demoEndsAt);
+      } else {
+        localStorage.removeItem("demoPlanEndsAt");
+      }
       if (isDemoPlan) setSelectedPlanId(DEMO_PLAN._id);
       setSaveMessage("Plan saved successfully.");
+
+      const isNewAccount = (selectionRes?.data?.salonsAdded || 0) === 0;
+      if (isNewAccount) {
+        navigate("/settings?openAddSalon=1");
+      }
     } catch (err) {
       setSelectedPlanId(selectionInfo?.selectedPlan?._id || null);
       setSaveMessage(
@@ -244,10 +264,16 @@ export function ViewPlan() {
           </div>
         )}
 
+        {selectionInfo?.demo?.demoAlreadyUsed && !selectionInfo?.demo?.demoActive && (
+          <div className="mt-4 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 px-4 py-3 text-sm">
+            Demo plan already used. Please select a paid plan.
+          </div>
+        )}
+
         {selectionInfo?.demo?.demoActive && (
           <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 px-4 py-3 text-sm">
             Demo Plan active for {Math.ceil((selectionInfo.demo.demoSecondsRemaining || 0) / 60)} minute(s).
-            It will auto-expire after 2 minutes.
+            It will auto-expire after 14days.
           </div>
         )}
       </div>
@@ -347,7 +373,12 @@ export function ViewPlan() {
 
               <button
                 onClick={() => handleSelectPlan(plan)}
-                disabled={plan._id !== DEMO_PLAN._id && !isBranchCountValid(plan)}
+                disabled={
+                  (plan._id !== DEMO_PLAN._id && !isBranchCountValid(plan)) ||
+                  (plan._id === DEMO_PLAN._id &&
+                    selectionInfo?.demo?.demoAlreadyUsed &&
+                    !selectionInfo?.demo?.demoActive)
+                }
                 className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isCurrent ? "text-white" : "border"
                   }`}
                 style={

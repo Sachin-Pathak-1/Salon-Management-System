@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
@@ -10,6 +10,8 @@ import { useToast } from "../context/ToastContext";
 
 export function Settings() {
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   /* ================= THEME ================= */
 
@@ -99,6 +101,26 @@ export function Settings() {
       fetchPlanInfo();
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("openAddSalon") !== "1") return;
+
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+
+    params.delete("openAddSalon");
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: "/settings",
+        search: nextSearch ? `?${nextSearch}` : ""
+      },
+      { replace: true }
+    );
+  }, [isAdmin, location.search, navigate]);
 
   /* ================= DRAG & SAVE ORDER ================= */
 
