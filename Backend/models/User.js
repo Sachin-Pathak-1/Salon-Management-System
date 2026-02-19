@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema(
     type: Date,
     default: null
   },
+  demoUsedAt: {
+    type: Date,
+    default: null
+  },
 
   billingHistory: [
     {

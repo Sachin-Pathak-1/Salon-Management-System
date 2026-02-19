@@ -19,6 +19,8 @@ const resolveTrialEnd = (user) => {
 const getDemoInfo = (user) => {
   const demoEndsAt = user?.demoAccessUntil ? new Date(user.demoAccessUntil) : null;
   const demoActive = demoEndsAt ? Date.now() <= demoEndsAt.getTime() : false;
+  const demoAlreadyUsed = Boolean(user?.demoUsedAt);
+  const demoEligible = !demoAlreadyUsed || demoActive;
   const demoSecondsRemaining = demoActive
     ? Math.max(Math.ceil((demoEndsAt.getTime() - Date.now()) / 1000), 0)
     : 0;
@@ -27,7 +29,10 @@ const getDemoInfo = (user) => {
     durationMinutes: DEMO_DURATION_MINUTES,
     demoEndsAt,
     demoActive,
-    demoSecondsRemaining
+    demoSecondsRemaining,
+    demoEligible,
+    demoAlreadyUsed,
+    demoUsedAt: user?.demoUsedAt || null
   };
 };
 
@@ -146,12 +151,23 @@ router.post("/select", auth(["admin"]), async (req, res) => {
     const isDemoPlan = planId === "demo-plan";
 
     if (isDemoPlan) {
+      const adminUser = await User.findById(req.user.id).select("demoUsedAt demoAccessUntil");
+      const demoStillActive = adminUser?.demoAccessUntil
+        ? Date.now() <= new Date(adminUser.demoAccessUntil).getTime()
+        : false;
+
+      if (adminUser?.demoUsedAt && !demoStillActive) {
+        return res.status(400).json({
+          message: "Demo plan can only be used once. Please select a paid plan."
+        });
+      }
+
       const premiumPlan = await Plan.findOne({ name: /^premium$/i }).select("name maxBranches price");
-      const premiumBranchLimit = premiumPlan?.maxBranches ?? 0; // 0 => unlimited in existing app logic
+      const premiumBranchLimit = 1;
       const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
       if (premiumBranchLimit > 0 && existingSalons > premiumBranchLimit) {
         return res.status(400).json({
-          message: "You already have more salons than Premium plan allows"
+          message: "Demo plan supports only one salon."
         });
       }
 
@@ -164,7 +180,8 @@ router.post("/select", auth(["admin"]), async (req, res) => {
           planBranchLimit: premiumBranchLimit,
           planPricePerBranch: premiumPlan?.price || 0,
           selectedPlanAt: selectedAt,
-          demoAccessUntil
+          demoAccessUntil,
+          demoUsedAt: adminUser?.demoUsedAt || selectedAt
         },
         { new: true }
       );

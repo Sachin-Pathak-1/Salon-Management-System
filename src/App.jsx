@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import React from "react";
 
@@ -43,6 +43,7 @@ import { Expenses } from "./pages/Expenses/Expenses.jsx";
 function App() {
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -60,6 +61,30 @@ function App() {
       localStorage.setItem("activeSalon", activeSalon);
     }
   }, [activeSalon]);
+
+  useEffect(() => {
+    const currentUserFromStorage = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (currentUserFromStorage?.role !== "admin") return undefined;
+
+    const demoEndsAtRaw = localStorage.getItem("demoPlanEndsAt");
+    if (!demoEndsAtRaw) return undefined;
+
+    const expiresAt = new Date(demoEndsAtRaw).getTime();
+    if (!Number.isFinite(expiresAt)) {
+      localStorage.removeItem("demoPlanEndsAt");
+      return undefined;
+    }
+
+    const delayMs = Math.max(expiresAt - Date.now(), 0);
+    const timer = setTimeout(() => {
+      localStorage.removeItem("demoPlanEndsAt");
+      if (window.location.pathname !== "/plans") {
+        navigate("/plans", { replace: true });
+      }
+    }, delayMs);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname, navigate]);
 
   /* ============================================
      RESTORE AUTH ON REFRESH (SAFE VERSION)
