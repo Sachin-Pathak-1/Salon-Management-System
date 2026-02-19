@@ -42,6 +42,31 @@ const userSchema = new mongoose.Schema(
     default: null
   },
 
+  demoTrialStartAt: {
+    type: Date,
+    default: null
+  },
+
+  demoTrialEndsAt: {
+    type: Date,
+    default: null
+  },
+
+  isDemoPlanSelected: {
+    type: Boolean,
+    default: false
+  },
+
+  demoPlanSelectedAt: {
+    type: Date,
+    default: null
+  },
+
+  demoPlanConsumed: {
+    type: Boolean,
+    default: false
+  },
+
   billingHistory: [
     {
       planId: {

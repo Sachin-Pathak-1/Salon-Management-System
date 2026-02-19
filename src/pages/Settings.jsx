@@ -54,6 +54,7 @@ export function Settings() {
   const [salons, setSalons] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [planInfo, setPlanInfo] = useState(null);
+  const [demoSecondsLeft, setDemoSecondsLeft] = useState(0);
 
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -61,6 +62,14 @@ export function Settings() {
   const [selected, setSelected] = useState(null);
 
   const [dragIndex, setDragIndex] = useState(null);
+
+  const hasPlanAccess = Boolean(
+    planInfo?.hasPlanAccess || planInfo?.selectedPlan || planInfo?.demoPlanActive
+  );
+  const salonLimit = Number(planInfo?.salonLimit || 0);
+  const salonsAdded = Number(planInfo?.salonsAdded || 0);
+  const reachedSalonLimit = salonLimit > 0 && salonsAdded >= salonLimit;
+  const canAddSalon = isAdmin && hasPlanAccess && !reachedSalonLimit;
 
   /* ================= LOAD SALONS ================= */
 
@@ -99,6 +108,60 @@ export function Settings() {
       fetchPlanInfo();
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const onSubscriptionUpdated = () => fetchPlanInfo();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchPlanInfo();
+      }
+    };
+
+    window.addEventListener("subscription-updated", onSubscriptionUpdated);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("subscription-updated", onSubscriptionUpdated);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin || !planInfo?.demoPlanActive || !planInfo?.trialEndsAt) return;
+
+    const endsAt = new Date(planInfo.trialEndsAt).getTime();
+    const delay = Math.max(endsAt - Date.now(), 0) + 250;
+    const timeoutId = setTimeout(() => {
+      fetchPlanInfo();
+    }, delay);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAdmin, planInfo?.demoPlanActive, planInfo?.trialEndsAt]);
+
+  useEffect(() => {
+    if (!planInfo?.demoPlanActive || !planInfo?.trialEndsAt) {
+      setDemoSecondsLeft(0);
+      return;
+    }
+
+    const computeRemaining = () => {
+      const endsAt = new Date(planInfo.trialEndsAt).getTime();
+      const now = Date.now();
+      const remaining = Math.max(Math.ceil((endsAt - now) / 1000), 0);
+      setDemoSecondsLeft(remaining);
+    };
+
+    computeRemaining();
+    const countdown = setInterval(computeRemaining, 1000);
+    return () => clearInterval(countdown);
+  }, [planInfo?.demoPlanActive, planInfo?.trialEndsAt]);
+
+  const formatDuration = (totalSeconds) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
 
   /* ================= DRAG & SAVE ORDER ================= */
 
@@ -140,6 +203,16 @@ export function Settings() {
   /* ================= SAVE SALON ================= */
 
   const saveSalon = async () => {
+    if (!canAddSalon && !editingId) {
+      if (!hasPlanAccess) {
+        showToast("Activate demo or purchase a plan before adding a salon.");
+      } else if (reachedSalonLimit) {
+        showToast(`Salon limit reached (${salonsAdded}/${salonLimit}).`);
+      } else {
+        showToast("Cannot add salon right now.");
+      }
+      return;
+    }
 
     const payload = {
       ...form,
@@ -224,7 +297,15 @@ export function Settings() {
                     setForm(emptyForm);
                     setShowForm(true);
                   }}
-                  className="btn-primary"
+                  className={`btn-primary ${!canAddSalon ? "opacity-60 cursor-not-allowed" : ""}`}
+                  disabled={!canAddSalon}
+                  title={
+                    !hasPlanAccess
+                      ? "Activate demo or purchase a plan to add salon."
+                      : reachedSalonLimit
+                        ? `Salon limit reached (${salonsAdded}/${salonLimit}).`
+                        : ""
+                  }
                 >
                   + Add Salon
                 </button>
@@ -261,6 +342,11 @@ export function Settings() {
               {planInfo?.selectedPlan && (
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600">
                   {planInfo.selectedPlan.name}
+                </span>
+              )}
+              {!planInfo?.selectedPlan && planInfo?.demoPlanActive && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-700">
+                  Demo Plan
                 </span>
               )}
             </div>
@@ -305,9 +391,33 @@ export function Settings() {
                   </div>
                 </div>
               </>
+            ) : planInfo?.demoPlanActive ? (
+              <div className="mt-3">
+                <div className="flex flex-wrap items-center gap-2 text-[12px]">
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Time Left <span className="font-semibold">{formatDuration(demoSecondsLeft)}</span>
+                  </div>
+                  <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
+                    Ends At <span className="font-semibold">{planInfo.trialEndsAt ? new Date(planInfo.trialEndsAt).toLocaleTimeString() : "N/A"}</span>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs opacity-75">
+                  Demo access is active. After timer ends, app will lock and redirect to Plans.
+                </p>
+              </div>
+            ) : planInfo?.demoPlanConsumed ? (
+              <div className="text-sm mt-2" style={{ color: 'var(--danger)' }}>
+                Demo trial expired/used. Purchase a plan to continue.
+              </div>
             ) : (
               <div className="text-sm mt-2" style={{ color: 'var(--text)' }}>
-                No plan selected yet. You can still add salons; limits apply after selecting a plan.
+                No active plan selected yet. Start demo or purchase a plan from Plans page.
+              </div>
+            )}
+
+            {hasPlanAccess && reachedSalonLimit && (
+              <div className="text-xs mt-2" style={{ color: 'var(--danger)' }}>
+                Add Salon is disabled because you reached the current limit ({salonsAdded}/{salonLimit}).
               </div>
             )}
           </div>
