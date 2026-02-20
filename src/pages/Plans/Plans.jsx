@@ -28,6 +28,12 @@ const planFeatures = {
     "Online Booking Integration",
     "Priority Support",
   ],
+  Demo: [
+    "14-Day Free Trial",
+    "Access to Dashboard & Core Features",
+    "No Payment Required During Trial",
+    "Upgrade to Paid Plan Anytime",
+  ],
 };
 
 export function ViewPlan() {
@@ -57,6 +63,15 @@ export function ViewPlan() {
   const [saveMessage, setSaveMessage] = useState("");
   const [selectionInfo, setSelectionInfo] = useState(null);
   const [salonsAddedCount, setSalonsAddedCount] = useState(0);
+  const orderedPlans = useMemo(() => {
+    const priority = { Basic: 1, Standard: 2, Premium: 3 };
+    return [...plans].sort((a, b) => {
+      const pa = priority[a?.name] ?? 99;
+      const pb = priority[b?.name] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [plans]);
 
   /* ================= LOAD DATA ================= */
 
@@ -75,6 +90,7 @@ export function ViewPlan() {
 
         const salonsList = salonsRes.data || [];
         setSalonsAddedCount(Array.isArray(salonsList) ? salonsList.length : 0);
+        setSelectionInfo(selectionRes?.data || null);
 
         if (selectionRes?.data?.selectedPlan) {
           setSelectedPlanId(selectionRes.data.selectedPlan._id);
@@ -84,7 +100,6 @@ export function ViewPlan() {
               selectionRes.data.salonsAdded || 1
             )
           );
-          setSelectionInfo(selectionRes.data);
         }
       } catch {
         setPlans([]);
@@ -111,6 +126,10 @@ export function ViewPlan() {
     !plan?.maxBranches || branchCount <= plan.maxBranches;
 
   const formatCurrency = (v) => `Rs. ${v.toFixed(2)}`;
+  const isDemoPlanActive = Boolean(selectionInfo?.demoPlanActive) && !selectionInfo?.selectedPlan;
+  const isDemoPlanConsumed = Boolean(selectionInfo?.demoPlanConsumed);
+  const hasPaidPlan = Boolean(selectionInfo?.selectedPlan);
+  const showDemoCard = !isDemoPlanConsumed || isDemoPlanActive;
 
   /* ================= SELECT PLAN ================= */
 
@@ -157,10 +176,37 @@ export function ViewPlan() {
 
       setSelectedPlanId(plan._id);
       setSaveMessage("Plan saved successfully.");
+      window.dispatchEvent(new Event("subscription-updated"));
+      navigate("/dashboard");
     } catch (err) {
       setSaveMessage(
         err?.response?.data?.message ||
         "Failed to save plan selection."
+      );
+    }
+  };
+
+  const handleSelectDemoPlan = async () => {
+    try {
+      setSaveMessage("");
+      await api.post("/plans/select-demo");
+
+      const [selectionRes, salonsRes] = await Promise.all([
+        api.get("/plans/selection"),
+        api.get("/salons/get"),
+      ]);
+
+      setSelectionInfo(selectionRes.data || null);
+      setSalonsAddedCount(
+        Array.isArray(salonsRes.data) ? salonsRes.data.length : 0
+      );
+      setSelectedPlanId(selectionRes?.data?.selectedPlan?._id || null);
+      setSaveMessage("Demo plan activated successfully.");
+      window.dispatchEvent(new Event("subscription-updated"));
+    } catch (err) {
+      setSaveMessage(
+        err?.response?.data?.message ||
+        "Failed to activate demo plan."
       );
     }
   };
@@ -231,7 +277,51 @@ export function ViewPlan() {
 
       {/* PLAN CARDS */}
       <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
-        {plans.map((plan) => {
+        {showDemoCard && (
+        <div
+          className={`rounded-2xl p-6 border bg-background shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl ${isDemoPlanActive ? "ring-2" : ""}`}
+          style={{ borderColor: isDemoPlanActive ? "var(--primary)" : "var(--border-light)" }}
+        >
+          <h2 className="text-2xl font-serif font-bold text-text">Demo Plan</h2>
+          <p className="mt-1" style={{ color: "var(--gray-700)" }}>
+            Start a 14-day free trial before purchasing a paid subscription.
+          </p>
+
+          <div className="mt-4 text-3xl font-bold" style={{ color: "var(--primary)" }}>
+            FREE
+            <span className="block text-sm font-medium" style={{ color: "var(--gray-700)" }}>
+              14 days trial
+            </span>
+          </div>
+
+          <ul className="mt-6 space-y-3">
+            {planFeatures.Demo.map((feature, i) => (
+              <li key={i} className="flex items-center gap-2 text-text">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--primary)" }}></span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <button
+            onClick={handleSelectDemoPlan}
+            disabled={hasPaidPlan || isDemoPlanActive || isDemoPlanConsumed}
+            className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isDemoPlanActive ? "text-white" : "border"}`}
+            style={isDemoPlanActive ? { backgroundColor: "var(--primary)" } : { borderColor: "var(--primary)", color: "var(--primary)" }}
+          >
+            {isDemoPlanActive
+              ? "Selected"
+              : hasPaidPlan
+                ? "Paid Plan Active"
+                : isDemoPlanConsumed
+                ? "Demo Used"
+                : "Start Demo Plan"}
+          </button>
+
+        </div>
+        )}
+
+        {orderedPlans.map((plan) => {
 
           const isCurrent =
             selectionInfo?.selectedPlan?._id === plan._id;

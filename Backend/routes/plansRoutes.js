@@ -5,6 +5,33 @@ const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
 
 const router = express.Router();
+const TRIAL_DURATION_DAYS = 14;
+
+const addDays = (dateValue, days) => {
+  const d = new Date(dateValue);
+  d.setDate(d.getDate() + days);
+  return d;
+};
+
+const getTrialInfo = (user) => {
+  const start = user.demoTrialStartAt || null;
+  const end = user.demoTrialEndsAt || null;
+  const hasTrialWindow = Boolean(start && end);
+  const now = new Date();
+  const trialExpired = hasTrialWindow ? now > end : false;
+  const remainingMs = hasTrialWindow ? end.getTime() - now.getTime() : (TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+  const trialRemainingDays = trialExpired
+    ? 0
+    : Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+
+  return {
+    trialStartAt: start,
+    trialEndsAt: end,
+    hasTrialWindow,
+    trialExpired,
+    trialRemainingDays
+  };
+};
 
 // GET /api/plans - Get all plans
 router.get('/', auth(["admin"]), async (req, res) => {
@@ -30,8 +57,17 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
       : null;
 
     const salonsAdded = await Salon.countDocuments({ adminId: req.user.id });
-    const salonLimit = user.planBranchLimit || 0;
+    const hasActiveSubscription = Boolean(selectedPlan);
+    const trialInfo = getTrialInfo(user);
+    const isDemoPlanSelected = Boolean(user.isDemoPlanSelected);
+    const demoPlanConsumed = Boolean(user.demoPlanConsumed);
+    const demoTrialActive = isDemoPlanSelected && trialInfo.hasTrialWindow && !trialInfo.trialExpired;
+    const salonLimit = hasActiveSubscription
+      ? (user.planBranchLimit || 0)
+      : (demoTrialActive ? 1 : 0);
     const remaining = salonLimit ? Math.max(salonLimit - salonsAdded, 0) : 0;
+    const hasPlanAccess = hasActiveSubscription || demoTrialActive;
+    const isLocked = !hasPlanAccess;
 
     const response = {
       selectedPlan,
@@ -40,7 +76,18 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
       salonsRemaining: remaining,
       pricePerBranch: user.planPricePerBranch || 0,
       totalPrice: (user.planPricePerBranch || 0) * (user.planBranchLimit || 0),
-      selectedPlanAt: user.selectedPlanAt
+      selectedPlanAt: user.selectedPlanAt,
+      hasActiveSubscription,
+      hasPlanAccess,
+      isDemoPlanSelected,
+      demoPlanActive: demoTrialActive,
+      demoPlanConsumed,
+      isLocked,
+      trialDurationDays: TRIAL_DURATION_DAYS,
+      trialStartAt: trialInfo.trialStartAt,
+      trialEndsAt: trialInfo.trialEndsAt,
+      trialExpired: trialInfo.trialExpired,
+      trialRemainingDays: trialInfo.trialRemainingDays
     };
     console.log("Response:", response);
     res.json(response);
@@ -137,6 +184,10 @@ router.post("/select", auth(["admin"]), async (req, res) => {
         planBranchLimit: count,
         planPricePerBranch: plan.price,
         selectedPlanAt: selectedAt,
+        isDemoPlanSelected: false,
+        demoPlanSelectedAt: null,
+        demoTrialStartAt: null,
+        demoTrialEndsAt: null,
         $push: {
           billingHistory: {
             planId: plan._id,
@@ -164,6 +215,52 @@ router.post("/select", auth(["admin"]), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/plans/select-demo - Activate one-time 14-day demo plan
+router.post("/select-demo", auth(["admin"]), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.selectedPlanId) {
+      return res.status(400).json({ message: "Paid plan already active." });
+    }
+
+    if (user.demoPlanConsumed) {
+      return res.status(400).json({ message: "Demo already used. Please subscribe to continue." });
+    }
+
+    const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
+    if (existingSalons > 1) {
+      return res.status(400).json({ message: "Demo plan supports only 1 salon/spa." });
+    }
+
+    const selectedAt = new Date();
+    const trialEndsAt = addDays(selectedAt, TRIAL_DURATION_DAYS);
+    await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        isDemoPlanSelected: true,
+        demoPlanSelectedAt: selectedAt,
+        demoPlanConsumed: true,
+        demoTrialStartAt: selectedAt,
+        demoTrialEndsAt: trialEndsAt
+      },
+      { new: true }
+    );
+
+    return res.json({
+      message: "Demo plan activated",
+      trialDurationDays: TRIAL_DURATION_DAYS,
+      trialEndsAt
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

@@ -50,14 +50,30 @@ exports.addSalon = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const salonLimit = adminUser.planBranchLimit || 0;
-        if (salonLimit > 0) {
-            const existing = await Salon.countDocuments({ adminId: req.user.id });
-            if (existing >= salonLimit) {
-                return res.status(403).json({
-                    message: "Salon limit reached for your selected plan"
-                });
-            }
+        const now = new Date();
+        const demoActive = Boolean(
+            adminUser.isDemoPlanSelected &&
+            adminUser.demoTrialStartAt &&
+            adminUser.demoTrialEndsAt &&
+            now <= new Date(adminUser.demoTrialEndsAt)
+        );
+        const hasPaidPlan = Boolean(adminUser.selectedPlanId);
+        const hasPlanAccess = hasPaidPlan || demoActive;
+
+        if (!hasPlanAccess) {
+            return res.status(403).json({
+                message: "Subscription required. Please choose Demo or a paid plan."
+            });
+        }
+
+        const salonLimit = hasPaidPlan ? (adminUser.planBranchLimit || 0) : 1;
+        const existing = await Salon.countDocuments({ adminId: req.user.id });
+        if (salonLimit > 0 && existing >= salonLimit) {
+            return res.status(403).json({
+                message: hasPaidPlan
+                    ? "Salon limit reached for your selected plan"
+                    : "Demo plan allows only 1 salon/spa"
+            });
         }
 
         // Only one primary salon
