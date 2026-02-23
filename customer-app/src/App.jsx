@@ -3,14 +3,15 @@ import { useState, useEffect } from "react";
 import React from "react";
 import api from "./api.js";
 
-import { Navbar } from "./components/Navbar.jsx";
+import Navbar from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 import { ToastProvider } from "./context/ToastContext";
 
 /* ================= LANDING PAGES ================= */
 
-import { LoginPage } from "./pages/LadingPage/LoginPage/LoginPage.jsx";
-import { SignupPage } from "./pages/LadingPage/SignupPage/SignupPage.jsx";
+import { CustomerLoginPage } from "./pages/CustomerAuth/CustomerLoginPage.jsx";
+import { CustomerSignupPage } from "./pages/CustomerAuth/CustomerSignupPage.jsx";
+import { CustomerProfilePage } from "./pages/CustomerProfile/CustomerProfilePage.jsx";
 import { ActivityPage } from "./pages/Activity/ActivityPage.jsx";
 import { HistoryPage } from "./pages/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/Customers/CustomerList.jsx";
@@ -150,13 +151,17 @@ function App() {
     "/",
     "/login",
     "/signup",
+    "/customer-login",
+    "/customer-signup",
     "/about",
     "/contact",
     "/lpservices"
   ];
 
   const showSidebar =
-    isLoggedIn && !publicRoutes.includes(location.pathname);
+    isLoggedIn &&
+    currentUser?.role !== "customer" &&
+    !publicRoutes.includes(location.pathname);
 
   /* ============================================
      ROLE HELPERS
@@ -167,6 +172,7 @@ function App() {
 
     if (user.role === "admin") return "/dashboard";
     if (user.role === "manager") return "/manager-dashboard";
+    if (user.role === "customer") return "/customer/profile";
     return "/staff-dashboard";
   };
 
@@ -221,6 +227,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />
+            <Route path="/book" element={<Navigate to="/customer-login" replace />} />
 
             {/* ================= AUTH ================= */}
 
@@ -229,7 +236,7 @@ function App() {
               element={
                 isLoggedIn
                   ? <Navigate to={dashboardLink} replace />
-                  : <LoginPage
+                  : <CustomerLoginPage
                     setIsLoggedIn={setIsLoggedIn}
                     setCurrentUser={setCurrentUser}
                     setActiveSalon={handleSetActiveSalon}
@@ -242,7 +249,33 @@ function App() {
               element={
                 isLoggedIn
                   ? <Navigate to={dashboardLink} replace />
-                  : <SignupPage
+                  : <CustomerSignupPage
+                    setIsLoggedIn={setIsLoggedIn}
+                    setCurrentUser={setCurrentUser}
+                    setActiveSalon={handleSetActiveSalon}
+                  />
+              }
+            />
+
+            <Route
+              path="/customer-login"
+              element={
+                isLoggedIn
+                  ? <Navigate to={dashboardLink} replace />
+                  : <CustomerLoginPage
+                    setIsLoggedIn={setIsLoggedIn}
+                    setCurrentUser={setCurrentUser}
+                    setActiveSalon={handleSetActiveSalon}
+                  />
+              }
+            />
+
+            <Route
+              path="/customer-signup"
+              element={
+                isLoggedIn
+                  ? <Navigate to={dashboardLink} replace />
+                  : <CustomerSignupPage
                     setIsLoggedIn={setIsLoggedIn}
                     setCurrentUser={setCurrentUser}
                     setActiveSalon={handleSetActiveSalon}
@@ -430,6 +463,15 @@ function App() {
               element={
                 <RequireRole roles={["admin", "manager", "staff"]}>
                   <Profile />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/customer/profile"
+              element={
+                <RequireRole roles={["customer"]}>
+                  <CustomerProfilePage />
                 </RequireRole>
               }
             />

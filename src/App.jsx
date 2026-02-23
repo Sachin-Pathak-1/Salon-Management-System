@@ -303,7 +303,7 @@ function App() {
   ];
 
   const showSidebar =
-    isLoggedIn && !publicRoutes.includes(location.pathname);
+    isLoggedIn && currentUser?.role !== "customer" && !publicRoutes.includes(location.pathname);
 
   /* ============================================
      ROLE HELPERS
@@ -314,6 +314,7 @@ function App() {
 
     if (user.role === "admin") return "/dashboard";
     if (user.role === "manager") return "/manager-dashboard";
+    if (user.role === "customer") return "/profile";
     return "/staff-dashboard";
   };
 
@@ -604,7 +605,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff", "customer"]}>
                   <Profile />
                 </RequireRole>
               }
