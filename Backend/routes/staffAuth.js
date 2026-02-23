@@ -9,6 +9,12 @@ const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
 
+const resolveTrialEnd = (user) => {
+  if (user?.trialEndsAt) return new Date(user.trialEndsAt);
+  const start = new Date(user?.trialStartAt || user?.createdAt || new Date());
+  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+};
+
 const escapeRegex = (value) =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import React from "react";
+import api from "./api.js";
 
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
@@ -63,28 +64,51 @@ function App() {
   }, [activeSalon]);
 
   useEffect(() => {
-    const currentUserFromStorage = JSON.parse(localStorage.getItem("currentUser") || "null");
-    if (currentUserFromStorage?.role !== "admin") return undefined;
-
-    const demoEndsAtRaw = localStorage.getItem("demoPlanEndsAt");
-    if (!demoEndsAtRaw) return undefined;
-
-    const expiresAt = new Date(demoEndsAtRaw).getTime();
-    if (!Number.isFinite(expiresAt)) {
+    if (!isLoggedIn || currentUser?.role !== "admin") {
       localStorage.removeItem("demoPlanEndsAt");
       return undefined;
     }
 
-    const delayMs = Math.max(expiresAt - Date.now(), 0);
-    const timer = setTimeout(() => {
-      localStorage.removeItem("demoPlanEndsAt");
-      if (window.location.pathname !== "/plans") {
-        navigate("/plans", { replace: true });
-      }
-    }, delayMs);
+    let timeoutId;
+    let isCancelled = false;
 
-    return () => clearTimeout(timer);
-  }, [location.pathname, navigate]);
+    const syncDemoTimer = async () => {
+      try {
+        const res = await api.get("/plans/selection");
+        if (isCancelled) return;
+
+        const demoEndsAtRaw = res?.data?.demo?.demoEndsAt || null;
+        if (!demoEndsAtRaw) {
+          localStorage.removeItem("demoPlanEndsAt");
+          return;
+        }
+
+        const expiresAt = new Date(demoEndsAtRaw).getTime();
+        if (!Number.isFinite(expiresAt)) {
+          localStorage.removeItem("demoPlanEndsAt");
+          return;
+        }
+
+        localStorage.setItem("demoPlanEndsAt", demoEndsAtRaw);
+        const delayMs = Math.max(expiresAt - Date.now(), 0);
+        timeoutId = setTimeout(() => {
+          localStorage.removeItem("demoPlanEndsAt");
+          if (window.location.pathname !== "/plans") {
+            navigate("/plans", { replace: true });
+          }
+        }, delayMs);
+      } catch {
+        // Keep app fail-open on transient network errors.
+      }
+    };
+
+    syncDemoTimer();
+
+    return () => {
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isLoggedIn, currentUser?.id, currentUser?.role, navigate]);
 
   /* ============================================
      RESTORE AUTH ON REFRESH (SAFE VERSION)

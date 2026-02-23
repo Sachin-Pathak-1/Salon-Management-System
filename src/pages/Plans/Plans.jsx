@@ -46,21 +46,8 @@ const DEMO_PLAN = {
 export function ViewPlan() {
   const navigate = useNavigate();
   const demoExpiryAlertedRef = useRef(false);
-
-  /* ================= ROLE CHECK ================= */
-
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const isAdmin = currentUser?.role === "admin";
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">
-          Access denied. Admin only.
-        </p>
-      </div>
-    );
-  }
 
   /* ================= STATE ================= */
 
@@ -71,6 +58,18 @@ export function ViewPlan() {
   const [saveMessage, setSaveMessage] = useState("");
   const [selectionInfo, setSelectionInfo] = useState(null);
   const [salonsAddedCount, setSalonsAddedCount] = useState(0);
+
+  /* ================= ROLE CHECK ================= */
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg font-semibold">
+          Access denied. Admin only.
+        </p>
+      </div>
+    );
+  }
 
   const plansWithDemo = useMemo(() => {
     const demoEligible = selectionInfo?.demo?.demoEligible;

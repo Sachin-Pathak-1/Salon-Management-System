@@ -9,6 +9,21 @@ const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 
 const router = express.Router();
 
+const resolveTrialEnd = (user) => {
+  if (user?.trialEndsAt) return new Date(user.trialEndsAt);
+  const start = new Date(user?.trialStartAt || user?.createdAt || new Date());
+  return new Date(start.getTime() + TRIAL_WINDOW_MS);
+};
+
+const isTrialExpired = (user) => {
+  if (!user || user?.selectedPlanId) return false;
+  const demoActive = user?.demoAccessUntil
+    ? Date.now() <= new Date(user.demoAccessUntil).getTime()
+    : false;
+  if (demoActive) return false;
+  return Date.now() > resolveTrialEnd(user).getTime();
+};
+
 const escapeRegex = (value) =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -129,7 +144,7 @@ router.post("/login", async (req, res) => {
     }
 
     let trialOwner = null;
-    if (roleSource === "admin") {
+    if (account.role === "admin") {
       trialOwner = account;
     } else if (account.adminId) {
       trialOwner = await User.findById(account.adminId).select(

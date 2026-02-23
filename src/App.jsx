@@ -42,6 +42,27 @@ import AttendanceReport from "./pages/Attendance/AttendanceReport.jsx";
 import { Inventory } from "./pages/Inventory/Inventory.jsx";
 import { Expenses } from "./pages/Expenses/Expenses.jsx";
 
+const normalizeSubscriptionData = (data = {}) => {
+  const trial = data?.trial || {};
+  const demo = data?.demo || {};
+  const hasActivePlan = Boolean(trial?.hasActivePlan || data?.selectedPlan);
+  const demoActive = Boolean(demo?.demoActive);
+  const hasPlanAccess = hasActivePlan || demoActive;
+
+  return {
+    loaded: true,
+    hasActiveSubscription: hasActivePlan,
+    hasPlanAccess,
+    isLocked: !hasPlanAccess,
+    isDemoPlanSelected: !hasActivePlan && demoActive,
+    demoPlanActive: demoActive,
+    demoPlanConsumed: Boolean(demo?.demoAlreadyUsed) && !demoActive,
+    trialExpired: Boolean(trial?.trialExpired),
+    trialRemainingDays: Number(trial?.trialDaysRemaining) || 0,
+    trialEndsAt: demo?.demoEndsAt || trial?.trialEndsAt || null
+  };
+};
+
 function SubscriptionGlassyGate({ trialExpired, trialEndsAt, children }) {
   return (
     <div className="relative min-h-screen">
@@ -172,22 +193,7 @@ function App() {
     try {
       setSubscriptionLoading(true);
       const res = await api.get("/plans/selection");
-      const data = res?.data || {};
-      const hasActiveSubscription = Boolean(data?.selectedPlan || data?.hasActiveSubscription);
-      const hasPlanAccess = Boolean(data?.hasPlanAccess) || hasActiveSubscription;
-
-      setSubscriptionStatus({
-        loaded: true,
-        hasActiveSubscription,
-        hasPlanAccess,
-        isLocked: Boolean(data?.isLocked) || !hasPlanAccess,
-        isDemoPlanSelected: Boolean(data?.isDemoPlanSelected),
-        demoPlanActive: Boolean(data?.demoPlanActive),
-        demoPlanConsumed: Boolean(data?.demoPlanConsumed),
-        trialExpired: Boolean(data?.trialExpired),
-        trialRemainingDays: Number(data?.trialRemainingDays) || 0,
-        trialEndsAt: data?.trialEndsAt || null
-      });
+      setSubscriptionStatus(normalizeSubscriptionData(res?.data || {}));
     } catch {
       // Fail-open to avoid locking the app due transient API/network issues.
       setSubscriptionStatus((prev) => prev || {

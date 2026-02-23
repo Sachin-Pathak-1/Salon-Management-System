@@ -45,9 +45,9 @@ export function Home() {
         <h2 className="text-3xl font-bold mb-6 text-[var(--text)]">Browse Experiences</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' },
-            { id: 2, name: 'Sunaina Glow Salon', location: 'Belapur East, Mumbai', rating: '0.0' },
-            { id: 3, name: 'Shani', location: 'Dadar, Mumbai', rating: '0.0' }
+            { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+            { id: 2, name: 'Sunaina Glow Salon', location: 'Belapur East, Mumbai', rating: '4.0' , image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+            { id: 3, name: 'Shani', location: 'Dadar, Mumbai', rating: '4.3' , image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
           ].map(salon => (
             <SalonCard key={salon.id} salon={salon} />
           ))}
@@ -56,9 +56,9 @@ export function Home() {
 
       {/* Map & Nearby Salons Section */}
       <MapListSection salons={[
-        { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' },
-        { id: 2, name: 'Urban Style Salon', location: 'Andheri', rating: '2.0' },
-        { id: 3, name: 'Sunaina Glow Salon', location: 'Belapur East', rating: '0.0' }
+        { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+        { id: 2, name: 'Urban Style Salon', location: 'Andheri', rating: '2.0' ,image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+        { id: 3, name: 'Sunaina Glow Salon', location: 'Belapur East', rating: '4.0' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'}
       ]} />
 
       {/* Stats Section */}
