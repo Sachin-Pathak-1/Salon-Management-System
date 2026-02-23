@@ -1,10 +1,12 @@
-import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Routes, Route, useLocation, Navigate, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import React from "react";
 
 import { Navbar } from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
+import { SubscriptionPopup } from "./components/SubscriptionPopup.jsx";
 import { ToastProvider } from "./context/ToastContext";
+import api from "./api.js";
 
 /* ================= LANDING PAGES ================= */
 
@@ -40,6 +42,43 @@ import AttendanceReport from "./pages/Attendance/AttendanceReport.jsx";
 import { Inventory } from "./pages/Inventory/Inventory.jsx";
 import { Expenses } from "./pages/Expenses/Expenses.jsx";
 
+function SubscriptionGlassyGate({ trialExpired, trialEndsAt, children }) {
+  return (
+    <div className="relative min-h-screen">
+      <div
+        className="pointer-events-none min-h-screen select-none blur-[2px] opacity-80"
+      >
+        {children}
+      </div>
+      <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/35 px-6">
+        <div
+          className="w-full max-w-xl rounded-2xl border p-8 text-center shadow-lg"
+          style={{ borderColor: "var(--border-light)", backgroundColor: "var(--background)" }}
+        >
+          <h2 className="text-3xl font-bold">Subscription Required</h2>
+          <p className="mt-3 text-sm opacity-85">
+            {trialExpired
+              ? "Your 14-day trial has expired. Subscribe to continue full access."
+              : "Choose a subscription plan to unlock full interaction."}
+          </p>
+          {trialEndsAt && (
+            <p className="mt-2 text-xs opacity-70">
+              Trial end date: {new Date(trialEndsAt).toLocaleDateString()}
+            </p>
+          )}
+          <Link
+            to="/plans"
+            className="inline-block mt-6 rounded-lg px-5 py-2.5 font-semibold text-white"
+            style={{ backgroundColor: "var(--primary)" }}
+          >
+            Subscribe / View Plans
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
 
   const location = useLocation();
@@ -49,6 +88,10 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [activeSalon, setActiveSalon] = useState(localStorage.getItem("activeSalon") || "");
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
+  const [hasShownPopup, setHasShownPopup] = useState(false);
 
   // Callback function to update activeSalon in parent and localStorage
   const handleSetActiveSalon = (salonId) => {
@@ -116,6 +159,128 @@ function App() {
 
   }, []);
 
+  const isAdminUser = currentUser?.role === "admin";
+  const shouldEnforceSubscription = isLoggedIn && isAdminUser;
+
+  const fetchSubscriptionStatus = useCallback(async () => {
+    if (!shouldEnforceSubscription || !currentUser?.id) {
+      setSubscriptionStatus(null);
+      setSubscriptionLoading(false);
+      return;
+    }
+
+    try {
+      setSubscriptionLoading(true);
+      const res = await api.get("/plans/selection");
+      const data = res?.data || {};
+      const hasActiveSubscription = Boolean(data?.selectedPlan || data?.hasActiveSubscription);
+      const hasPlanAccess = Boolean(data?.hasPlanAccess) || hasActiveSubscription;
+
+      setSubscriptionStatus({
+        loaded: true,
+        hasActiveSubscription,
+        hasPlanAccess,
+        isLocked: Boolean(data?.isLocked) || !hasPlanAccess,
+        isDemoPlanSelected: Boolean(data?.isDemoPlanSelected),
+        demoPlanActive: Boolean(data?.demoPlanActive),
+        demoPlanConsumed: Boolean(data?.demoPlanConsumed),
+        trialExpired: Boolean(data?.trialExpired),
+        trialRemainingDays: Number(data?.trialRemainingDays) || 0,
+        trialEndsAt: data?.trialEndsAt || null
+      });
+    } catch {
+      // Fail-open to avoid locking the app due transient API/network issues.
+      setSubscriptionStatus((prev) => prev || {
+        loaded: false,
+        hasActiveSubscription: false,
+        hasPlanAccess: true,
+        isLocked: false,
+        isDemoPlanSelected: false,
+        demoPlanActive: false,
+        demoPlanConsumed: false,
+        trialExpired: false,
+        trialRemainingDays: 0,
+        trialEndsAt: null
+      });
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, [shouldEnforceSubscription, currentUser?.id]);
+
+  useEffect(() => {
+    fetchSubscriptionStatus();
+  }, [fetchSubscriptionStatus]);
+
+  useEffect(() => {
+    const onSubscriptionUpdated = () => {
+      fetchSubscriptionStatus();
+    };
+
+    window.addEventListener("subscription-updated", onSubscriptionUpdated);
+    return () => {
+      window.removeEventListener("subscription-updated", onSubscriptionUpdated);
+    };
+  }, [fetchSubscriptionStatus]);
+
+  useEffect(() => {
+    if (!shouldEnforceSubscription || !subscriptionStatus?.demoPlanActive || !subscriptionStatus?.trialEndsAt) {
+      return;
+    }
+
+    const endsAt = new Date(subscriptionStatus.trialEndsAt).getTime();
+    const delay = Math.max(endsAt - Date.now(), 0) + 200;
+    const timeoutId = setTimeout(() => {
+      fetchSubscriptionStatus();
+    }, delay);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    shouldEnforceSubscription,
+    subscriptionStatus?.demoPlanActive,
+    subscriptionStatus?.trialEndsAt,
+    fetchSubscriptionStatus
+  ]);
+
+  useEffect(() => {
+    setHasShownPopup(false);
+    setShowSubscriptionPopup(false);
+  }, [currentUser?.id, isLoggedIn]);
+
+  useEffect(() => {
+    if (!shouldEnforceSubscription || subscriptionLoading || !subscriptionStatus) return;
+    if (subscriptionStatus.hasPlanAccess) {
+      setShowSubscriptionPopup(false);
+      return;
+    }
+
+    if (location.pathname === "/dashboard" && !hasShownPopup) {
+      setShowSubscriptionPopup(true);
+      setHasShownPopup(true);
+    }
+  }, [
+    shouldEnforceSubscription,
+    subscriptionLoading,
+    subscriptionStatus,
+    location.pathname,
+    hasShownPopup
+  ]);
+
+  useEffect(() => {
+    if (!shouldEnforceSubscription || !subscriptionStatus || subscriptionLoading) return;
+    if (location.pathname === "/plans") return;
+
+    if (subscriptionStatus.isLocked) {
+      setShowSubscriptionPopup(true);
+      navigate("/plans", { replace: true });
+    }
+  }, [
+    shouldEnforceSubscription,
+    subscriptionStatus,
+    subscriptionLoading,
+    location.pathname,
+    navigate
+  ]);
+
   if (!authReady) return null;
 
   /* ============================================
@@ -148,7 +313,7 @@ function App() {
 
   const dashboardLink = resolveDashboardPath(currentUser);
 
-  const RequireRole = ({ roles = [], children }) => {
+  const RequireRole = ({ roles = [], enforceSubscription = false, children }) => {
 
     if (!isLoggedIn || !currentUser) {
       return <Navigate to="/login" replace />;
@@ -156,6 +321,35 @@ function App() {
 
     if (roles.length > 0 && !roles.includes(currentUser.role)) {
       return <Navigate to={dashboardLink} replace />;
+    }
+
+    if (
+      enforceSubscription &&
+      shouldEnforceSubscription &&
+      location.pathname !== "/plans"
+    ) {
+      if (subscriptionLoading || !subscriptionStatus) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <p className="text-sm opacity-80">Checking subscription status...</p>
+          </div>
+        );
+      }
+
+      if (subscriptionStatus.loaded === false) {
+        return children;
+      }
+
+      if (!subscriptionStatus.hasPlanAccess) {
+        return (
+          <SubscriptionGlassyGate
+            trialExpired={subscriptionStatus.trialExpired}
+            trialEndsAt={subscriptionStatus.trialEndsAt}
+          >
+            {children}
+          </SubscriptionGlassyGate>
+        );
+      }
     }
 
     return children;
@@ -231,7 +425,7 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole enforceSubscription roles={["admin"]}>
                   <Dashboard activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -240,7 +434,7 @@ function App() {
             <Route
               path="/manager-dashboard"
               element={
-                <RequireRole roles={["manager"]}>
+                <RequireRole enforceSubscription roles={["manager"]}>
                   <ManagerDashboard />
                 </RequireRole>
               }
@@ -249,7 +443,7 @@ function App() {
             <Route
               path="/staff-dashboard"
               element={
-                <RequireRole roles={["staff"]}>
+                <RequireRole enforceSubscription roles={["staff"]}>
                   <StaffDashboard activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -260,7 +454,7 @@ function App() {
             <Route
               path="/services"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <Services activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -269,7 +463,7 @@ function App() {
             <Route
               path="/reports"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <Reports activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -278,7 +472,7 @@ function App() {
             <Route
               path="/inventory"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <Inventory activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -287,7 +481,7 @@ function App() {
             <Route
               path="/expenses"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <Expenses activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -296,7 +490,7 @@ function App() {
             <Route
               path="/customers"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <CustomerList />
                 </RequireRole>
               }
@@ -305,7 +499,7 @@ function App() {
             <Route
               path="/customer/:id"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <CustomerDetails />
                 </RequireRole>
               }
@@ -314,7 +508,7 @@ function App() {
             <Route
               path="/appointments"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <AdminAppointments />
                 </RequireRole>
               }
@@ -323,7 +517,7 @@ function App() {
             <Route
               path="/add-appointment"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole enforceSubscription roles={["admin"]}>
                   <AddAppointment />
                 </RequireRole>
               }
@@ -332,7 +526,7 @@ function App() {
             <Route
               path="/create-appointment/:salonId"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole enforceSubscription roles={["admin"]}>
                   <CreateAppointment />
                 </RequireRole>
               }
@@ -341,7 +535,7 @@ function App() {
             <Route
               path="/paymenthistory"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole enforceSubscription roles={["admin"]}>
                   <PaymentHistory />
                 </RequireRole>
               }
@@ -350,7 +544,7 @@ function App() {
             <Route
               path="/plans"
               element={
-                <RequireRole roles={["admin"]}>
+                <RequireRole enforceSubscription roles={["admin"]}>
                   <ViewPlan />
                 </RequireRole>
               }
@@ -359,7 +553,7 @@ function App() {
             <Route
               path="/support"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <HelpPage />
                 </RequireRole>
               }
@@ -368,7 +562,7 @@ function App() {
             <Route
               path="/staff"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <StaffManage activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -377,7 +571,7 @@ function App() {
             <Route
               path="/settings"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <Settings />
                 </RequireRole>
               }
@@ -386,7 +580,7 @@ function App() {
             <Route
               path="/attendance"
               element={
-                <RequireRole roles={["manager"]}>
+                <RequireRole enforceSubscription roles={["manager"]}>
                   <ManagerAttendance />
                 </RequireRole>
               }
@@ -395,7 +589,7 @@ function App() {
             <Route
               path="/attendance-report"
               element={
-                <RequireRole roles={["admin", "manager"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager"]}>
                   <AttendanceReport activeSalon={activeSalon} />
                 </RequireRole>
               }
@@ -404,7 +598,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <Profile />
                 </RequireRole>
               }
@@ -414,7 +608,7 @@ function App() {
             <Route
               path="/activity"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <ActivityPage isLoggedIn={isLoggedIn} />
                 </RequireRole>
               }
@@ -423,7 +617,7 @@ function App() {
             <Route
               path="/history"
               element={
-                <RequireRole roles={["admin", "manager", "staff"]}>
+                <RequireRole enforceSubscription roles={["admin", "manager", "staff"]}>
                   <HistoryPage isLoggedIn={isLoggedIn} />
                 </RequireRole>
               }
@@ -433,6 +627,17 @@ function App() {
 
         </div>
       </div>
+      <SubscriptionPopup
+        open={showSubscriptionPopup}
+        trialExpired={Boolean(subscriptionStatus?.trialExpired)}
+        trialRemainingDays={Number(subscriptionStatus?.trialRemainingDays) || 0}
+        isDemoPlanSelected={Boolean(subscriptionStatus?.isDemoPlanSelected)}
+        onClose={() => setShowSubscriptionPopup(false)}
+        onSubscribe={() => {
+          setShowSubscriptionPopup(false);
+          navigate("/plans");
+        }}
+      />
     </ToastProvider>
   );
 }
