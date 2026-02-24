@@ -6,6 +6,12 @@ const salonSchema = new mongoose.Schema(
   address: { type: String, required: true },
   contact: { type: String, required: true },
 
+  type: {
+    type: String,
+    enum: ["salon", "spa"],
+    default: "salon"
+  },
+
   email: String,
   ownerName: String,
 
