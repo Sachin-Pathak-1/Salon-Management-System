@@ -1,230 +1,136 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import "./Navbar.css";
+﻿import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-const SALON_API = "http://localhost:5000/api/salons/get";
-
-export function Navbar({
-  isLoggedIn,
+function Navbar({
+  isLoggedIn = false,
+  currentUser = null,
   setIsLoggedIn,
-  currentUser,
   setCurrentUser,
-  activeSalon,
   setActiveSalon
 }) {
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [salons, setSalons] = useState([]);
-  const [salonsLoading, setSalonsLoading] = useState(false);
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") ||
-    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-  );
-
   const navigate = useNavigate();
-  const location = useLocation();
-  const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
 
-  let dashboardLink = "/staff-dashboard";
-  if (currentUser?.role === "admin") dashboardLink = "/dashboard";
-  if (currentUser?.role === "manager") dashboardLink = "/manager-dashboard";
-
-  /* ================= AUTH HEADER ================= */
-  const authHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")
-      }`
-  });
-
-  /* ================= FETCH SALONS ================= */
-  const fetchSalons = async () => {
-    try {
-      setSalonsLoading(true);
-      const res = await fetch(SALON_API, {
-        headers: authHeader()
-      });
-
-      if (!res.ok) {
-        console.error("Status:", res.status);
-        const text = await res.text();
-        console.error("Response:", text);
-        setSalons([]);
-        return;
-      }
-
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-
-      setSalons(list);
-
-      // If no salons returned, clear any previously selected salon (stale value)
-      if (!list.length) {
-        setActiveSalon("");
-        localStorage.removeItem("activeSalon");
-      } else {
-        // If current activeSalon is missing or not in the fetched list, pick the first
-        const found = list.find(s => s._id === activeSalon);
-        if (!activeSalon || !found) {
-          setActiveSalon(list[0]._id);
-        }
-      }
-
-    } catch (err) {
-      console.error("Network error:", err);
-      setSalons([]);
-    } finally {
-      setSalonsLoading(false);
-    }
-  };
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-    fetchSalons();
-    // eslint-disable-next-line
-  }, [isLoggedIn]);
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-  /* ================= THEME ================= */
-  const applyTheme = (t) => {
-    document.documentElement.setAttribute("data-theme", t);
-
-    // Sync with Tailwind 'class' mode
-    if (t === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    localStorage.setItem("theme", t);
-    setTheme(t);
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
   };
 
-  useEffect(() => {
-    applyTheme(theme);
-    // eslint-disable-next-line
-  }, []);
-
-  /* ================= LOGOUT ================= */
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    // Clear selected salon on logout to avoid leaking previous user's salon
-    setActiveSalon("");
-    localStorage.removeItem("activeSalon");
+    if (typeof setIsLoggedIn === "function") setIsLoggedIn(false);
+    if (typeof setCurrentUser === "function") setCurrentUser(null);
+    if (typeof setActiveSalon === "function") setActiveSalon("");
+
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
     localStorage.removeItem("activeSalon");
     navigate("/");
   };
 
+  const menuItemClass =
+    "rounded-md px-3 py-2 text-sm font-semibold tracking-wide text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]";
+  const textLinkClass =
+    "rounded-md px-2 py-1 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]";
+
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-
-        {/* LOGO */}
-        <div
-          className="navbar-logo"
-          onClick={() => navigate(isLoggedIn ? dashboardLink : "/")}
-        >
-          Blissful Beauty Salon
-        </div>
-
-        {/* CENTER NAV */}
-        <div className="navbar-center">
-          {/* location dropdown always visible */}
-          {!isLoggedIn && (
-            <div className="location-selector">
-              <span>📍</span>
-              <select className="location-dropdown">
-                <option>Mumbai</option>
-                <option>Delhi</option>
-                <option>Bengaluru</option>
-              </select>
-            </div>
-          )}
-
-          {/* Show only landing links when NOT logged in */}
-          {!isLoggedIn && (
-            <>
-              <Link to="/" className="nav-link">Home</Link>
-              <Link to="/lpservices" className="nav-link">Services</Link>
-              <Link to="/about" className="nav-link">About</Link>
-              <Link to="/contact" className="nav-link">Contact</Link>
-            </>
-          )}
-
-          {/* Show system links when logged in */}
-          {isLoggedIn && (
-            <>
-              <Link
-                to={dashboardLink}
-                className={`nav-link ${location.pathname === dashboardLink ? "active" : ""}`}
-              >
-                Dashboard
-              </Link>
-
-              <Link
-                to="/add-appointment"
-                className={`nav-link ${location.pathname === "/add-appointment" ? "active" : ""}`}
-              >
-                Add Appointment
-              </Link>
-
-              {currentUser?.role === "admin" && (
-                <Link
-                  to="/plans"
-                  className={`nav-link ${location.pathname === "/plans" ? "active" : ""}`}
-                >
-                  Plans
-                </Link>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* RIGHT SIDE */}
-        <div className="navbar-right">
-          {/* landing page controls when not logged in */}
-          {!isLoggedIn && (
-            <>
-              <div className="lang-toggle">
-                🌐 EN
-              </div>
-              <button
-                className="nav-btn book-now"
-                onClick={() => navigate('/login')}
-              >
-                Book Now
-              </button>
-              <Link to="/login" className="nav-link nav-login">
-                Log In
-              </Link>
-              <Link to="/signup" className="nav-link nav-signup">
-                Sign Up
-              </Link>
-            </>
-          )}
-
-          {/* Salon Select (Improved UI) */}
-          {isLoggedIn && salons.length > 0 && (
-            <div className="salon-select-wrapper">
-              <label className="salon-label">Salon</label>
-              <select
-                value={activeSalon}
-                onChange={(e) => setActiveSalon(e.target.value)}
-                className="salon-select"
-              >
-                {salons.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-      
-          {/* Theme Toggle */}
+    <nav className="sticky top-0 z-50 border-b border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] shadow-[0_4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-colors duration-300">
+      <div className="mx-auto flex h-[70px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:gap-8">
+        <div className="flex min-w-0 items-center gap-4 lg:gap-6">
           <button
-            className="theme-toggle-btn"
-            onClick={() => applyTheme(theme === "light" ? "dark" : "light")}
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-baseline text-lg font-extrabold tracking-tight sm:text-xl"
+          >
+            <span className="text-[var(--text)]">Blissful</span>
+            <span className="text-[var(--accent)]">Beauty Salon</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] max-[520px]:hidden"
+          >
+            <span>📍</span>
+            <span>Mumbai</span>
+            <span>▾</span>
+          </button>
+        </div>
+
+        <div className="flex-1 items-center justify-center gap-2 flex max-[520px]:hidden">
+          <button type="button" onClick={() => navigate("/")} className={menuItemClass}>HOME</button>
+          <button type="button" onClick={() => navigate("/salon")} className={menuItemClass}>SALON</button>
+          <button type="button" onClick={() => navigate("/spa")} className={menuItemClass}>SPA</button>
+          <button type="button" onClick={() => navigate("/offers")} className={menuItemClass}>OFFERS</button>
+          <button type="button" onClick={() => navigate("/trends")} className={menuItemClass}>TRENDS</button>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+          <button
+            type="button"
+            className="rounded-md px-2 py-1 text-sm text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] inline-flex max-[520px]:hidden"
+          >
+            🌐 EN
+          </button>
+
+          {!isLoggedIn && (
+            <button
+              type="button"
+              className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)] inline-flex max-[520px]:hidden"
+              onClick={() => navigate("/login")}
+            >
+              📅 Book Now
+            </button>
+          )}
+
+          {!isLoggedIn && (
+            <button
+              type="button"
+              className={textLinkClass}
+              onClick={() => navigate("/login")}
+            >
+              Log In
+            </button>
+          )}
+
+          {!isLoggedIn && (
+            <button
+              type="button"
+              className="border-2 bg-[var(--primary)] text-white border-[var(--primary)] rounded-md px-3 py-2 text-sm font-semibold tracking-wide transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]"
+              onClick={() => navigate("/signup")}
+            >
+              Sign Up
+            </button>
+          )}
+
+          {isLoggedIn && currentUser?.role === "customer" && (
+            <button
+              type="button"
+              className={textLinkClass}
+              onClick={() => navigate("/customer/profile")}
+            >
+              Profile
+            </button>
+          )}
+
+          {isLoggedIn && (
+            <button
+              type="button"
+              className="rounded-md border border-[var(--primary)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary)] hover:text-[var(--background)]"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--primary)] text-base text-[var(--primary)] transition hover:bg-[var(--primary)] hover:text-[var(--background)]"
+            onClick={toggleTheme}
           >
             {theme === "light" ? "🌙" : "☀️"}
           </button>
@@ -233,3 +139,5 @@ export function Navbar({
     </nav>
   );
 }
+
+export default Navbar;

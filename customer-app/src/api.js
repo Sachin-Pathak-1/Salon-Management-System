@@ -20,12 +20,15 @@ api.interceptors.response.use(
     const code = error?.response?.data?.code;
 
     if (status === 401) {
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+      const targetPath = currentUser?.role === "customer" ? "/customer-login" : "/login";
+
       localStorage.removeItem("token");
       localStorage.removeItem("currentUser");
       localStorage.removeItem("activeSalon");
 
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      if (window.location.pathname !== targetPath) {
+        window.location.href = targetPath;
       }
     }
 
@@ -46,11 +49,13 @@ api.interceptors.response.use(
           window.location.href = "/plans";
         }
       } else {
+        const currentUserRole = currentUser?.role;
+        const targetPath = currentUserRole === "customer" ? "/customer-login" : "/login";
         localStorage.removeItem("token");
         localStorage.removeItem("currentUser");
         localStorage.removeItem("activeSalon");
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
+        if (window.location.pathname !== targetPath) {
+          window.location.href = targetPath;
         }
       }
     }
