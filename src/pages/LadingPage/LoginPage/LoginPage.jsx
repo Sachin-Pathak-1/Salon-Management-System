@@ -27,10 +27,17 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email: normalizedEmail, password }
+      );
+=======
       const res = await axios.post("http://localhost:5000/api/auth/customer/login", {
         email: normalizedEmail,
         otp: otp.trim()
       });
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
 
       const { token, user } = res.data;
 
@@ -40,17 +47,55 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
       // ✅ Save user directly (no extra API call)
       localStorage.setItem("currentUser", JSON.stringify(user));
 
+<<<<<<< HEAD
+      // Clear any previously selected salon to avoid leaking another user's salon
+      localStorage.removeItem("activeSalon");
+
+      if (typeof setCurrentUser === "function") setCurrentUser(user);
+      if (typeof setIsLoggedIn === "function") setIsLoggedIn(true);
+
+      // Keep branch/salon context aligned with the logged-in account.
+      if (user.role === "manager" || user.role === "staff") {
+        if (user.salonId) {
+          if (setActiveSalon) setActiveSalon(user.salonId);
+          localStorage.setItem("activeSalon", user.salonId);
+        } else {
+          if (setActiveSalon) setActiveSalon("");
+          localStorage.removeItem("activeSalon");
+        }
+      } else {
+        if (setActiveSalon) setActiveSalon("");
+        localStorage.removeItem("activeSalon");
+      }
+
+      // Redirect based on role
+      if (user.role === "admin") {
+        navigate("/dashboard");
+      } else if (user.role === "manager") {
+        navigate("/manager-dashboard");
+      } else {
+        navigate("/staff-dashboard");
+      }
+=======
       setCurrentUser(user);
       setIsLoggedIn(true);
       if (setActiveSalon) setActiveSalon("");
       localStorage.removeItem("activeSalon");
       navigate("/profile");
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
 
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      const backendMessage = err?.response?.data?.message;
+      if (backendMessage) {
+        setError(backendMessage);
+      } else if (err?.request) {
+        setError("Cannot reach server. Start backend on http://localhost:5000.");
+      } else {
+        setError(err?.message || "Login failed");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleSendOtp = async () => {
