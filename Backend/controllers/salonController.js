@@ -190,6 +190,44 @@ exports.getSalons = async (req, res) => {
 };
 
 /* ============================
+   GET PUBLIC SALONS
+============================ */
+exports.getPublicSalons = async (req, res) => {
+    try {
+        res.set("Cache-Control", "no-store");
+
+        const salons = await Salon.find({})
+            .sort({ isPrimary: -1, order: 1, createdAt: -1 })
+            .select("name address logo openingTime closingTime status isPrimary holidays")
+            .lean();
+
+        const processedSalons = salons.map((salon) => {
+            const isHoliday = checkIsHoliday(salon.holidays);
+            const isOpenNow = checkIsOpenNow(salon.openingTime, salon.closingTime);
+
+            let displayStatus = salon.status;
+            if (isHoliday) {
+                displayStatus = "Holiday";
+            } else if (!isOpenNow && salon.status === "open") {
+                displayStatus = "Closed";
+            }
+
+            return {
+                ...salon,
+                isHolidayToday: isHoliday,
+                isOpenNow: isOpenNow && !isHoliday && salon.status === "open",
+                displayStatus
+            };
+        });
+
+        res.json(processedSalons);
+    } catch (err) {
+        console.error("GET PUBLIC SALONS ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/* ============================
    REORDER SALONS
 ============================ */
 exports.reorderSalons = async (req, res) => {

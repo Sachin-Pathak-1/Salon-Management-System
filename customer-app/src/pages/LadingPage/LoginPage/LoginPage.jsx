@@ -24,6 +24,7 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
     setLoading(true);
 
     try {
+
       const res = await axios.post(
         "http://localhost:5000/api/auth/login",
         { email: normalizedEmail, password }
@@ -40,8 +41,8 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
       // Clear any previously selected salon to avoid leaking another user's salon
       localStorage.removeItem("activeSalon");
 
-      if (typeof setCurrentUser === "function") setCurrentUser(user);
-      if (typeof setIsLoggedIn === "function") setIsLoggedIn(true);
+      setCurrentUser(user);
+      setIsLoggedIn(true);
 
       // Keep branch/salon context aligned with the logged-in account.
       if (user.role === "manager" || user.role === "staff") {
@@ -67,17 +68,10 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
       }
 
     } catch (err) {
-      const backendMessage = err?.response?.data?.message;
-      if (backendMessage) {
-        setError(backendMessage);
-      } else if (err?.request) {
-        setError("Cannot reach server. Start backend on http://localhost:5000.");
-      } else {
-        setError(err?.message || "Login failed");
-      }
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || "Login failed");
     }
+
+    setLoading(false);
   };
 
   useEffect(() => {
