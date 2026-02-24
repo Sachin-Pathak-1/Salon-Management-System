@@ -12,6 +12,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { CustomerLoginPage } from "./pages/CustomerAuth/CustomerLoginPage.jsx";
 import { CustomerSignupPage } from "./pages/CustomerAuth/CustomerSignupPage.jsx";
 import { CustomerProfilePage } from "./pages/CustomerProfile/CustomerProfilePage.jsx";
+import { CustomerCreateAppointmentPage } from "./pages/CustomerAppointments/CustomerCreateAppointmentPage.jsx";
 import { ActivityPage } from "./pages/Activity/ActivityPage.jsx";
 import { HistoryPage } from "./pages/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/Customers/CustomerList.jsx";
@@ -472,6 +473,15 @@ function App() {
               element={
                 <RequireRole roles={["customer"]}>
                   <CustomerProfilePage />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="/customer/appointments/new"
+              element={
+                <RequireRole roles={["customer"]}>
+                  <CustomerCreateAppointmentPage />
                 </RequireRole>
               }
             />

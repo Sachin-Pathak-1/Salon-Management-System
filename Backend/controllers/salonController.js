@@ -16,6 +16,21 @@ function checkIsHoliday(holidays = []) {
 }
 
 /* ============================
+   PUBLIC SALONS
+============================ */
+exports.getPublicSalons = async (_req, res) => {
+    try {
+        const salons = await Salon.find({})
+            .sort({ isPrimary: -1, order: 1, createdAt: -1 })
+            .lean();
+        return res.json(salons);
+    } catch (err) {
+        console.error("GET PUBLIC SALONS ERROR:", err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+/* ============================
    ADD SALON
 ============================ */
 exports.addSalon = async (req, res) => {
@@ -152,6 +167,8 @@ exports.getSalons = async (req, res) => {
         } else if (req.user.role === "staff" || req.user.role === "manager") {
             if (!req.user.salonId) return res.json([]);
             query = { _id: req.user.salonId };
+        } else if (req.user.role === "customer") {
+            query = {};
         } else {
             return res.status(403).json({ message: "Unauthorized" });
         }

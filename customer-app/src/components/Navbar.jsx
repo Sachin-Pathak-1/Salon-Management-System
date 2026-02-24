@@ -38,6 +38,16 @@ function Navbar({
   const textLinkClass =
     "rounded-md px-2 py-1 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]";
 
+  const handleCreateAppointment = () => {
+    if (!isLoggedIn || currentUser?.role !== "customer") {
+      navigate("/login", {
+        state: { redirectTo: "/customer/appointments/new" }
+      });
+      return;
+    }
+    navigate("/customer/appointments/new");
+  };
+
   return (
     <nav className="sticky top-0 z-50 border-b border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] shadow-[0_4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-colors duration-300">
       <div className="mx-auto flex h-[70px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:gap-8">
@@ -63,10 +73,9 @@ function Navbar({
 
         <div className="flex-1 items-center justify-center gap-2 flex max-[520px]:hidden">
           <button type="button" onClick={() => navigate("/")} className={menuItemClass}>HOME</button>
-          <button type="button" onClick={() => navigate("/salon")} className={menuItemClass}>SALON</button>
-          <button type="button" onClick={() => navigate("/spa")} className={menuItemClass}>SPA</button>
-          <button type="button" onClick={() => navigate("/offers")} className={menuItemClass}>OFFERS</button>
-          <button type="button" onClick={() => navigate("/trends")} className={menuItemClass}>TRENDS</button>
+          <button type="button" onClick={() => navigate("/lpservices")} className={menuItemClass}>SERVICES</button>
+          <button type="button" onClick={() => navigate("/about")} className={menuItemClass}>ABOUT</button>
+          <button type="button" onClick={() => navigate("/contact")} className={menuItemClass}>CONTACT</button>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
@@ -77,15 +86,13 @@ function Navbar({
             🌐 EN
           </button>
 
-          {!isLoggedIn && (
-            <button
-              type="button"
-              className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)] inline-flex max-[520px]:hidden"
-              onClick={() => navigate("/login")}
-            >
-              📅 Book Now
-            </button>
-          )}
+          <button
+            type="button"
+            className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)] inline-flex max-[520px]:hidden"
+            onClick={handleCreateAppointment}
+          >
+            📅 Create Appointment
+          </button>
 
           {!isLoggedIn && (
             <button

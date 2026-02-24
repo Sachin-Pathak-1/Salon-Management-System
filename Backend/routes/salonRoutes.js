@@ -5,6 +5,7 @@ const router = express.Router();
 const {
   addSalon,
   getSalons,
+  getPublicSalons,
   reorderSalons,
   emergencyCloseAll,
   emergencyOpenAll,
@@ -16,6 +17,7 @@ const {
    SALON ROUTES
 ============================ */
 
+router.get("/public", getPublicSalons);
 router.post("/add", auth(["admin"]), addSalon);
 router.get("/get", auth(), getSalons);
 router.put("/reorder", auth(["admin"]), reorderSalons);

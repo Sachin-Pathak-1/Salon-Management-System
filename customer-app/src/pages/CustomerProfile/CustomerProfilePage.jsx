@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
+import { useNavigate } from "react-router-dom";
 
 export function CustomerProfilePage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [appointments, setAppointments] = useState([]);
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -18,15 +21,22 @@ export function CustomerProfilePage() {
       setLoading(true);
       setError("");
       try {
-        const res = await api.get("/auth/customer/me");
+        const profileRes = await api.get("/auth/customer/me");
         setProfile({
-          name: res.data?.name || "",
-          email: res.data?.email || "",
-          contact: res.data?.contact || "",
-          address: res.data?.address || ""
+          name: profileRes.data?.name || "",
+          email: profileRes.data?.email || "",
+          contact: profileRes.data?.contact || "",
+          address: profileRes.data?.address || ""
         });
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load profile");
+      }
+
+      try {
+        const appointmentsRes = await api.get("/appointments/customer/my");
+        setAppointments(Array.isArray(appointmentsRes.data) ? appointmentsRes.data : []);
+      } catch (err) {
+        setAppointments([]);
       } finally {
         setLoading(false);
       }
@@ -86,6 +96,13 @@ export function CustomerProfilePage() {
         <p className="mt-2 text-sm opacity-80">
           Keep your details updated for faster bookings.
         </p>
+        <button
+          type="button"
+          onClick={() => navigate("/customer/appointments/new")}
+          className="mt-4 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)]"
+        >
+          Create Appointment
+        </button>
 
         {error && (
           <div className="mt-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700">
@@ -149,6 +166,46 @@ export function CustomerProfilePage() {
             </button>
           </div>
         </form>
+
+        <div className="mt-10">
+          <h2 className="text-2xl font-bold">My Appointments</h2>
+          {appointments.length === 0 ? (
+            <p className="mt-3 text-sm opacity-80">No appointments found yet.</p>
+          ) : (
+            <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border-light)]">
+              <table className="min-w-full bg-[var(--background)] text-sm">
+                <thead className="bg-[var(--gray-100)]">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Time</th>
+                    <th className="px-4 py-3 text-left">Salon</th>
+                    <th className="px-4 py-3 text-left">Service</th>
+                    <th className="px-4 py-3 text-left">Staff</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.map((appointment) => (
+                    <tr key={appointment._id} className="border-t border-[var(--border-light)]">
+                      <td className="px-4 py-3">
+                        {appointment?.date ? new Date(appointment.date).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-4 py-3">{appointment?.time || "-"}</td>
+                      <td className="px-4 py-3">{appointment?.salonId?.name || "-"}</td>
+                      <td className="px-4 py-3">{appointment?.serviceId?.name || "-"}</td>
+                      <td className="px-4 py-3">{appointment?.staffId?.name || "-"}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-[var(--hover-bg)] px-3 py-1 text-xs font-semibold uppercase">
+                          {appointment?.status || "pending"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

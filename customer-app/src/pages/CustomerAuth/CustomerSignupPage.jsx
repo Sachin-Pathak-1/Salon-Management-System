@@ -11,13 +11,16 @@ export function CustomerSignupPage({
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
-    confirmPassword: "",
+    otp: "",
+    confirmOtp: "",
     contact: "",
     address: ""
   });
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,22 +30,28 @@ export function CustomerSignupPage({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
     const payload = {
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
-      password: formData.password,
+      otp: formData.otp.trim(),
       contact: formData.contact.trim(),
       address: formData.address.trim()
     };
 
-    if (!payload.name || !payload.email || !payload.password) {
-      setError("Name, email and password are required");
+    if (!payload.name || !payload.email || !payload.otp) {
+      setError("Name, email and OTP are required");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+    if (!/^\d{6}$/.test(payload.otp)) {
+      setError("OTP must be exactly 6 digits");
+      return;
+    }
+
+    if (formData.otp !== formData.confirmOtp) {
+      setError("OTP values do not match");
       return;
     }
 
@@ -64,6 +73,35 @@ export function CustomerSignupPage({
       setError(err?.response?.data?.message || "Customer registration failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setError("");
+    setSuccess("");
+    const normalizedEmail = formData.email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError("Enter email first to receive OTP");
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const res = await api.post("/auth/customer/send-otp", {
+        email: normalizedEmail,
+        purpose: "signup"
+      });
+      const devOtp = res?.data?.devOtp;
+      setOtpSent(true);
+      setSuccess(
+        devOtp
+          ? `${res?.data?.message || "OTP generated"} (DEV OTP: ${devOtp})`
+          : (res?.data?.message || "OTP sent successfully")
+      );
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -99,6 +137,11 @@ export function CustomerSignupPage({
                 {error}
               </div>
             )}
+            {success && (
+              <div className="mt-4 rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-sm text-green-700">
+                {success}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <input
@@ -116,6 +159,14 @@ export function CustomerSignupPage({
                 onChange={handleChange}
                 className="input-themed"
               />
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={sendingOtp}
+                className="w-full rounded-lg border border-[var(--border-light)] bg-[var(--background)] py-2.5 text-sm font-semibold text-[var(--text)] disabled:opacity-70"
+              >
+                {sendingOtp ? "Sending OTP..." : "Send OTP to Email"}
+              </button>
               <input
                 name="contact"
                 placeholder="Phone (optional)"
@@ -131,24 +182,28 @@ export function CustomerSignupPage({
                 className="input-themed"
               />
               <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                value={formData.password}
+                name="otp"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="OTP (6 digits)"
+                value={formData.otp}
                 onChange={handleChange}
                 className="input-themed"
               />
               <input
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
+                name="confirmOtp"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="Confirm OTP"
+                value={formData.confirmOtp}
                 onChange={handleChange}
                 className="input-themed"
               />
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !otpSent}
                 className="w-full rounded-lg bg-[var(--primary)] py-3 font-semibold text-white transition hover:bg-[var(--secondary)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? "Creating..." : "Create Account"}
