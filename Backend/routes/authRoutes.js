@@ -12,6 +12,7 @@ const TRIAL_DAYS = 14;
 const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 const OTP_EXPIRY_MINUTES = 10;
 const OTP_RESEND_COOLDOWN_MS = 45 * 1000;
+const isProduction = process.env.NODE_ENV === "production";
 
 const router = express.Router();
 
@@ -84,7 +85,10 @@ const getMailerTransport = () => {
 const sendCustomerOtpMail = async ({ toEmail, otp, purpose }) => {
   const transport = getMailerTransport();
   if (!transport) {
-    throw new Error("OTP mail service is not configured");
+    if (isProduction) {
+      throw new Error("OTP mail service is not configured");
+    }
+    return { delivered: false };
   }
 
   const from = process.env.SMTP_FROM || process.env.SMTP_USER;
@@ -107,6 +111,8 @@ const sendCustomerOtpMail = async ({ toEmail, otp, purpose }) => {
       </div>
     `
   });
+
+  return { delivered: true };
 };
 
 const verifyCustomerOtp = async ({ email, purpose, otp }) => {
@@ -186,12 +192,23 @@ router.post("/customer/send-otp", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendCustomerOtpMail({ toEmail: normalizedEmail, otp, purpose });
+    const mailResult = await sendCustomerOtpMail({
+      toEmail: normalizedEmail,
+      otp,
+      purpose
+    });
 
-    return res.json({
+    const payload = {
       message: "OTP sent successfully to your email",
       expiresInMinutes: OTP_EXPIRY_MINUTES
-    });
+    };
+
+    if (!isProduction && mailResult?.delivered === false) {
+      payload.message = "OTP generated (email not configured in local environment)";
+      payload.devOtp = otp;
+    }
+
+    return res.json(payload);
   } catch (err) {
     return res.status(500).json({ message: err.message || "Failed to send OTP" });
   }
