@@ -18,11 +18,8 @@ import { HistoryPage } from "./pages/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/Customers/CustomerList.jsx";
 import { CustomerDetails } from "./pages/Customers/CustomerDetails.jsx";
 import { Home } from "./pages/LadingPage/Home/Home.jsx";
-<<<<<<< HEAD
 import { Salon } from "./pages/LadingPage/Salon/Salon.jsx";
 import { Spa } from "./pages/LadingPage/Spa/Spa.jsx";
-=======
->>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
 import { LPServices } from "./pages/LadingPage/Services/Services.jsx";
 import { About } from "./pages/LadingPage/About/About.jsx";
 import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
@@ -159,11 +156,8 @@ function App() {
     "/signup",
     "/customer-login",
     "/customer-signup",
-<<<<<<< HEAD
     "/salon",
     "/spa",
-=======
->>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
     "/about",
     "/contact",
     "/lpservices"
@@ -235,11 +229,8 @@ function App() {
             {/* ================= PUBLIC ================= */}
 
             <Route path="/" element={<Home />} />
-<<<<<<< HEAD
             <Route path="/salon" element={<Salon />} />
             <Route path="/spa" element={<Spa />} />
-=======
->>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />
