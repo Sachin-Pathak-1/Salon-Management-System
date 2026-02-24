@@ -73,19 +73,9 @@ function Navbar({
 
         <div className="flex-1 items-center justify-center gap-2 flex max-[520px]:hidden">
           <button type="button" onClick={() => navigate("/")} className={menuItemClass}>HOME</button>
-<<<<<<< Harshal-Update
-
-          <button type="button" onClick={() => navigate("/salon")} className={menuItemClass}>SALON</button>
-          <button type="button" onClick={() => navigate("/spa")} className={menuItemClass}>SPA</button>
           <button type="button" onClick={() => navigate("/lpservices")} className={menuItemClass}>SERVICES</button>
           <button type="button" onClick={() => navigate("/about")} className={menuItemClass}>ABOUT</button>
           <button type="button" onClick={() => navigate("/contact")} className={menuItemClass}>CONTACT</button>
-
-=======
-          <button type="button" onClick={() => navigate("/lpservices")} className={menuItemClass}>SERVICES</button>
-          <button type="button" onClick={() => navigate("/about")} className={menuItemClass}>ABOUT</button>
-          <button type="button" onClick={() => navigate("/contact")} className={menuItemClass}>CONTACT</button>
->>>>>>> main
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">

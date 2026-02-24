@@ -18,11 +18,6 @@ import { HistoryPage } from "./pages/History/HistoryPage.jsx";
 import { CustomerList } from "./pages/Customers/CustomerList.jsx";
 import { CustomerDetails } from "./pages/Customers/CustomerDetails.jsx";
 import { Home } from "./pages/LadingPage/Home/Home.jsx";
-<<<<<<< Harshal-Update
-import { Salon } from "./pages/LadingPage/Salon/Salon.jsx";
-import { Spa } from "./pages/LadingPage/Spa/Spa.jsx";
-=======
->>>>>>> main
 import { LPServices } from "./pages/LadingPage/Services/Services.jsx";
 import { About } from "./pages/LadingPage/About/About.jsx";
 import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
@@ -159,11 +154,6 @@ function App() {
     "/signup",
     "/customer-login",
     "/customer-signup",
-<<<<<<< Harshal-Update
-    "/salon",
-    "/spa",
-=======
->>>>>>> main
     "/about",
     "/contact",
     "/lpservices"
@@ -235,11 +225,6 @@ function App() {
             {/* ================= PUBLIC ================= */}
 
             <Route path="/" element={<Home />} />
-<<<<<<< Harshal-Update
-            <Route path="/salon" element={<Salon />} />
-            <Route path="/spa" element={<Spa />} />
-=======
->>>>>>> main
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />

@@ -1,44 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import SalonCard from "../../../components/SalonCard";
 import MapListSection from "../../../components/MapListSection";
+import ServiceCard from "../../../components/ServiceCard";
 import NewsletterSection from "../../../components/NewsletterSection";
-import api from "../../../api";
-
-const SALON_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=1200&q=80";
-const SPA_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1200&q=80";
-
-const SPA_KEYWORDS = ["spa", "wellness", "therapy", "retreat", "massage"];
-
-const isSpaSalon = (item) => {
-  const source = `${item?.name || ""} ${item?.address || ""}`.toLowerCase();
-  return SPA_KEYWORDS.some((keyword) => source.includes(keyword));
-};
 
 export function Home() {
-  const [salons, setSalons] = useState([]);
-
-  useEffect(() => {
-    const loadSalons = async () => {
-      try {
-        const res = await api.get("/salons/public");
-        setSalons(Array.isArray(res.data) ? res.data : []);
-      } catch {
-        setSalons([]);
-      }
-    };
-
-    loadSalons();
-  }, []);
-
-  const { premiumSalons, luxurySpas } = useMemo(() => {
-    const spaList = salons.filter(isSpaSalon).slice(0, 3);
-    const salonList = salons.filter((item) => !isSpaSalon(item)).slice(0, 3);
-    return { premiumSalons: salonList, luxurySpas: spaList };
-  }, [salons]);
-
   return (
     <div className="bg-[var(--background)] text-[var(--text)]">
       {/* Hero Section */}
@@ -116,150 +82,6 @@ export function Home() {
           </div>
         </div>
       </section>
-
-
-      {/* Mumbai Map Section */}
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="text-3xl font-bold">Map of Mumbai</h2>
-          <p className="hidden text-sm text-[var(--gray-700)] sm:block">
-            Find beauty destinations around the city
-          </p>
-        </div>
-        <div className="overflow-hidden rounded-3xl border border-[var(--border-light)] shadow-lg ring-1 ring-black/5">
-          <iframe
-            title="Mumbai map"
-            src="https://www.google.com/maps?q=Mumbai&z=11&output=embed"
-            className="h-[420px] w-full border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
-        </div>
-      </section>
-
-      {/* Premium Salons Near You */}
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="flex items-end justify-between gap-6">
-          <h2 className="text-3xl font-bold">Premium Salons Near You</h2>
-          <Link
-            to="/lpservices"
-            className="hidden text-sm font-semibold text-[var(--primary)] hover:underline sm:block"
-          >
-            View all services
-          </Link>
-        </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {premiumSalons.map((salon) => (
-            <article
-              key={salon._id}
-              className="overflow-hidden rounded-2xl bg-[var(--gray-100)] shadow-lg ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <img
-                src={salon.logo || SALON_FALLBACK_IMAGE}
-                alt={salon.name}
-                className="h-52 w-full object-cover"
-              />
-              <div className="p-5">
-                <h3 className="text-lg font-semibold">{salon.name}</h3>
-                <p className="mt-1 text-sm text-[var(--gray-700)]">{salon.address}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-[var(--text)]">
-                    Status: {salon.displayStatus || salon.status || "Open"}
-                  </p>
-                  <Link
-                    to="/login"
-                    className="rounded-full bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white"
-                  >
-                    Book
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-          {premiumSalons.length === 0 && (
-            <p className="text-sm text-[var(--gray-700)]">No salons available right now.</p>
-          )}
-        </div>
-      </section>
-
-      {/* Signature Section */}
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="rounded-3xl bg-[var(--gray-100)]/90 p-8 shadow-lg ring-1 ring-black/5 sm:p-10">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
-              Signature Section
-            </p>
-            <h2 className="mt-3 text-3xl font-bold">Crafted Luxury Experiences</h2>
-            <p className="mt-3 text-sm text-[var(--gray-700)]">
-              Our signature rituals blend modern techniques with personalized care,
-              giving you a premium end-to-end salon and spa experience.
-            </p>
-          </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <div className="rounded-2xl bg-[var(--background)] p-5 shadow ring-1 ring-black/5">
-              <h3 className="text-lg font-semibold">Signature Hair Artistry</h3>
-              <p className="mt-2 text-sm text-[var(--gray-700)]">
-                Precision cut, styling consultation, and finish for a complete look.
-              </p>
-            </div>
-            <div className="rounded-2xl bg-[var(--background)] p-5 shadow ring-1 ring-black/5">
-              <h3 className="text-lg font-semibold">Radiance Skin Ritual</h3>
-              <p className="mt-2 text-sm text-[var(--gray-700)]">
-                Deep cleanse, glow mask, and hydration therapy for luminous skin.
-              </p>
-            </div>
-            <div className="rounded-2xl bg-[var(--background)] p-5 shadow ring-1 ring-black/5">
-              <h3 className="text-lg font-semibold">Aroma Wellness Escape</h3>
-              <p className="mt-2 text-sm text-[var(--gray-700)]">
-                Curated aroma oils with calming massage to unwind and reset.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Luxury Spas Near You */}
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="flex items-end justify-between gap-6">
-          <h2 className="text-3xl font-bold">Luxury Spas Near You</h2>
-          <Link
-            to="/spa"
-            className="hidden text-sm font-semibold text-[var(--primary)] hover:underline sm:block"
-          >
-            Explore spa options
-          </Link>
-        </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {luxurySpas.map((spa) => (
-            <article
-              key={spa._id}
-              className="overflow-hidden rounded-2xl bg-[var(--gray-100)] shadow-lg ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <img src={spa.logo || SPA_FALLBACK_IMAGE} alt={spa.name} className="h-52 w-full object-cover" />
-              <div className="p-5">
-                <h3 className="text-lg font-semibold">{spa.name}</h3>
-                <p className="mt-1 text-sm text-[var(--gray-700)]">{spa.address}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-[var(--text)]">
-                    Status: {spa.displayStatus || spa.status || "Open"}
-                  </p>
-                  <Link
-                    to="/login"
-                    className="rounded-full bg-[var(--primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white"
-                  >
-                    Book
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-          {luxurySpas.length === 0 && (
-            <p className="text-sm text-[var(--gray-700)]">No spas available right now.</p>
-          )}
-        </div>
-      </section>
-
 
       {/* Testimonials Section */}
       <section className="mx-auto max-w-6xl px-6 py-20">
@@ -366,11 +188,8 @@ export function Home() {
         </div>
       </section>
 
-
-
       {/* Newsletter Section */}
       <NewsletterSection />
-
 
       {/* CTA Section */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
