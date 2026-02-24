@@ -19,7 +19,6 @@ const {
 
 router.get("/public", getPublicSalons);
 router.post("/add", auth(["admin"]), addSalon);
-router.get("/public", getPublicSalons);
 router.get("/get", auth(), getSalons);
 router.put("/reorder", auth(["admin"]), reorderSalons);
 router.put("/emergency/close-all", auth(["admin"]), emergencyCloseAll);
