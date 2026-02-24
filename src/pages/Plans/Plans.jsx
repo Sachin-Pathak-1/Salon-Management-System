@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.js";
 
 /* ================= PLAN FEATURES ================= */
 
 const planFeatures = {
+  "Demo Plan": [
+    "Premium features unlocked",
+    "Free temporary usage",
+    "14 days activation"
+  ],
   Basic: [
     "Single Salon Dashboard",
     "Service & Pricing Management",
@@ -28,21 +33,33 @@ const planFeatures = {
     "Online Booking Integration",
     "Priority Support",
   ],
-  Demo: [
-    "14-Day Free Trial",
-    "Access to Dashboard & Core Features",
-    "No Payment Required During Trial",
-    "Upgrade to Paid Plan Anytime",
-  ],
+};
+
+const DEMO_PLAN = {
+  _id: "demo-plan",
+  name: "Demo Plan",
+  maxBranches: 0,
+  price: 0,
+  description: "Free Premium access for 14 Days."
 };
 
 export function ViewPlan() {
   const navigate = useNavigate();
-
-  /* ================= ROLE CHECK ================= */
-
+  const demoExpiryAlertedRef = useRef(false);
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const isAdmin = currentUser?.role === "admin";
+
+  /* ================= STATE ================= */
+
+  const [plans, setPlans] = useState([]);
+  const [branchCount, setBranchCount] = useState(1);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
+  const [selectionInfo, setSelectionInfo] = useState(null);
+  const [salonsAddedCount, setSalonsAddedCount] = useState(0);
+
+  /* ================= ROLE CHECK ================= */
 
   if (!isAdmin) {
     return (
@@ -54,67 +71,89 @@ export function ViewPlan() {
     );
   }
 
-  /* ================= STATE ================= */
-
-  const [plans, setPlans] = useState([]);
-  const [branchCount, setBranchCount] = useState(1);
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
-  const [loadError, setLoadError] = useState("");
-  const [saveMessage, setSaveMessage] = useState("");
-  const [selectionInfo, setSelectionInfo] = useState(null);
-  const [salonsAddedCount, setSalonsAddedCount] = useState(0);
-  const orderedPlans = useMemo(() => {
-    const priority = { Basic: 1, Standard: 2, Premium: 3 };
-    return [...plans].sort((a, b) => {
-      const pa = priority[a?.name] ?? 99;
-      const pb = priority[b?.name] ?? 99;
-      if (pa !== pb) return pa - pb;
-      return String(a?.name || "").localeCompare(String(b?.name || ""));
-    });
-  }, [plans]);
+  const plansWithDemo = useMemo(() => {
+    const demoEligible = selectionInfo?.demo?.demoEligible;
+    const demoActive = selectionInfo?.demo?.demoActive;
+    const includeDemo = demoActive || demoEligible === undefined || Boolean(demoEligible);
+    return includeDemo ? [DEMO_PLAN, ...plans] : plans;
+  }, [plans, selectionInfo?.demo?.demoEligible, selectionInfo?.demo?.demoActive]);
 
   /* ================= LOAD DATA ================= */
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        setLoadError("");
+  const fetchPlansData = async () => {
+    try {
+      setLoadError("");
 
-        const [plansRes, selectionRes, salonsRes] = await Promise.all([
-          api.get("/plans"),
-          api.get("/plans/selection"),
-          api.get("/salons/get"),
-        ]);
+      const [plansRes, selectionRes] = await Promise.all([
+        api.get("/plans"),
+        api.get("/plans/selection"),
+      ]);
 
-        setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
-
-        const salonsList = salonsRes.data || [];
-        setSalonsAddedCount(Array.isArray(salonsList) ? salonsList.length : 0);
-        setSelectionInfo(selectionRes?.data || null);
-
-        if (selectionRes?.data?.selectedPlan) {
-          setSelectedPlanId(selectionRes.data.selectedPlan._id);
-          setBranchCount(
-            Math.max(
-              selectionRes.data.salonLimit || 1,
-              selectionRes.data.salonsAdded || 1
-            )
-          );
-        }
-      } catch {
-        setPlans([]);
-        setLoadError("Failed to load plans. Please check the API.");
+      setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
+      setSelectionInfo(selectionRes?.data || null);
+      setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
+      if (selectionRes?.data?.demo?.demoEndsAt) {
+        localStorage.setItem("demoPlanEndsAt", selectionRes.data.demo.demoEndsAt);
+      } else {
+        localStorage.removeItem("demoPlanEndsAt");
       }
-    };
 
-    fetchPlans();
+      if (selectionRes?.data?.selectedPlan) {
+        setSelectedPlanId(selectionRes.data.selectedPlan._id);
+        setBranchCount(
+          Math.max(
+            selectionRes.data.salonLimit || 1,
+            selectionRes.data.salonsAdded || 1
+          )
+        );
+        setSelectionInfo(selectionRes.data);
+      } else if (selectionRes?.data?.demo?.demoActive) {
+        setSelectedPlanId(DEMO_PLAN._id);
+      } else {
+        setSelectedPlanId(null);
+      }
+    } catch {
+      setPlans([]);
+      setLoadError("Failed to load plans. Please check the API.");
+    }
+  };
+
+  useEffect(() => {
+    fetchPlansData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!selectionInfo?.demo?.demoActive || !selectionInfo?.demo?.demoEndsAt) {
+      demoExpiryAlertedRef.current = false;
+      return;
+    }
+
+    const expiresAt = new Date(selectionInfo.demo.demoEndsAt).getTime();
+    const delayMs = Math.max(expiresAt - Date.now(), 0);
+
+    const timer = setTimeout(async () => {
+      if (demoExpiryAlertedRef.current) return;
+      demoExpiryAlertedRef.current = true;
+
+      localStorage.removeItem("demoPlanEndsAt");
+      setSelectedPlanId(null);
+      setSaveMessage("Demo plan expired. Please upgrade to continue.");
+      await fetchPlansData();
+      if (window.location.pathname !== "/plans") {
+        navigate("/plans", { replace: true });
+      }
+    }, delayMs);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionInfo?.demo?.demoActive, selectionInfo?.demo?.demoEndsAt, navigate]);
 
   /* ================= DERIVED STATE ================= */
 
   const selectedPlan = useMemo(
-    () => plans.find((p) => p._id === selectedPlanId) || null,
-    [plans, selectedPlanId]
+    () => plansWithDemo.find((p) => p._id === selectedPlanId) || null,
+    [plansWithDemo, selectedPlanId]
   );
 
   const totalPrice = useMemo(() => {
@@ -126,14 +165,11 @@ export function ViewPlan() {
     !plan?.maxBranches || branchCount <= plan.maxBranches;
 
   const formatCurrency = (v) => `Rs. ${v.toFixed(2)}`;
-  const isDemoPlanActive = Boolean(selectionInfo?.demoPlanActive) && !selectionInfo?.selectedPlan;
-  const isDemoPlanConsumed = Boolean(selectionInfo?.demoPlanConsumed);
-  const hasPaidPlan = Boolean(selectionInfo?.selectedPlan);
-  const showDemoCard = !isDemoPlanConsumed || isDemoPlanActive;
 
   /* ================= SELECT PLAN ================= */
 
   const handleSelectPlan = async (plan) => {
+    const isDemoPlan = plan._id === DEMO_PLAN._id;
 
     // Auto-correct branch count if exceeding max
     if (plan.maxBranches && branchCount > plan.maxBranches) {
@@ -158,55 +194,33 @@ export function ViewPlan() {
 
     try {
       setSaveMessage("");
+      setSelectedPlanId(plan._id);
 
       await api.post("/plans/select", {
         planId: plan._id,
-        branchCount,
+        branchCount: isDemoPlan ? 1 : branchCount,
       });
 
-      const [selectionRes, salonsRes] = await Promise.all([
-        api.get("/plans/selection"),
-        api.get("/salons/get"),
-      ]);
-
+      const selectionRes = await api.get("/plans/selection");
       setSelectionInfo(selectionRes.data || null);
-      setSalonsAddedCount(
-        Array.isArray(salonsRes.data) ? salonsRes.data.length : 0
-      );
-
-      setSelectedPlanId(plan._id);
+      setSalonsAddedCount(selectionRes?.data?.salonsAdded || 0);
+      if (selectionRes?.data?.demo?.demoEndsAt) {
+        localStorage.setItem("demoPlanEndsAt", selectionRes.data.demo.demoEndsAt);
+      } else {
+        localStorage.removeItem("demoPlanEndsAt");
+      }
+      if (isDemoPlan) setSelectedPlanId(DEMO_PLAN._id);
       setSaveMessage("Plan saved successfully.");
-      window.dispatchEvent(new Event("subscription-updated"));
-      navigate("/dashboard");
+
+      const isNewAccount = (selectionRes?.data?.salonsAdded || 0) === 0;
+      if (isNewAccount) {
+        navigate("/settings?openAddSalon=1");
+      }
     } catch (err) {
+      setSelectedPlanId(selectionInfo?.selectedPlan?._id || null);
       setSaveMessage(
         err?.response?.data?.message ||
         "Failed to save plan selection."
-      );
-    }
-  };
-
-  const handleSelectDemoPlan = async () => {
-    try {
-      setSaveMessage("");
-      await api.post("/plans/select-demo");
-
-      const [selectionRes, salonsRes] = await Promise.all([
-        api.get("/plans/selection"),
-        api.get("/salons/get"),
-      ]);
-
-      setSelectionInfo(selectionRes.data || null);
-      setSalonsAddedCount(
-        Array.isArray(salonsRes.data) ? salonsRes.data.length : 0
-      );
-      setSelectedPlanId(selectionRes?.data?.selectedPlan?._id || null);
-      setSaveMessage("Demo plan activated successfully.");
-      window.dispatchEvent(new Event("subscription-updated"));
-    } catch (err) {
-      setSaveMessage(
-        err?.response?.data?.message ||
-        "Failed to activate demo plan."
       );
     }
   };
@@ -232,6 +246,35 @@ export function ViewPlan() {
         <p className="mt-2 max-w-xl" style={{ color: 'var(--gray-700)' }}>
           Choose a plan that suits your business needs.
         </p>
+
+        {selectionInfo?.trial?.trialExpired && (
+          <div className="mt-4 rounded-lg border border-red-400 bg-red-100 text-red-700 px-4 py-3 text-sm">
+            Your 14-day free demo expired on{" "}
+            {selectionInfo?.trial?.trialEndsAt
+              ? new Date(selectionInfo.trial.trialEndsAt).toLocaleDateString()
+              : "N/A"}.
+            Please purchase a plan to continue using the application.
+          </div>
+        )}
+
+        {!selectionInfo?.trial?.trialExpired && !selectionInfo?.trial?.hasActivePlan && (
+          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 px-4 py-3 text-sm">
+            Free demo active. {selectionInfo?.trial?.trialDaysRemaining ?? 0} day(s) remaining.
+          </div>
+        )}
+
+        {selectionInfo?.demo?.demoAlreadyUsed && !selectionInfo?.demo?.demoActive && (
+          <div className="mt-4 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 px-4 py-3 text-sm">
+            Demo plan already used. Please select a paid plan.
+          </div>
+        )}
+
+        {selectionInfo?.demo?.demoActive && (
+          <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 px-4 py-3 text-sm">
+            Demo Plan active for {Math.ceil((selectionInfo.demo.demoSecondsRemaining || 0) / 60)} minute(s).
+            It will auto-expire after 14days.
+          </div>
+        )}
       </div>
 
       {/* BRANCH COUNT */}
@@ -276,55 +319,17 @@ export function ViewPlan() {
       )}
 
       {/* PLAN CARDS */}
-      <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
-        {showDemoCard && (
-        <div
-          className={`rounded-2xl p-6 border bg-background shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl ${isDemoPlanActive ? "ring-2" : ""}`}
-          style={{ borderColor: isDemoPlanActive ? "var(--primary)" : "var(--border-light)" }}
-        >
-          <h2 className="text-2xl font-serif font-bold text-text">Demo Plan</h2>
-          <p className="mt-1" style={{ color: "var(--gray-700)" }}>
-            Start a 14-day free trial before purchasing a paid subscription.
-          </p>
-
-          <div className="mt-4 text-3xl font-bold" style={{ color: "var(--primary)" }}>
-            FREE
-            <span className="block text-sm font-medium" style={{ color: "var(--gray-700)" }}>
-              14 days trial
-            </span>
-          </div>
-
-          <ul className="mt-6 space-y-3">
-            {planFeatures.Demo.map((feature, i) => (
-              <li key={i} className="flex items-center gap-2 text-text">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--primary)" }}></span>
-                {feature}
-              </li>
-            ))}
-          </ul>
-
-          <button
-            onClick={handleSelectDemoPlan}
-            disabled={hasPaidPlan || isDemoPlanActive || isDemoPlanConsumed}
-            className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isDemoPlanActive ? "text-white" : "border"}`}
-            style={isDemoPlanActive ? { backgroundColor: "var(--primary)" } : { borderColor: "var(--primary)", color: "var(--primary)" }}
-          >
-            {isDemoPlanActive
-              ? "Selected"
-              : hasPaidPlan
-                ? "Paid Plan Active"
-                : isDemoPlanConsumed
-                ? "Demo Used"
-                : "Start Demo Plan"}
-          </button>
-
-        </div>
-        )}
-
-        {orderedPlans.map((plan) => {
-
+      <div
+        className="w-full mx-auto grid gap-4"
+        style={{
+          gridTemplateColumns: `repeat(${Math.max(plansWithDemo.length, 1)}, minmax(0, 1fr))`
+        }}
+      >
+        {plansWithDemo.map((plan) => {
           const isCurrent =
-            selectionInfo?.selectedPlan?._id === plan._id;
+            selectedPlanId === plan._id ||
+            selectionInfo?.selectedPlan?._id === plan._id ||
+            (plan._id === DEMO_PLAN._id && (selectionInfo?.demo?.demoActive || selectedPlanId === DEMO_PLAN._id));
 
           const isUpgrade =
             selectedPlan &&
@@ -335,7 +340,7 @@ export function ViewPlan() {
               key={plan._id}
               className={`rounded-2xl p-6 border bg-background shadow-md
                 transition-all duration-300
-                hover:scale-105 hover:shadow-xl
+                hover:-translate-y-1 hover:shadow-xl
                 ${isCurrent ? "ring-2" : ""}`}
               style={{ borderColor: isCurrent ? 'var(--primary)' : 'var(--border-light)' }}
             >
@@ -367,13 +372,26 @@ export function ViewPlan() {
 
               <button
                 onClick={() => handleSelectPlan(plan)}
-                disabled={!isBranchCountValid(plan)}
+                disabled={
+                  (plan._id !== DEMO_PLAN._id && !isBranchCountValid(plan)) ||
+                  (plan._id === DEMO_PLAN._id &&
+                    selectionInfo?.demo?.demoAlreadyUsed &&
+                    !selectionInfo?.demo?.demoActive)
+                }
                 className={`mt-8 w-full rounded-xl py-3 font-semibold transition ${isCurrent ? "text-white" : "border"
                   }`}
-                style={isCurrent ? { backgroundColor: 'var(--primary)' } : { borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                style={
+                  isCurrent
+                    ? { backgroundColor: 'var(--primary)' }
+                    : plan._id === DEMO_PLAN._id
+                      ? { backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }
+                      : { borderColor: 'var(--primary)', color: 'var(--primary)' }
+                }
               >
                 {isCurrent
                   ? "Selected"
+                  : plan._id === DEMO_PLAN._id
+                    ? "Free"
                   : isUpgrade
                     ? "Upgrade Plan"
                     : "Switch Plan"}

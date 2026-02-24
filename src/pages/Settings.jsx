@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
@@ -10,6 +10,8 @@ import { useToast } from "../context/ToastContext";
 
 export function Settings() {
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   /* ================= THEME ================= */
 
@@ -63,8 +65,12 @@ export function Settings() {
 
   const [dragIndex, setDragIndex] = useState(null);
 
+  const trialInfo = planInfo?.trial || {};
+  const demoInfo = planInfo?.demo || {};
+  const hasActivePlan = Boolean(trialInfo?.hasActivePlan || planInfo?.selectedPlan);
+  const demoPlanActive = Boolean(demoInfo?.demoActive);
   const hasPlanAccess = Boolean(
-    planInfo?.hasPlanAccess || planInfo?.selectedPlan || planInfo?.demoPlanActive
+    hasActivePlan || demoPlanActive
   );
   const salonLimit = Number(planInfo?.salonLimit || 0);
   const salonsAdded = Number(planInfo?.salonsAdded || 0);
@@ -128,25 +134,25 @@ export function Settings() {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (!isAdmin || !planInfo?.demoPlanActive || !planInfo?.trialEndsAt) return;
+    if (!isAdmin || !demoPlanActive || !demoInfo?.demoEndsAt) return;
 
-    const endsAt = new Date(planInfo.trialEndsAt).getTime();
+    const endsAt = new Date(demoInfo.demoEndsAt).getTime();
     const delay = Math.max(endsAt - Date.now(), 0) + 250;
     const timeoutId = setTimeout(() => {
       fetchPlanInfo();
     }, delay);
 
     return () => clearTimeout(timeoutId);
-  }, [isAdmin, planInfo?.demoPlanActive, planInfo?.trialEndsAt]);
+  }, [isAdmin, demoPlanActive, demoInfo?.demoEndsAt]);
 
   useEffect(() => {
-    if (!planInfo?.demoPlanActive || !planInfo?.trialEndsAt) {
+    if (!demoPlanActive || !demoInfo?.demoEndsAt) {
       setDemoSecondsLeft(0);
       return;
     }
 
     const computeRemaining = () => {
-      const endsAt = new Date(planInfo.trialEndsAt).getTime();
+      const endsAt = new Date(demoInfo.demoEndsAt).getTime();
       const now = Date.now();
       const remaining = Math.max(Math.ceil((endsAt - now) / 1000), 0);
       setDemoSecondsLeft(remaining);
@@ -155,7 +161,7 @@ export function Settings() {
     computeRemaining();
     const countdown = setInterval(computeRemaining, 1000);
     return () => clearInterval(countdown);
-  }, [planInfo?.demoPlanActive, planInfo?.trialEndsAt]);
+  }, [demoPlanActive, demoInfo?.demoEndsAt]);
 
   const formatDuration = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -344,7 +350,7 @@ export function Settings() {
                   {planInfo.selectedPlan.name}
                 </span>
               )}
-              {!planInfo?.selectedPlan && planInfo?.demoPlanActive && (
+              {!planInfo?.selectedPlan && demoPlanActive && (
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-700">
                   Demo Plan
                 </span>
@@ -391,21 +397,21 @@ export function Settings() {
                   </div>
                 </div>
               </>
-            ) : planInfo?.demoPlanActive ? (
+            ) : demoPlanActive ? (
               <div className="mt-3">
                 <div className="flex flex-wrap items-center gap-2 text-[12px]">
                   <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
                     Time Left <span className="font-semibold">{formatDuration(demoSecondsLeft)}</span>
                   </div>
                   <div className="border rounded-full px-3 py-1" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border-light)' }}>
-                    Ends At <span className="font-semibold">{planInfo.trialEndsAt ? new Date(planInfo.trialEndsAt).toLocaleTimeString() : "N/A"}</span>
+                    Ends At <span className="font-semibold">{demoInfo?.demoEndsAt ? new Date(demoInfo.demoEndsAt).toLocaleTimeString() : "N/A"}</span>
                   </div>
                 </div>
                 <p className="mt-2 text-xs opacity-75">
                   Demo access is active. After timer ends, app will lock and redirect to Plans.
                 </p>
               </div>
-            ) : planInfo?.demoPlanConsumed ? (
+            ) : (demoInfo?.demoAlreadyUsed && !demoPlanActive) ? (
               <div className="text-sm mt-2" style={{ color: 'var(--danger)' }}>
                 Demo trial expired/used. Purchase a plan to continue.
               </div>

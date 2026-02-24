@@ -211,7 +211,7 @@ router.get("/", auth(["admin", "manager", "staff"]), async (req, res) => {
 
         if (!targetSalonId) {
             // Fallback: if admin hasn't selected a salon yet or user data is incomplete
-            if (req.user.role === 'admin' && !salonId) {
+            if (req.user.role === 'admin' && !targetSalonId) {
                 // If super admin, maybe return all? But scheme is 1 record per salon per date.
                 // For now enforce salonId.
                 // return res.status(400).json({ error: "Admin must provide salonId" });
