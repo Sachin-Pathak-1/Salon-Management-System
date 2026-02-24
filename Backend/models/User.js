@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
 
   role: {
     type: String,
-    enum: ["admin"],
+    enum: ["admin", "manager"],
     default: "admin"
   },
 
@@ -42,29 +42,27 @@ const userSchema = new mongoose.Schema(
     default: null
   },
 
-  demoTrialStartAt: {
+  trialStartAt: {
+    type: Date,
+    default: Date.now
+  },
+
+  trialEndsAt: {
+    type: Date,
+    default: () => {
+      const end = new Date();
+      end.setDate(end.getDate() + 14);
+      return end;
+    }
+  },
+
+  demoAccessUntil: {
     type: Date,
     default: null
   },
-
-  demoTrialEndsAt: {
+  demoUsedAt: {
     type: Date,
     default: null
-  },
-
-  isDemoPlanSelected: {
-    type: Boolean,
-    default: false
-  },
-
-  demoPlanSelectedAt: {
-    type: Date,
-    default: null
-  },
-
-  demoPlanConsumed: {
-    type: Boolean,
-    default: false
   },
 
   billingHistory: [

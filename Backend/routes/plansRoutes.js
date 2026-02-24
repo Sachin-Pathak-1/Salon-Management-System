@@ -3,33 +3,36 @@ const Plan = require('../models/Plans');
 const User = require("../models/User");
 const Salon = require("../models/Salon");
 const auth = require("../middleware/auth");
+const TRIAL_DAYS = 14;
+const TRIAL_WINDOW_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+const DEMO_DURATION_MINUTES = 2;
+const DEMO_DURATION_MS = DEMO_DURATION_MINUTES * 60 * 1000;
 
 const router = express.Router();
-const TRIAL_DURATION_DAYS = 14;
 
-const addDays = (dateValue, days) => {
-  const d = new Date(dateValue);
-  d.setDate(d.getDate() + days);
-  return d;
+const resolveTrialEnd = (user) => {
+  if (user?.trialEndsAt) return new Date(user.trialEndsAt);
+  const start = new Date(user?.trialStartAt || user?.createdAt || new Date());
+  return new Date(start.getTime() + TRIAL_WINDOW_MS);
 };
 
-const getTrialInfo = (user) => {
-  const start = user.demoTrialStartAt || null;
-  const end = user.demoTrialEndsAt || null;
-  const hasTrialWindow = Boolean(start && end);
-  const now = new Date();
-  const trialExpired = hasTrialWindow ? now > end : false;
-  const remainingMs = hasTrialWindow ? end.getTime() - now.getTime() : (TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
-  const trialRemainingDays = trialExpired
-    ? 0
-    : Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+const getDemoInfo = (user) => {
+  const demoEndsAt = user?.demoAccessUntil ? new Date(user.demoAccessUntil) : null;
+  const demoActive = demoEndsAt ? Date.now() <= demoEndsAt.getTime() : false;
+  const demoAlreadyUsed = Boolean(user?.demoUsedAt);
+  const demoEligible = !demoAlreadyUsed || demoActive;
+  const demoSecondsRemaining = demoActive
+    ? Math.max(Math.ceil((demoEndsAt.getTime() - Date.now()) / 1000), 0)
+    : 0;
 
   return {
-    trialStartAt: start,
-    trialEndsAt: end,
-    hasTrialWindow,
-    trialExpired,
-    trialRemainingDays
+    durationMinutes: DEMO_DURATION_MINUTES,
+    demoEndsAt,
+    demoActive,
+    demoSecondsRemaining,
+    demoEligible,
+    demoAlreadyUsed,
+    demoUsedAt: user?.demoUsedAt || null
   };
 };
 
@@ -57,17 +60,15 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
       : null;
 
     const salonsAdded = await Salon.countDocuments({ adminId: req.user.id });
-    const hasActiveSubscription = Boolean(selectedPlan);
-    const trialInfo = getTrialInfo(user);
-    const isDemoPlanSelected = Boolean(user.isDemoPlanSelected);
-    const demoPlanConsumed = Boolean(user.demoPlanConsumed);
-    const demoTrialActive = isDemoPlanSelected && trialInfo.hasTrialWindow && !trialInfo.trialExpired;
-    const salonLimit = hasActiveSubscription
-      ? (user.planBranchLimit || 0)
-      : (demoTrialActive ? 1 : 0);
+    const salonLimit = user.planBranchLimit || 0;
     const remaining = salonLimit ? Math.max(salonLimit - salonsAdded, 0) : 0;
-    const hasPlanAccess = hasActiveSubscription || demoTrialActive;
-    const isLocked = !hasPlanAccess;
+    const trialEndsAt = resolveTrialEnd(user);
+    const hasActivePlan = Boolean(user.selectedPlanId);
+    const demo = getDemoInfo(user);
+    const trialExpired = !hasActivePlan && !demo.demoActive && Date.now() > trialEndsAt.getTime();
+    const trialStartAt = user.trialStartAt || user.createdAt || null;
+    const msLeft = Math.max(trialEndsAt.getTime() - Date.now(), 0);
+    const trialDaysRemaining = trialExpired ? 0 : Math.ceil(msLeft / (24 * 60 * 60 * 1000));
 
     const response = {
       selectedPlan,
@@ -77,17 +78,15 @@ router.get("/selection", auth(["admin"]), async (req, res) => {
       pricePerBranch: user.planPricePerBranch || 0,
       totalPrice: (user.planPricePerBranch || 0) * (user.planBranchLimit || 0),
       selectedPlanAt: user.selectedPlanAt,
-      hasActiveSubscription,
-      hasPlanAccess,
-      isDemoPlanSelected,
-      demoPlanActive: demoTrialActive,
-      demoPlanConsumed,
-      isLocked,
-      trialDurationDays: TRIAL_DURATION_DAYS,
-      trialStartAt: trialInfo.trialStartAt,
-      trialEndsAt: trialInfo.trialEndsAt,
-      trialExpired: trialInfo.trialExpired,
-      trialRemainingDays: trialInfo.trialRemainingDays
+      trial: {
+        trialDays: TRIAL_DAYS,
+        trialStartAt,
+        trialEndsAt,
+        trialExpired,
+        trialDaysRemaining,
+        hasActivePlan
+      },
+      demo
     };
     console.log("Response:", response);
     res.json(response);
@@ -148,8 +147,53 @@ router.get("/billing-history", auth(["admin"]), async (req, res) => {
 router.post("/select", auth(["admin"]), async (req, res) => {
   try {
     const { planId, branchCount } = req.body;
-
     const count = Number(branchCount);
+    const isDemoPlan = planId === "demo-plan";
+
+    if (isDemoPlan) {
+      const adminUser = await User.findById(req.user.id).select("demoUsedAt demoAccessUntil");
+      const demoStillActive = adminUser?.demoAccessUntil
+        ? Date.now() <= new Date(adminUser.demoAccessUntil).getTime()
+        : false;
+
+      if (adminUser?.demoUsedAt && !demoStillActive) {
+        return res.status(400).json({
+          message: "Demo plan can only be used once. Please select a paid plan."
+        });
+      }
+
+      const premiumPlan = await Plan.findOne({ name: /^premium$/i }).select("name maxBranches price");
+      const premiumBranchLimit = 1;
+      const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
+      if (premiumBranchLimit > 0 && existingSalons > premiumBranchLimit) {
+        return res.status(400).json({
+          message: "Demo plan supports only one salon."
+        });
+      }
+
+      const demoAccessUntil = new Date(Date.now() + DEMO_DURATION_MS);
+      const selectedAt = new Date();
+      await User.findByIdAndUpdate(
+        req.user.id,
+        {
+          selectedPlanId: null,
+          planBranchLimit: premiumBranchLimit,
+          planPricePerBranch: premiumPlan?.price || 0,
+          selectedPlanAt: selectedAt,
+          demoAccessUntil,
+          demoUsedAt: adminUser?.demoUsedAt || selectedAt
+        },
+        { new: true }
+      );
+
+      return res.json({
+        message: "Demo plan activated for 2 minutes.",
+        isDemoPlan: true,
+        grantedFromPlan: premiumPlan?.name || "Premium",
+        planBranchLimit: premiumBranchLimit,
+        demoAccessUntil
+      });
+    }
     if (!planId || !Number.isFinite(count) || count < 1) {
       return res.status(400).json({ message: "Plan and branch count required" });
     }
@@ -184,10 +228,7 @@ router.post("/select", auth(["admin"]), async (req, res) => {
         planBranchLimit: count,
         planPricePerBranch: plan.price,
         selectedPlanAt: selectedAt,
-        isDemoPlanSelected: false,
-        demoPlanSelectedAt: null,
-        demoTrialStartAt: null,
-        demoTrialEndsAt: null,
+        demoAccessUntil: null,
         $push: {
           billingHistory: {
             planId: plan._id,
@@ -215,52 +256,6 @@ router.post("/select", auth(["admin"]), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
-  }
-});
-
-// POST /api/plans/select-demo - Activate one-time 14-day demo plan
-router.post("/select-demo", auth(["admin"]), async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.selectedPlanId) {
-      return res.status(400).json({ message: "Paid plan already active." });
-    }
-
-    if (user.demoPlanConsumed) {
-      return res.status(400).json({ message: "Demo already used. Please subscribe to continue." });
-    }
-
-    const existingSalons = await Salon.countDocuments({ adminId: req.user.id });
-    if (existingSalons > 1) {
-      return res.status(400).json({ message: "Demo plan supports only 1 salon/spa." });
-    }
-
-    const selectedAt = new Date();
-    const trialEndsAt = addDays(selectedAt, TRIAL_DURATION_DAYS);
-    await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        isDemoPlanSelected: true,
-        demoPlanSelectedAt: selectedAt,
-        demoPlanConsumed: true,
-        demoTrialStartAt: selectedAt,
-        demoTrialEndsAt: trialEndsAt
-      },
-      { new: true }
-    );
-
-    return res.json({
-      message: "Demo plan activated",
-      trialDurationDays: TRIAL_DURATION_DAYS,
-      trialEndsAt
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
   }
 });
 

@@ -34,6 +34,14 @@ exports.getServices = async (req, res) => {
       filter.salonId = req.query.salonId;
     }
 
+    if (req.user.role === "customer") {
+      if (!req.query.salonId) {
+        return res.status(400).json({ message: "SalonId required" });
+      }
+      filter.salonId = req.query.salonId;
+      filter.status = "active";
+    }
+
     const services = await Service
       .find(filter)
       .populate("categoryId")

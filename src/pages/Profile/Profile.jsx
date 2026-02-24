@@ -1,39 +1,104 @@
-import { useState, useEffect } from "react";
-import { useToast } from "../../context/ToastContext";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
-import InfoRow from "../../components/InfoRow";
+import { useToast } from "../../context/ToastContext";
+
+const endpointByRole = (role) => {
+  if (role === "customer") {
+    return { get: "/auth/customer/me", update: "/auth/customer/profile" };
+  }
+  if (role === "admin") {
+    return { get: "/adminProfile/profile", update: "/adminProfile/update" };
+  }
+  return { get: "/staffProfile/me", update: "/staffProfile/update" };
+};
+
+const SERVICE_OPTIONS = [
+  "Haircut",
+  "Hair Coloring",
+  "Facial",
+  "Manicure",
+  "Pedicure",
+  "Spa",
+  "Waxing",
+  "Makeup"
+];
+
+const VISIT_TIME_OPTIONS = ["Morning", "Afternoon", "Evening", "Weekend"];
+
+const defaultForm = {
+  name: "",
+  contact: "",
+  address: "",
+  gender: "",
+  dob: "",
+  preferredServices: [],
+  skinType: "",
+  hairType: "",
+  allergies: "",
+  preferredVisitTime: "",
+  communicationPreference: {
+    email: true,
+    sms: false,
+    whatsapp: false
+  },
+  notes: ""
+};
 
 const Profile = () => {
-  const { showToast } = useToast();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { showToast } = useToast();
+
+  const currentUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const role = currentUser?.role || "staff";
+  const isAdmin = role === "admin";
+  const isCustomer = role === "customer";
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    name: "",
-    contact: "",
-    address: "",
-    gender: "",
-    dob: ""
-  });
+  const [profile, setProfile] = useState(null);
+  const [form, setForm] = useState(defaultForm);
+
+  const endpoints = endpointByRole(role);
+
+  const hydrateForm = (data) => {
+    setForm({
+      name: data?.name || "",
+      contact: data?.contact || "",
+      address: data?.address || "",
+      gender: data?.gender || "",
+      dob: data?.dob ? String(data.dob).slice(0, 10) : "",
+      preferredServices: Array.isArray(data?.preferredServices) ? data.preferredServices : [],
+      skinType: data?.skinType || "",
+      hairType: data?.hairType || "",
+      allergies: data?.allergies || "",
+      preferredVisitTime: data?.preferredVisitTime || "",
+      communicationPreference: {
+        email: data?.communicationPreference?.email ?? true,
+        sms: data?.communicationPreference?.sms ?? false,
+        whatsapp: data?.communicationPreference?.whatsapp ?? false
+      },
+      notes: data?.notes || ""
+    });
+  };
 
   const fetchProfile = async () => {
+    setLoading(true);
     try {
-      const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      const isAdmin = storedUser.role === "admin";
-      const endpoint = isAdmin ? "/adminProfile/profile" : "/staffProfile/me";
-      const res = await api.get(endpoint);
-      setUser(res.data);
-      setProfileForm({
-        name: res.data.name || "",
-        contact: res.data.contact || "",
-        address: res.data.address || "",
-        gender: res.data.gender || "",
-        dob: res.data.dob || ""
-      });
+      const res = await api.get(endpoints.get);
+      setProfile(res.data || null);
+      hydrateForm(res.data || {});
     } catch (err) {
-      console.error("Failed to fetch profile:", err);
+      showToast(err?.response?.data?.message || "Failed to load profile", "error");
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -41,355 +106,425 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEdit = () => {
-    setIsEditing(true);
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setProfileForm({
-      name: user.name || "",
-      contact: user.contact || "",
-      address: user.address || "",
-      gender: user.gender || "",
-      dob: user.dob || ""
+  const toggleService = (service) => {
+    setForm((prev) => {
+      const exists = prev.preferredServices.includes(service);
+      return {
+        ...prev,
+        preferredServices: exists
+          ? prev.preferredServices.filter((item) => item !== service)
+          : [...prev.preferredServices, service]
+      };
     });
   };
 
-  const handleSave = async () => {
-    try {
-      const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      const isAdmin = storedUser.role === "admin";
-      const endpoint = isAdmin ? "/adminProfile/update" : "/staffProfile/update";
+  const toggleCommunication = (channel) => {
+    setForm((prev) => ({
+      ...prev,
+      communicationPreference: {
+        ...prev.communicationPreference,
+        [channel]: !prev.communicationPreference[channel]
+      }
+    }));
+  };
 
-      await api.put(endpoint, profileForm);
+  const handleCancel = () => {
+    hydrateForm(profile || {});
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      showToast("Name is required", "error");
+      return;
+    }
+
+    const payload = {
+      name: form.name.trim(),
+      contact: form.contact.trim(),
+      address: form.address.trim()
+    };
+
+    if (isCustomer) {
+      payload.gender = form.gender;
+      payload.dob = form.dob || null;
+      payload.preferredServices = form.preferredServices;
+      payload.skinType = form.skinType.trim();
+      payload.hairType = form.hairType.trim();
+      payload.allergies = form.allergies.trim();
+      payload.preferredVisitTime = form.preferredVisitTime;
+      payload.communicationPreference = form.communicationPreference;
+      payload.notes = form.notes.trim();
+    }
+
+    if (!isAdmin && !isCustomer) {
+      payload.gender = form.gender;
+      payload.dob = form.dob;
+    }
+
+    setSaving(true);
+    try {
+      const res = await api.put(endpoints.update, payload);
+
+      const stored = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      stored.name = payload.name;
+      stored.contact = payload.contact;
+      stored.address = payload.address;
+      stored.gender = payload.gender || "";
+      stored.dob = payload.dob || null;
+      localStorage.setItem("currentUser", JSON.stringify(stored));
+
       showToast("Profile updated successfully");
       setIsEditing(false);
-      fetchProfile();
-
-      // Update localStorage for navbar etc
-      storedUser.name = profileForm.name;
-      localStorage.setItem("currentUser", JSON.stringify(storedUser));
+      setProfile(res.data || null);
+      hydrateForm(res.data || {});
     } catch (err) {
-      showToast(err?.response?.data?.message || "Failed to update profile");
+      showToast(err?.response?.data?.message || "Failed to update profile", "error");
+    } finally {
+      setSaving(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen font-['Inter']">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] text-[var(--text)]">
+        <div className="h-12 w-12 rounded-full border-4 border-[var(--border-light)] border-t-[var(--primary)] animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
+  if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen font-['Inter']">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Profile Not Found</h2>
-          <button onClick={() => navigate("/")} className="btn-primary px-6 py-2 rounded-xl">Go Home</button>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] text-[var(--text)] px-4">
+        <div className="w-full max-w-lg rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-8 text-center shadow-lg">
+          <h2 className="text-2xl font-bold">Profile not available</h2>
+          <p className="mt-2 opacity-80">We could not load your profile details.</p>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="mt-5 rounded-lg bg-[var(--primary)] px-5 py-2.5 font-semibold text-white"
+          >
+            Go Home
+          </button>
         </div>
       </div>
     );
   }
 
-  const initials = (user.name || "").split(" ").map(n => n[0] || "").slice(0, 2).join("").toUpperCase();
-  const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A";
+  const initials = (profile.name || "U")
+    .split(" ")
+    .map((part) => part[0] || "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const joined = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
+    })
+    : "N/A";
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--text)] font-['Inter'] transition-colors duration-300 ease">
-      <main className="flex-1 py-10 px-4 md:px-10 lg:px-20">
-        <div className="max-w-6xl mx-auto">
-          {/* HEADER CARD */}
-          <header className="bg-[var(--gray-100)] rounded-3xl overflow-hidden shadow-xl border border-[var(--border-light)] mb-10 transition-all hover:shadow-2xl">
-            <div className="h-48 bg-gradient-to-r from-[var(--primary)] via-[var(--primary-dark,var(--primary))] to-[var(--secondary,var(--primary))] relative">
-              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-6 items-center md:items-end px-8 pb-10 relative">
-              <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-2xl -mt-16 z-10 transition-transform hover:scale-105">
-                <div className="w-full h-full rounded-[20px] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark,var(--primary))] text-white font-black text-4xl flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] px-4 py-8 md:px-8 lg:px-10">
+      <div className="mx-auto max-w-6xl space-y-7">
+        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-light)] bg-[var(--gray-100)] shadow-xl">
+          <div className="h-40 bg-[radial-gradient(circle_at_10%_20%,var(--secondary),transparent_35%),radial-gradient(circle_at_80%_20%,var(--accent),transparent_30%),linear-gradient(120deg,var(--primary),var(--secondary))]" />
+          <div className="px-6 pb-6 pt-0 md:px-8">
+            <div className="-mt-16 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="grid h-28 w-28 place-content-center rounded-3xl border-4 border-[var(--gray-100)] bg-[var(--primary)] text-4xl font-black text-white shadow-lg">
                   {initials}
                 </div>
+                <div>
+                  <h1 className="text-3xl font-black leading-tight tracking-tight">{profile.name}</h1>
+                  <p className="text-sm opacity-85">{profile.email}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge>{role}</Badge>
+                    <Badge>Member since {joined}</Badge>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-black text-[var(--text)] mb-2 tracking-tight">{user.name}</h1>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center mb-3">
-                <span className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--background)] border border-[var(--border-light)] text-sm font-medium">
-                  <span>📧</span> {user.email}
-                </span>
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--primary)] text-white font-bold uppercase tracking-wider text-xs shadow-sm">
-                  {user.role}
-                </span>
-              </div>
-              <div className="text-[var(--text)] text-sm font-medium opacity-80">
-                Account Active since {joinDate}
-              </div>
-            </div>
-
-            <div className="mt-4 md:mt-0 flex gap-3">
               <button
-                onClick={handleEdit}
-                className="flex items-center gap-2 bg-[var(--text)] text-[var(--background)] px-7 py-3.5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg group"
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-xl bg-[var(--primary)] px-5 py-2.5 font-semibold text-white transition hover:brightness-110"
               >
-                <span className="transition-transform group-hover:rotate-12">✏️</span> Edit Profile
+                Edit Profile
               </button>
             </div>
+          </div>
+        </section>
+
+        {isCustomer && (
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard title="Preferred Services" value={String((profile.preferredServices || []).length)} subtitle="saved choices" />
+            <MetricCard title="Communication" value={String(activeChannels(profile.communicationPreference))} subtitle="active channels" />
+            <MetricCard title="Skin Type" value={profile.skinType || "Not set"} subtitle="beauty profile" />
+            <MetricCard title="Hair Type" value={profile.hairType || "Not set"} subtitle="beauty profile" />
+          </section>
+        )}
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-sm">
+            <h2 className="text-xl font-bold">Personal Details</h2>
+            <div className="mt-4 space-y-3">
+              <Info label="Full Name" value={profile.name || "-"} />
+              <Info label="Email" value={profile.email || "-"} />
+              <Info label="Contact" value={profile.contact || "Not provided"} />
+              <Info label="Address" value={profile.address || "Not provided"} />
+              {isCustomer && (
+                <>
+                  <Info label="Gender" value={profile.gender || "Not provided"} />
+                  <Info label="Date of Birth" value={profile.dob ? String(profile.dob).slice(0, 10) : "Not provided"} />
+                </>
+              )}
             </div>
-          </header>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10">
-            {/* SIDE NAVIGATION */}
-            <aside className="hidden lg:block">
-              <nav className="flex flex-col gap-2 sticky top-24">
-                <NavItem icon="📊" label="Overview" href="#overview" active />
-                <NavItem icon="👤" label="Personal Info" href="#personal" />
-                <NavItem icon="⚡" label="Recent Activity" href="#activity" />
-                <div className="mt-6 pt-6 border-t border-[var(--border-light)]">
-                  <button
-                    onClick={() => navigate("/settings")}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[var(--text)] opacity-70 no-underline font-bold transition-all hover:bg-[var(--gray-100)] hover:opacity-100"
-                  >
-                    <span>⚙️</span> Settings
-                  </button>
-                </div>
-              </nav>
-            </aside>
+          <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-sm">
+            <h2 className="text-xl font-bold">{isCustomer ? "Beauty Preferences" : "Account Summary"}</h2>
+            <div className="mt-4 space-y-3 text-sm">
+              {isCustomer ? (
+                <>
+                  <Info label="Skin Type" value={profile.skinType || "Not set"} />
+                  <Info label="Hair Type" value={profile.hairType || "Not set"} />
+                  <Info label="Preferred Time" value={profile.preferredVisitTime || "Not set"} />
+                  <Info label="Allergies" value={profile.allergies || "None recorded"} />
+                </>
+              ) : (
+                <>
+                  <Info label="Role" value={role} />
+                  <Info label="Member Since" value={joined} />
+                  <Info label="Status" value="Active" />
+                </>
+              )}
+            </div>
+          </div>
+        </section>
 
-            {/* MAIN CONTENT */}
-            <section className="flex flex-col gap-8">
-              <div id="overview" className="bg-[var(--gray-100)] rounded-3xl p-8 shadow-sm border border-[var(--border-light)]">
-                <h2 className="text-xl font-black text-[var(--text)] mb-8 flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">📊</span>
-                  Account Overview
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <StatCard icon="📅" label="Last Seen" value="Today" themeColor="var(--accent)" />
-                  <StatCard icon="✔️" label="Permissions" value={user.role === 'admin' ? "Full Access" : "Management"} themeColor="var(--success)" />
-                  <StatCard icon="🏢" label="Associated" value={user.role === 'admin' ? "All Salons" : "Assigned Salon"} themeColor="var(--primary)" />
-                </div>
+        {isCustomer && (
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-sm">
+              <h2 className="text-xl font-bold">Selected Services</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(profile.preferredServices || []).length ? (
+                  profile.preferredServices.map((service) => (
+                    <span key={service} className="rounded-full border border-[var(--border-light)] bg-[var(--background)] px-3 py-1 text-sm font-medium">
+                      {service}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm opacity-75">No preferred services selected yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-sm">
+              <h2 className="text-xl font-bold">Communication Settings</h2>
+              <div className="mt-4 grid gap-3">
+                <ChannelRow label="Email" enabled={Boolean(profile.communicationPreference?.email)} />
+                <ChannelRow label="SMS" enabled={Boolean(profile.communicationPreference?.sms)} />
+                <ChannelRow label="WhatsApp" enabled={Boolean(profile.communicationPreference?.whatsapp)} />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {isCustomer && (
+          <section className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-sm">
+            <h2 className="text-xl font-bold">Customer Notes</h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm opacity-85">{profile.notes || "No notes added."}</p>
+          </section>
+        )}
+      </div>
+
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4" onClick={handleCancel}>
+          <div
+            className="w-full max-h-[90vh] max-w-3xl overflow-y-auto rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold">Edit {isCustomer ? "Customer" : "Profile"} Details</h3>
+            <p className="mt-1 text-sm opacity-75">Update your details for a better personalized experience.</p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <Field label="Full Name">
+                <input value={form.name} onChange={(e) => handleChange("name", e.target.value)} className="input-themed" />
+              </Field>
+
+              <Field label="Email">
+                <input value={profile.email || ""} disabled className="input-themed opacity-70" />
+              </Field>
+
+              <Field label="Contact">
+                <input value={form.contact} onChange={(e) => handleChange("contact", e.target.value)} className="input-themed" />
+              </Field>
+
+              {isCustomer && (
+                <Field label="Preferred Visit Time">
+                  <select value={form.preferredVisitTime} onChange={(e) => handleChange("preferredVisitTime", e.target.value)} className="input-themed">
+                    <option value="">Select</option>
+                    {VISIT_TIME_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
+              {isCustomer && (
+                <>
+                  <Field label="Gender">
+                    <select value={form.gender} onChange={(e) => handleChange("gender", e.target.value)} className="input-themed">
+                      <option value="">Select</option>
+                      <option value="female">Female</option>
+                      <option value="male">Male</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Date of Birth">
+                    <input type="date" value={form.dob} onChange={(e) => handleChange("dob", e.target.value)} className="input-themed" />
+                  </Field>
+
+                  <Field label="Skin Type">
+                    <input value={form.skinType} onChange={(e) => handleChange("skinType", e.target.value)} className="input-themed" placeholder="Oily / Dry / Combination" />
+                  </Field>
+
+                  <Field label="Hair Type">
+                    <input value={form.hairType} onChange={(e) => handleChange("hairType", e.target.value)} className="input-themed" placeholder="Curly / Straight / Wavy" />
+                  </Field>
+                </>
+              )}
+
+              <div className="md:col-span-2">
+                <Field label="Address">
+                  <textarea value={form.address} onChange={(e) => handleChange("address", e.target.value)} rows={2} className="input-themed resize-none" />
+                </Field>
               </div>
 
-              <div id="personal" className="bg-[var(--gray-100)] rounded-3xl p-8 shadow-sm border border-[var(--border-light)]">
-                <h2 className="text-xl font-black text-[var(--text)] mb-8 flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">👤</span>
-                  Personal Information
-                </h2>
-                <div className="space-y-4">
-                  <ProfileInfoRow
-                    label="Full Name"
-                    value={user.name}
-                  />
-                  <ProfileInfoRow
-                    label="Email Address"
-                    value={user.email}
-                  />
-                  <ProfileInfoRow
-                    label="Contact Number"
-                    value={user.contact || "Not provided"}
-                  />
-                  <ProfileInfoRow
-                    label="Address"
-                    value={user.address || "Not provided"}
-                  />
-                  {user.role !== 'admin' && (
-                    <>
-                      <ProfileInfoRow
-                        label="Gender"
-                        value={user.gender || "Not provided"}
-                      />
-                      <ProfileInfoRow
-                        label="Date of Birth"
-                        value={user.dob || "Not provided"}
-                      />
-                    </>
-                  )}
-                  <ProfileInfoRow label="Role" value={user.role} badge />
-                  <ProfileInfoRow label="Member Since" value={joinDate} />
+              {isCustomer && (
+                <div className="md:col-span-2">
+                  <Field label="Allergies / Sensitivities">
+                    <textarea value={form.allergies} onChange={(e) => handleChange("allergies", e.target.value)} rows={2} className="input-themed resize-none" placeholder="Mention products or ingredients to avoid" />
+                  </Field>
                 </div>
-              </div>
+              )}
 
-              <div id="activity" className="bg-[var(--gray-100)] rounded-3xl p-8 shadow-sm border border-[var(--border-light)]">
-                <h2 className="text-xl font-black text-[var(--text)] mb-8 flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center">⚡</span>
-                  System Activity
-                </h2>
-                <div className="grid gap-4">
-                  <ActivityItem icon="🛡️" title="Secure Login Session" time="Just now" status="success" />
-                  <ActivityItem icon="⚙️" title="Viewed System Settings" time="15 mins ago" />
-                  <ActivityItem icon="🏷️" title="Checked Service Catalog" time="2 hours ago" />
+              {isCustomer && (
+                <div className="md:col-span-2">
+                  <span className="mb-1 block text-sm font-medium">Preferred Services</span>
+                  <div className="flex flex-wrap gap-2">
+                    {SERVICE_OPTIONS.map((service) => {
+                      const active = form.preferredServices.includes(service);
+                      return (
+                        <button
+                          key={service}
+                          type="button"
+                          onClick={() => toggleService(service)}
+                          className={`rounded-full border px-3 py-1 text-sm font-medium transition ${
+                            active
+                              ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                              : "border-[var(--border-light)] bg-[var(--background)]"
+                          }`}
+                        >
+                          {service}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </section>
+              )}
+
+              {isCustomer && (
+                <div className="md:col-span-2">
+                  <span className="mb-1 block text-sm font-medium">Communication Preferences</span>
+                  <div className="flex flex-wrap gap-4">
+                    <Checkbox label="Email" checked={Boolean(form.communicationPreference.email)} onChange={() => toggleCommunication("email")} />
+                    <Checkbox label="SMS" checked={Boolean(form.communicationPreference.sms)} onChange={() => toggleCommunication("sms")} />
+                    <Checkbox label="WhatsApp" checked={Boolean(form.communicationPreference.whatsapp)} onChange={() => toggleCommunication("whatsapp")} />
+                  </div>
+                </div>
+              )}
+
+              {isCustomer && (
+                <div className="md:col-span-2">
+                  <Field label="Additional Notes">
+                    <textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} rows={3} className="input-themed resize-none" placeholder="Anything your stylist should know" />
+                  </Field>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={handleCancel} className="rounded-lg border border-[var(--border-light)] px-4 py-2 font-medium">
+                Cancel
+              </button>
+              <button type="button" onClick={handleSave} disabled={saving} className="rounded-lg bg-[var(--primary)] px-5 py-2 font-semibold text-white disabled:opacity-70">
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* EDIT PROFILE MODAL */}
-        {isEditing && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={handleCancel}>
-            <div className="w-full max-w-xl rounded-2xl shadow-2xl border" style={{ backgroundColor: "var(--gray-100)", borderColor: "var(--border-light)" }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: "var(--border-light)" }}>
-                <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Edit Profile</h2>
-                <button
-                  onClick={handleCancel}
-                  className="text-2xl opacity-50 hover:opacity-100 transition-opacity"
-                >✕</button>
-              </div>
-
-              <div className="grid gap-5 p-6">
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Full Name</label>
-                  <input
-                    type="text"
-                    value={profileForm.name}
-                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                    placeholder="Your full name"
-                    className="input-themed w-full px-4 py-3 rounded-xl"
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Email Address</label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    disabled
-                    className="input-themed w-full px-4 py-3 rounded-xl opacity-50 cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Contact Number</label>
-                  <input
-                    type="tel"
-                    value={profileForm.contact}
-                    onChange={(e) => setProfileForm({ ...profileForm, contact: e.target.value })}
-                    placeholder="Your contact number"
-                    className="input-themed w-full px-4 py-3 rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Address</label>
-                  <textarea
-                    value={profileForm.address}
-                    onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                    placeholder="Your address"
-                    className="input-themed w-full px-4 py-3 rounded-xl resize-none"
-                    rows="2"
-                  />
-                </div>
-
-                {user.role !== 'admin' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Gender</label>
-                      <select
-                        value={profileForm.gender}
-                        onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
-                        className="input-themed w-full px-4 py-3 rounded-xl"
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: "var(--text)" }}>Date of Birth</label>
-                      <input
-                        type="date"
-                        value={profileForm.dob}
-                        onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                        className="input-themed w-full px-4 py-3 rounded-xl"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: "var(--border-light)" }}>
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="px-5 py-2.5 border-2 rounded-xl text-sm font-semibold transition-colors"
-                    style={{ borderColor: "var(--border-light)", backgroundColor: "var(--background)" }}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
-                    style={{ backgroundColor: "var(--primary)" }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+      )}
     </div>
   );
 };
 
-/* --- SUBCOMPONENTS --- */
-
-const NavItem = ({ icon, label, href, active }) => (
-  <a
-    className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl no-underline font-bold transition-all ${active
-      ? "bg-[var(--background)] text-[var(--primary)] shadow-sm border border-[var(--border-light)]"
-      : "text-[var(--text)] opacity-60 hover:opacity-100 hover:bg-[var(--gray-100)] hover:translate-x-1"
-      }`}
-    href={href}
-  >
-    <span>{icon}</span> {label}
-  </a>
+const Field = ({ label, children }) => (
+  <label className="block">
+    <span className="mb-1 block text-sm font-medium">{label}</span>
+    {children}
+  </label>
 );
 
-const StatCard = ({ icon, label, value, themeColor }) => (
-  <div className="bg-[var(--background)] p-6 rounded-2xl border border-[var(--border-light)] transition-all hover:-translate-y-1 hover:shadow-lg group">
-    <div className="text-3xl mb-4 transition-transform group-hover:scale-110 origin-left">{icon}</div>
-    <div className="text-[var(--text)] font-bold text-[10px] uppercase tracking-widest mb-1 opacity-50">{label}</div>
-    <div className="text-lg font-black" style={{ color: themeColor }}>{value}</div>
+const Info = ({ label, value }) => (
+  <div className="flex items-center justify-between rounded-lg border border-[var(--border-light)] bg-[var(--background)] px-3 py-2">
+    <span className="text-sm opacity-75">{label}</span>
+    <span className="text-sm font-medium text-right">{value}</span>
   </div>
 );
 
-const ProfileInfoRow = ({ label, value, badge }) => (
-  <div className="flex justify-between items-center py-4.5 border-b border-[var(--border-light)] last:border-0 group">
-    <span className="font-bold text-sm text-[var(--text)] opacity-70 group-hover:opacity-100 transition-opacity">{label}</span>
-    {badge ? (
-      <span className="px-3.5 py-1.5 rounded-full bg-[var(--primary)] text-white font-black uppercase text-[11px] tracking-widest shadow-sm">
-        {value}
-      </span>
-    ) : (
-      <span className="font-semibold text-sm text-[var(--text)]">{value}</span>
-    )}
+const MetricCard = ({ title, value, subtitle }) => (
+  <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-5 shadow-sm">
+    <p className="text-xs uppercase tracking-wide opacity-70">{title}</p>
+    <p className="mt-1 text-2xl font-black">{value}</p>
+    <p className="text-xs opacity-70">{subtitle}</p>
   </div>
 );
 
-const ActivityItem = ({ icon, title, time, status }) => (
-  <div className="flex gap-4 items-center p-5 bg-[var(--background)] rounded-2xl border border-[var(--border-light)] transition-all hover:border-[var(--primary)] hover:border-opacity-30">
-    <span className="w-12 h-12 rounded-xl bg-[var(--gray-100)] flex items-center justify-center text-xl shadow-inner border border-[var(--border-light)]">{icon}</span>
-    <div className="flex-1">
-      <div className="font-black text-[var(--text)] text-sm">{title}</div>
-      <div className="text-[var(--text)] text-xs font-medium opacity-50">{time}</div>
-    </div>
-    {status === 'success' && (
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Active</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      </div>
-    )}
+const Checkbox = ({ label, checked, onChange }) => (
+  <label className="inline-flex items-center gap-2 text-sm font-medium">
+    <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4" />
+    {label}
+  </label>
+);
+
+const ChannelRow = ({ label, enabled }) => (
+  <div className="flex items-center justify-between rounded-lg border border-[var(--border-light)] bg-[var(--background)] px-3 py-2">
+    <span className="text-sm">{label}</span>
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${enabled ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-700"}`}>
+      {enabled ? "Enabled" : "Disabled"}
+    </span>
   </div>
 );
+
+const Badge = ({ children }) => (
+  <span className="rounded-full bg-[var(--background)] px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+    {children}
+  </span>
+);
+
+const activeChannels = (pref = {}) =>
+  [pref.email, pref.sms, pref.whatsapp].filter(Boolean).length || 0;
 
 export default Profile;

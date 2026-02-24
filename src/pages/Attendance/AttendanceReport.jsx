@@ -3,6 +3,79 @@ import axios from "axios";
 
 const API_BASE = "http://localhost:5000/api";
 
+const toISODate = (date) => {
+    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return date;
+    }
+    const value = new Date(date || "");
+    if (Number.isNaN(value.getTime())) return "";
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const getISOWeekParts = (dateString) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString || "");
+    if (!match) return { year: "", week: "" };
+    const utcDate = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    utcDate.setUTCDate(utcDate.getUTCDate() + 4 - (utcDate.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7);
+    return { year: utcDate.getUTCFullYear(), week: String(weekNo).padStart(2, "0") };
+};
+
+const getPickerType = (view) => {
+    if (view === "weekly") return "week";
+    if (view === "monthly") return "month";
+    if (view === "yearly") return "number";
+    return "date";
+};
+
+const getPickerValue = (dateString, view) => {
+    const safeDate = toISODate(dateString);
+    if (!safeDate) return "";
+
+    if (view === "weekly") {
+        const { year, week } = getISOWeekParts(safeDate);
+        return `${year}-W${week}`;
+    }
+    if (view === "monthly") {
+        return safeDate.slice(0, 7);
+    }
+    if (view === "yearly") {
+        return safeDate.slice(0, 4);
+    }
+    return safeDate;
+};
+
+const fromWeekValueToISODate = (value) => {
+    const match = /^(\d{4})-W(\d{2})$/.exec(value || "");
+    if (!match) return "";
+    const year = Number(match[1]);
+    const week = Number(match[2]);
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const jan4Day = jan4.getUTCDay() || 7;
+    const firstMonday = new Date(jan4);
+    firstMonday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+    const monday = new Date(firstMonday);
+    monday.setUTCDate(firstMonday.getUTCDate() + (week - 1) * 7);
+    return monday.toISOString().slice(0, 10);
+};
+
+const toApiDateFromPicker = (value, view) => {
+    if (view === "weekly") {
+        return fromWeekValueToISODate(value);
+    }
+    if (view === "monthly") {
+        return /^\d{4}-\d{2}$/.test(value || "") ? `${value}-01` : "";
+    }
+    if (view === "yearly") {
+        return /^\d{4}$/.test(value || "") ? `${value}-01-01` : "";
+    }
+    return toISODate(value);
+};
+
 export default function AttendanceReport({ activeSalon }) {
     const todayDate = new Date().toISOString().split("T")[0];
     const [selectedDate, setSelectedDate] = useState(todayDate);
@@ -11,6 +84,7 @@ export default function AttendanceReport({ activeSalon }) {
     const [dayAttendanceData, setDayAttendanceData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [pickerInput, setPickerInput] = useState(getPickerValue(todayDate, "day"));
 
     useEffect(() => {
         if (activeSalon) {
@@ -65,6 +139,20 @@ export default function AttendanceReport({ activeSalon }) {
     const calendarTotals = calendar.totals || {
         presentDays: 0, absentDays: 0, leaveDays: 0, mixedDays: 0, unmarkedDays: 0, totalDays: 0
     };
+    const pickerType = getPickerType(view);
+    const pickerValue = pickerInput;
+
+    useEffect(() => {
+        setPickerInput(getPickerValue(selectedDate, view));
+    }, [selectedDate, view]);
+
+    const handleDateChange = (value) => {
+        setPickerInput(value);
+        const apiDate = toApiDateFromPicker(value, view);
+        if (apiDate) {
+            setSelectedDate(apiDate);
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -103,9 +191,12 @@ export default function AttendanceReport({ activeSalon }) {
                             ))}
                         </div>
                         <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            type={pickerType}
+                            value={pickerValue}
+                            min={view === "yearly" ? "2000" : undefined}
+                            max={view === "yearly" ? "2100" : undefined}
+                            step={view === "yearly" ? "1" : undefined}
+                            onChange={(e) => handleDateChange(e.target.value)}
                             className="p-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
                             style={{ backgroundColor: 'var(--gray-100)', borderColor: 'var(--border-light)', color: 'var(--text)' }}
                         />

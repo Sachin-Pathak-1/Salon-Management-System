@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../../api";
@@ -36,6 +37,15 @@ export function Home() {
     return { premiumSalons: salonList, luxurySpas: spaList };
   }, [salons]);
 
+=======
+import { Link } from "react-router-dom";
+import SalonCard from "../../../components/SalonCard";
+import MapListSection from "../../../components/MapListSection";
+import ServiceCard from "../../../components/ServiceCard";
+import NewsletterSection from "../../../components/NewsletterSection";
+
+export function Home() {
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
   return (
     <div className="bg-[var(--background)] text-[var(--text)]">
       {/* Hero Section */}
@@ -71,6 +81,30 @@ export function Home() {
         </div>
       </section>
 
+<<<<<<< HEAD
+=======
+      {/* Browse Experiences Section */}
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <h2 className="text-3xl font-bold mb-6 text-[var(--text)]">Browse Experiences</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+            { id: 2, name: 'Sunaina Glow Salon', location: 'Belapur East, Mumbai', rating: '4.0' , image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+            { id: 3, name: 'Shani', location: 'Dadar, Mumbai', rating: '4.3' , image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+          ].map(salon => (
+            <SalonCard key={salon.id} salon={salon} />
+          ))}
+        </div>
+      </section>
+
+      {/* Map & Nearby Salons Section */}
+      <MapListSection salons={[
+        { id: 1, name: 'Enrich Salon Beauty', location: 'Belapur Rd, Sector 11', rating: '3.2' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+        { id: 2, name: 'Urban Style Salon', location: 'Andheri', rating: '2.0' ,image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'},
+        { id: 3, name: 'Sunaina Glow Salon', location: 'Belapur East', rating: '4.0' ,image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Fsb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60'}
+      ]} />
+
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
       {/* Stats Section */}
       <section className="mx-auto max-w-6xl px-6 mt-10">
         <div className="grid grid-cols-2 gap-4 rounded-3xl bg-[var(--gray-100)]/90 p-6 shadow-xl ring-1 ring-black/5 sm:grid-cols-4">
@@ -93,6 +127,7 @@ export function Home() {
         </div>
       </section>
 
+<<<<<<< HEAD
       {/* Mumbai Map Section */}
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="mb-6 flex items-end justify-between gap-4">
@@ -235,6 +270,8 @@ export function Home() {
         </div>
       </section>
 
+=======
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
       {/* Testimonials Section */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="flex items-end justify-between gap-6">
@@ -340,6 +377,12 @@ export function Home() {
         </div>
       </section>
 
+<<<<<<< HEAD
+=======
+      {/* Newsletter Section */}
+      <NewsletterSection />
+
+>>>>>>> a0a3800945a13170daa2785e86c7a76050b2c68a
       {/* CTA Section */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
         <div className="rounded-3xl bg-[var(--primary)] px-8 py-12 text-center text-white sm:px-16">

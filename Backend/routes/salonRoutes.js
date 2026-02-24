@@ -17,6 +17,7 @@ const {
    SALON ROUTES
 ============================ */
 
+router.get("/public", getPublicSalons);
 router.post("/add", auth(["admin"]), addSalon);
 router.get("/public", getPublicSalons);
 router.get("/get", auth(), getSalons);
