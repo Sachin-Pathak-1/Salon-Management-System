@@ -1,6 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+const SALON_FALLBACK = "https://picsum.photos/seed/salon-fallback/1200/800";
+const SPA_FALLBACK = "https://picsum.photos/seed/spa-fallback/1200/800";
+
 function IconStar() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -47,9 +50,20 @@ export function PageHeader({ title, subtitle }) {
 }
 
 export function ExperienceCard({ item, primaryLabel = "Book Now", secondaryLabel = "View Details" }) {
+  const fallbackImage = item.type === "spa" ? SPA_FALLBACK : SALON_FALLBACK;
+  const initialImage = item.images?.[0] || fallbackImage;
+
   return (
     <article className="beauty-card">
-      <img className="beauty-thumb" src={item.images[0]} alt={item.name} />
+      <img
+        className="beauty-thumb"
+        src={initialImage}
+        alt={item.name}
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = fallbackImage;
+        }}
+      />
       <div className="beauty-card-body">
         <div className="beauty-row">
           <h3 className="beauty-title">{item.name}</h3>
@@ -68,7 +82,7 @@ export function ExperienceCard({ item, primaryLabel = "Book Now", secondaryLabel
           <Link to={`/experiences/${item.type}/${item.slug}`} className="beauty-btn beauty-btn-light" style={{ textDecoration: "none" }}>
             {secondaryLabel}
           </Link>
-          <Link to="/customer/appointments/new" className="beauty-btn beauty-btn-primary" style={{ textDecoration: "none" }}>
+          <Link to={`/experiences/${item.type}/${item.slug}?book=1`} className="beauty-btn beauty-btn-primary" style={{ textDecoration: "none" }}>
             {primaryLabel}
           </Link>
         </div>

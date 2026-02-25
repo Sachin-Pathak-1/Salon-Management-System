@@ -58,7 +58,7 @@ function mapSalonRecord(record) {
 }
 
 export async function fetchPublicExperiences(type) {
-  const params = {};
+  const params = { bookableOnly: true };
   if (type) params.type = type;
 
   const response = await api.get("/salons/public", { params });

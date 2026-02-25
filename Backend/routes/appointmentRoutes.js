@@ -52,6 +52,34 @@ const getCurrentHHMM = () => {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 };
 
+const isValidDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+
+const getDayRange = (dateKey) => {
+  const start = new Date(`${dateKey}T00:00:00.000`);
+  const end = new Date(`${dateKey}T23:59:59.999`);
+  return { start, end };
+};
+
+const generateTimeSlots = ({
+  openingTime = "09:00",
+  closingTime = "20:00",
+  intervalMinutes = 30
+} = {}) => {
+  const open = timeToMinutes(openingTime);
+  const close = timeToMinutes(closingTime);
+  const slots = [];
+
+  if (!Number.isFinite(open) || !Number.isFinite(close) || open > close) {
+    return slots;
+  }
+
+  for (let minutes = open; minutes <= close; minutes += intervalMinutes) {
+    slots.push(minutesToTime(minutes));
+  }
+
+  return slots;
+};
+
 const toId = (value) => String(value || "");
 
 const isStaffAssignedToService = (staff, service) => {
@@ -139,7 +167,9 @@ const findNextWalkInTime = async ({ staffId, date, salon }) => {
 router.get("/public/salon/:salonId/details", async (req, res) => {
   try {
     const { salonId } = req.params;
-    const salon = await Salon.findById(salonId).select("_id");
+    const salon = await Salon.findById(salonId).select(
+      "_id name status openingTime closingTime holidays address"
+    );
     if (!salon) {
       return res.status(404).json({ message: "Salon not found" });
     }
@@ -149,9 +179,120 @@ router.get("/public/salon/:salonId/details", async (req, res) => {
     const services = await Service.find({ salonId: salon._id, status: "active" })
       .select("_id name price duration assignedStaff status");
 
-    return res.json({ staff, services });
+    return res.json({
+      salon: {
+        _id: salon._id,
+        name: salon.name,
+        status: salon.status,
+        openingTime: salon.openingTime || "09:00",
+        closingTime: salon.closingTime || "20:00",
+        holidays: Array.isArray(salon.holidays) ? salon.holidays : [],
+        address: salon.address || ""
+      },
+      staff,
+      services
+    });
   } catch (err) {
     console.error("PUBLIC SALON DETAILS ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   PUBLIC STAFF AVAILABILITY
+============================ */
+router.get("/public/availability", async (req, res) => {
+  try {
+    const { salonId, staffId, date } = req.query;
+
+    if (!salonId || !staffId || !date) {
+      return res.status(400).json({
+        message: "salonId, staffId and date are required"
+      });
+    }
+
+    if (!isValidDateKey(date)) {
+      return res.status(400).json({
+        message: "Date must be in YYYY-MM-DD format"
+      });
+    }
+
+    const salon = await Salon.findById(salonId).select(
+      "_id status openingTime closingTime holidays"
+    );
+    if (!salon) {
+      return res.status(404).json({ message: "Salon not found" });
+    }
+
+    if (salon.status !== "open") {
+      return res.json({
+        date,
+        salonId,
+        staffId,
+        openingTime: salon.openingTime || "09:00",
+        closingTime: salon.closingTime || "20:00",
+        slots: [],
+        message: salon.status === "temporarily-closed"
+          ? "Salon is temporarily closed."
+          : "Salon is closed."
+      });
+    }
+
+    if (Array.isArray(salon.holidays) && salon.holidays.includes(date)) {
+      return res.json({
+        date,
+        salonId,
+        staffId,
+        openingTime: salon.openingTime || "09:00",
+        closingTime: salon.closingTime || "20:00",
+        slots: [],
+        message: "Salon is closed on selected date (holiday)."
+      });
+    }
+
+    const staff = await Staff.findOne({ _id: staffId, salonId, status: "active" }).select("_id");
+    if (!staff) {
+      return res.status(404).json({ message: "Staff not found in this salon" });
+    }
+
+    const interval = Math.max(Number(req.query.interval) || 30, 5);
+    const baseSlots = generateTimeSlots({
+      openingTime: salon.openingTime || "09:00",
+      closingTime: salon.closingTime || "20:00",
+      intervalMinutes: interval
+    });
+
+    const { start, end } = getDayRange(date);
+    const booked = await Appointment.find({
+      salonId,
+      staffId,
+      date: { $gte: start, $lte: end },
+      status: { $ne: "cancelled" }
+    }).select("time");
+
+    const bookedSet = new Set(booked.map((entry) => String(entry.time)));
+    const isToday = date === getTodayDateString();
+    const currentMinutes = timeToMinutes(getCurrentHHMM());
+
+    const slots = baseSlots.map((time) => {
+      const inPast = isToday && timeToMinutes(time) < currentMinutes;
+      const bookedAlready = bookedSet.has(time);
+      return {
+        time,
+        available: !(inPast || bookedAlready)
+      };
+    });
+
+    return res.json({
+      date,
+      salonId,
+      staffId,
+      openingTime: salon.openingTime || "09:00",
+      closingTime: salon.closingTime || "20:00",
+      slots
+    });
+  } catch (err) {
+    console.error("PUBLIC AVAILABILITY ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 });

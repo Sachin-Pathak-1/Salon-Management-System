@@ -349,7 +349,8 @@ exports.getPublicSalons = async (req, res) => {
     try {
         res.set("Cache-Control", "no-store");
 
-        const { type } = req.query;
+        const { type, bookableOnly } = req.query;
+        const shouldFilterBookable = String(bookableOnly || "").toLowerCase() === "true";
 
         const salons = await Salon.find({})
             .sort({ isPrimary: -1, order: 1, createdAt: -1 })
@@ -377,10 +378,30 @@ exports.getPublicSalons = async (req, res) => {
             };
         });
 
-        const filtered =
+        let filtered =
             type === "salon" || type === "spa"
                 ? processedSalons.filter((salon) => salon.type === type)
                 : processedSalons;
+
+        if (shouldFilterBookable) {
+            const withBookableFlag = await Promise.all(
+                filtered.map(async (salon) => {
+                    const [staffCount, serviceCount] = await Promise.all([
+                        Staff.countDocuments({ salonId: salon._id, status: "active" }),
+                        Service.countDocuments({ salonId: salon._id, status: "active" })
+                    ]);
+
+                    return {
+                        ...salon,
+                        hasBookableStaff: staffCount > 0,
+                        hasBookableServices: serviceCount > 0,
+                        isBookable: staffCount > 0 && serviceCount > 0
+                    };
+                })
+            );
+
+            filtered = withBookableFlag.filter((salon) => salon.isBookable);
+        }
 
         res.json(filtered);
     } catch (err) {

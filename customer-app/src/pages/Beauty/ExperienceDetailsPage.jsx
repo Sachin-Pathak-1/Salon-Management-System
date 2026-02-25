@@ -1,14 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { allExperiences, reviews, servicesByType } from "./beautyData";
 import { fetchPublicExperiences } from "./beautyApi";
 import { RatingStars } from "./beautyUi";
+import { InlineBookingWidget } from "./InlineBookingWidget";
 
 export function ExperienceDetailsPage() {
   const { type, slug } = useParams();
+  const [searchParams] = useSearchParams();
   const [index, setIndex] = useState(0);
   const [items, setItems] = useState(allExperiences);
   const [loaded, setLoaded] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [preselectedServiceName, setPreselectedServiceName] = useState("");
+  const [bookingScrollTick, setBookingScrollTick] = useState(0);
+  const bookingSectionRef = useRef(null);
+
+  const triggerBookingScroll = () => {
+    setShowBooking(true);
+    setBookingScrollTick((tick) => tick + 1);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +50,35 @@ export function ExperienceDetailsPage() {
 
   const item = useMemo(() => items.find((entry) => entry.type === type && entry.slug === slug), [items, type, slug]);
   const similar = useMemo(() => items.filter((entry) => entry.type === type && entry.slug !== slug).slice(0, 4), [items, type, slug]);
+
+  useEffect(() => {
+    const shouldOpenBooking = searchParams.get("book") === "1";
+    setShowBooking(shouldOpenBooking);
+    if (!shouldOpenBooking) {
+      setPreselectedServiceName("");
+    }
+  }, [searchParams, type, slug]);
+
+  useEffect(() => {
+    if (!showBooking) return;
+
+    const scrollToBooking = (behavior = "smooth") => {
+      if (!bookingSectionRef.current) return;
+      const navbarOffset = 90;
+      const top = bookingSectionRef.current.getBoundingClientRect().top + window.scrollY - navbarOffset;
+      window.scrollTo({ top: Math.max(top, 0), behavior });
+    };
+
+    // First scroll after opening booking block.
+    requestAnimationFrame(() => scrollToBooking("smooth"));
+
+    // Second pass after layout settles to avoid landing above target.
+    const settleTimer = setTimeout(() => {
+      scrollToBooking("smooth");
+    }, 260);
+
+    return () => clearTimeout(settleTimer);
+  }, [showBooking, bookingScrollTick]);
 
   if (loaded && !item) {
     return <Navigate to={type === "spa" ? "/spas" : "/salons"} replace />;
@@ -103,13 +143,30 @@ export function ExperienceDetailsPage() {
                       </div>
                       <div className="beauty-row" style={{ gap: 10 }}>
                         <strong>INR {service.price}</strong>
-                        <button type="button" className="beauty-btn beauty-btn-primary">Add / Book</button>
+                        <button
+                          type="button"
+                          className="beauty-btn beauty-btn-primary"
+                          onClick={() => {
+                            setPreselectedServiceName(service.name);
+                            triggerBookingScroll();
+                          }}
+                        >
+                          Add / Book
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </article>
+
+            <div id="booking-section" ref={bookingSectionRef}>
+              <InlineBookingWidget
+                experience={item}
+                open={showBooking}
+                preselectedServiceName={preselectedServiceName}
+              />
+            </div>
 
             <article className="beauty-panel" style={{ marginTop: 16 }}>
               <div className="beauty-panel-body">
@@ -155,17 +212,26 @@ export function ExperienceDetailsPage() {
                 <li>Free reschedule up to 4 hours before</li>
                 <li>Reward points on every booking</li>
               </ul>
-              <Link to="/customer/appointments/new" className="beauty-btn beauty-btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
+              <button
+                type="button"
+                className="beauty-btn beauty-btn-primary"
+                onClick={triggerBookingScroll}
+              >
                 Book Appointment
-              </Link>
+              </button>
             </div>
           </aside>
         </div>
 
         <div className="beauty-mobile-book">
-          <Link to="/customer/appointments/new" className="beauty-btn beauty-btn-primary" style={{ width: "100%", display: "block", textAlign: "center", textDecoration: "none" }}>
+          <button
+            type="button"
+            onClick={triggerBookingScroll}
+            className="beauty-btn beauty-btn-primary"
+            style={{ width: "100%", display: "block", textAlign: "center" }}
+          >
             Book Appointment
-          </Link>
+          </button>
         </div>
       </div>
     </div>

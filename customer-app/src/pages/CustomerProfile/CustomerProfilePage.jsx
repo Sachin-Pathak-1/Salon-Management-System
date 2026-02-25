@@ -136,8 +136,8 @@ export function CustomerProfilePage() {
                     ))}
                   </div>
                 )}
-                <Link to="/customer/appointments/new" className="beauty-btn beauty-btn-primary" style={{ marginTop: 12, display: "inline-block", textDecoration: "none" }}>
-                  Book New Appointment
+                <Link to="/salons" className="beauty-btn beauty-btn-primary" style={{ marginTop: 12, display: "inline-block", textDecoration: "none" }}>
+                  Explore & Book
                 </Link>
               </div>
             </article>
@@ -190,5 +190,6 @@ export function CustomerProfilePage() {
     </div>
   );
 }
+
 
 

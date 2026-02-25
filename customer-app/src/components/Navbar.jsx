@@ -38,16 +38,6 @@ function Navbar({
   const textLinkClass =
     "rounded-md px-2 py-1 text-sm font-medium text-(--gray-700) transition hover:bg-(--hover-bg) hover:text-(--primary)";
 
-  const handleCreateAppointment = () => {
-    if (!isLoggedIn || currentUser?.role !== "customer") {
-      navigate("/login", {
-        state: { redirectTo: "/customer/appointments/new" }
-      });
-      return;
-    }
-    navigate("/customer/appointments/new");
-  };
-
   return (
     <nav className="sticky top-0 z-50 border-b border-(--border-light) bg-(--background) text-(--text) shadow-[0_4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-colors duration-300">
       <div className="mx-auto flex h-17.5 w-full max-w-350 items-center justify-between gap-4 px-4 sm:px-6 lg:gap-8">
@@ -85,14 +75,6 @@ function Navbar({
             className="inline-flex rounded-md px-2 py-1 text-sm text-(--gray-700) transition hover:bg-(--hover-bg) max-[520px]:hidden"
           >
             EN
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex rounded-lg bg-(--primary) px-3 py-2 text-sm font-semibold text-white transition hover:bg-(--secondary) max-[520px]:hidden"
-            onClick={handleCreateAppointment}
-          >
-            Appointment
           </button>
 
           {!isLoggedIn && (
