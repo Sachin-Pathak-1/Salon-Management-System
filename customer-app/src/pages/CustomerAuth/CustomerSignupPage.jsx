@@ -156,7 +156,10 @@ export function CustomerSignupPage({
                 type="email"
                 placeholder="Email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setOtpSent(false);
+                }}
                 className="input-themed"
               />
               <button

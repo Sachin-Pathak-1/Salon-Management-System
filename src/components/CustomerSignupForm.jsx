@@ -84,8 +84,13 @@ export function CustomerSignupForm() {
         email: normalizedEmail,
         purpose: "signup"
       });
+      const devOtp = res?.data?.devOtp;
       setOtpSent(true);
-      setSuccess(res?.data?.message || "OTP sent successfully");
+      setSuccess(
+        devOtp
+          ? `${res?.data?.message || "OTP generated"} (DEV OTP: ${devOtp})`
+          : (res?.data?.message || "OTP sent successfully")
+      );
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -114,7 +119,10 @@ export function CustomerSignupForm() {
           type="email"
           placeholder="Email"
           value={formData.email}
-          onChange={handleChange}
+          onChange={(e) => {
+            handleChange(e);
+            setOtpSent(false);
+          }}
           className="input-themed"
         />
         <button
@@ -183,7 +191,7 @@ export function CustomerSignupForm() {
           name="confirmOtp"
           type="text"
           inputMode="numeric"
-          maxLength={8}
+          maxLength={6}
           placeholder="Confirm OTP"
           value={formData.confirmOtp}
           onChange={handleChange}

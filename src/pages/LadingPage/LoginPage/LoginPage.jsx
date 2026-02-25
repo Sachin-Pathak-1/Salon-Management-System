@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../../../api";
 
 export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
@@ -23,11 +23,14 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
     if (!normalizedEmail || !otp) {
       return setError("All fields required");
     }
+    if (!/^\d{6}$/.test(otp.trim())) {
+      return setError("OTP must be exactly 6 digits");
+    }
 
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/customer/login", {
+      const res = await api.post("/auth/customer/login", {
         email: normalizedEmail,
         otp: otp.trim()
       });
@@ -64,12 +67,17 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
 
     setSendingOtp(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/customer/send-otp", {
+      const res = await api.post("/auth/customer/send-otp", {
         email: normalizedEmail,
         purpose: "login"
       });
+      const devOtp = res?.data?.devOtp;
       setOtpSent(true);
-      setInfo(res?.data?.message || "OTP sent successfully");
+      setInfo(
+        devOtp
+          ? `${res?.data?.message || "OTP generated"} (DEV OTP: ${devOtp})`
+          : (res?.data?.message || "OTP sent successfully")
+      );
     } catch (err) {
       setError(err.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -103,7 +111,10 @@ export function LoginPage({ setIsLoggedIn, setCurrentUser, setActiveSalon }) {
             type="text"
             placeholder="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => {
+              setEmail(e.target.value);
+              setOtpSent(false);
+            }}
             className="input-themed"
           />
 
