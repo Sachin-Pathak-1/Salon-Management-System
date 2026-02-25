@@ -27,6 +27,10 @@ export function CustomerLoginPage({
       setError("Email and OTP are required");
       return;
     }
+    if (!/^\d{6}$/.test(otp.trim())) {
+      setError("OTP must be exactly 6 digits");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -129,7 +133,10 @@ export function CustomerLoginPage({
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setOtpSent(false);
+                }}
                 className="input-themed"
               />
               <input
