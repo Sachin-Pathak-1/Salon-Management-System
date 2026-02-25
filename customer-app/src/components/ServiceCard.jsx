@@ -9,10 +9,10 @@ const ServiceCard = ({ service }) => {
         className="w-full h-40 object-cover"
       />
       <div className="p-4">
-        <h3 className="text-xl font-semibold text-[var(--text)]">
+        <h3 className="text-xl font-semibold text-(--text)">
           {service.name}
         </h3>
-        <p className="text-[var(--gray-700)] text-sm mt-2">
+        <p className="text-(--gray-700) text-sm mt-2">
           {service.description}
         </p>
       </div>

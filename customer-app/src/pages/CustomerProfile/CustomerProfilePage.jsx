@@ -1,23 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api";
-import { useNavigate } from "react-router-dom";
+import { allExperiences } from "../Beauty/beautyData";
+import { RatingStars } from "../Beauty/beautyUi";
 
 export function CustomerProfilePage() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editMode, setEditMode] = useState(false);
   const [appointments, setAppointments] = useState([]);
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    contact: "",
-    address: ""
-  });
+  const [profile, setProfile] = useState({ name: "", email: "", contact: "", address: "" });
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const load = async () => {
       setLoading(true);
       setError("");
       try {
@@ -35,20 +32,19 @@ export function CustomerProfilePage() {
       try {
         const appointmentsRes = await api.get("/appointments/customer/my");
         setAppointments(Array.isArray(appointmentsRes.data) ? appointmentsRes.data : []);
-      } catch (err) {
+      } catch {
         setAppointments([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProfile();
+    load();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
+  const bookingHistory = useMemo(() => appointments.slice(0, 5), [appointments]);
+  const saved = useMemo(() => allExperiences.slice(0, 4), []);
+  const wallet = useMemo(() => ({ balance: 1250, rewards: 420, tier: "Gold" }), []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -72,6 +68,7 @@ export function CustomerProfilePage() {
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       setSuccess("Profile updated successfully");
+      setEditMode(false);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to save profile");
     } finally {
@@ -81,132 +78,117 @@ export function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-70px)] bg-[var(--background)] px-4 py-8 text-[var(--text)]">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-8 shadow-xl">
-          Loading profile...
+      <div className="beauty-shell">
+        <div className="beauty-container">
+          <div className="beauty-panel"><div className="beauty-panel-body">Loading profile...</div></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-70px)] bg-[var(--background)] px-4 py-8 text-[var(--text)]">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--border-light)] bg-[var(--gray-100)] p-8 shadow-xl">
-        <h1 className="text-3xl font-bold">Customer Profile</h1>
-        <p className="mt-2 text-sm opacity-80">
-          Keep your details updated for faster bookings.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate("/customer/appointments/new")}
-          className="mt-4 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)]"
-        >
-          Create Appointment
-        </button>
+    <div className="beauty-shell">
+      <div className="beauty-container">
+        <section className="beauty-hero">
+          <h1>Customer Profile</h1>
+          <p>Manage your profile, track bookings, and use rewards for premium experiences.</p>
+        </section>
 
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mt-4 rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-sm text-green-700">
-            {success}
-          </div>
-        )}
+        {error ? <div className="beauty-empty" style={{ borderStyle: "solid", borderColor: "#d18e86" }}>{error}</div> : null}
+        {success ? <div className="beauty-empty" style={{ borderStyle: "solid", borderColor: "#8ac4a1" }}>{success}</div> : null}
 
-        <form onSubmit={handleSave} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="md:col-span-1">
-            <label className="mb-1 block text-sm font-medium">Name</label>
-            <input
-              name="name"
-              value={profile.name}
-              onChange={handleChange}
-              className="input-themed"
-            />
-          </div>
+        <div className="beauty-detail-grid">
+          <div>
+            <article className="beauty-panel">
+              <div className="beauty-panel-body">
+                <div className="beauty-row">
+                  <h2 style={{ margin: 0 }}>Profile Info</h2>
+                  <button type="button" className="beauty-btn beauty-btn-light" onClick={() => setEditMode((v) => !v)}>{editMode ? "Cancel" : "Edit Profile"}</button>
+                </div>
 
-          <div className="md:col-span-1">
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <input
-              name="email"
-              value={profile.email}
-              disabled
-              className="input-themed opacity-80"
-            />
-          </div>
+                <form onSubmit={handleSave} style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                  <input className="beauty-input" value={profile.name} disabled={!editMode} onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))} placeholder="Name" />
+                  <input className="beauty-input" value={profile.email} disabled placeholder="Email" />
+                  <input className="beauty-input" value={profile.contact} disabled={!editMode} onChange={(e) => setProfile((prev) => ({ ...prev, contact: e.target.value }))} placeholder="Contact" />
+                  <input className="beauty-input" value={profile.address} disabled={!editMode} onChange={(e) => setProfile((prev) => ({ ...prev, address: e.target.value }))} placeholder="Address" />
+                  {editMode ? <button type="submit" className="beauty-btn beauty-btn-primary" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button> : null}
+                </form>
+              </div>
+            </article>
 
-          <div className="md:col-span-1">
-            <label className="mb-1 block text-sm font-medium">Contact</label>
-            <input
-              name="contact"
-              value={profile.contact}
-              onChange={handleChange}
-              className="input-themed"
-            />
-          </div>
+            <article className="beauty-panel" style={{ marginTop: 16 }}>
+              <div className="beauty-panel-body">
+                <h2 style={{ marginTop: 0 }}>Booking History</h2>
+                {bookingHistory.length === 0 ? (
+                  <p className="beauty-muted">No bookings yet.</p>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {bookingHistory.map((appointment) => (
+                      <div key={appointment._id} className="beauty-service">
+                        <div>
+                          <strong>{appointment?.serviceId?.name || "Service"}</strong>
+                          <p className="beauty-muted" style={{ margin: "4px 0 0" }}>
+                            {appointment?.date ? new Date(appointment.date).toLocaleDateString() : "Date pending"} • {appointment?.time || "Time pending"}
+                          </p>
+                        </div>
+                        <span className="beauty-tag">{appointment?.status || "pending"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Link to="/customer/appointments/new" className="beauty-btn beauty-btn-primary" style={{ marginTop: 12, display: "inline-block", textDecoration: "none" }}>
+                  Book New Appointment
+                </Link>
+              </div>
+            </article>
 
-          <div className="md:col-span-1">
-            <label className="mb-1 block text-sm font-medium">Address</label>
-            <input
-              name="address"
-              value={profile.address}
-              onChange={handleChange}
-              className="input-themed"
-            />
-          </div>
-
-          <div className="md:col-span-2 mt-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-[var(--primary)] px-6 py-3 font-semibold text-white transition hover:bg-[var(--secondary)] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {saving ? "Saving..." : "Save Profile"}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold">My Appointments</h2>
-          {appointments.length === 0 ? (
-            <p className="mt-3 text-sm opacity-80">No appointments found yet.</p>
-          ) : (
-            <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border-light)]">
-              <table className="min-w-full bg-[var(--background)] text-sm">
-                <thead className="bg-[var(--gray-100)]">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Date</th>
-                    <th className="px-4 py-3 text-left">Time</th>
-                    <th className="px-4 py-3 text-left">Salon</th>
-                    <th className="px-4 py-3 text-left">Service</th>
-                    <th className="px-4 py-3 text-left">Staff</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointments.map((appointment) => (
-                    <tr key={appointment._id} className="border-t border-[var(--border-light)]">
-                      <td className="px-4 py-3">
-                        {appointment?.date ? new Date(appointment.date).toLocaleDateString() : "-"}
-                      </td>
-                      <td className="px-4 py-3">{appointment?.time || "-"}</td>
-                      <td className="px-4 py-3">{appointment?.salonId?.name || "-"}</td>
-                      <td className="px-4 py-3">{appointment?.serviceId?.name || "-"}</td>
-                      <td className="px-4 py-3">{appointment?.staffId?.name || "-"}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-[var(--hover-bg)] px-3 py-1 text-xs font-semibold uppercase">
-                          {appointment?.status || "pending"}
-                        </span>
-                      </td>
-                    </tr>
+            <article className="beauty-panel" style={{ marginTop: 16 }}>
+              <div className="beauty-panel-body">
+                <h2 style={{ marginTop: 0 }}>Saved Salons & Spas</h2>
+                <div className="beauty-grid" style={{ marginTop: 8 }}>
+                  {saved.map((item) => (
+                    <Link key={item.id} to={`/experiences/${item.type}/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      <article className="beauty-card">
+                        <img className="beauty-thumb" src={item.images[0]} alt={item.name} />
+                        <div className="beauty-card-body">
+                          <h3 className="beauty-title">{item.name}</h3>
+                          <RatingStars value={item.rating} />
+                        </div>
+                      </article>
+                    </Link>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <aside className="beauty-panel beauty-sticky">
+            <div className="beauty-panel-body">
+              <h3 style={{ marginTop: 0 }}>Wallet & Rewards</h3>
+              <div className="beauty-service" style={{ marginBottom: 10 }}>
+                <div>
+                  <p className="beauty-muted" style={{ margin: 0 }}>Wallet Balance</p>
+                  <strong>INR {wallet.balance}</strong>
+                </div>
+              </div>
+              <div className="beauty-service" style={{ marginBottom: 10 }}>
+                <div>
+                  <p className="beauty-muted" style={{ margin: 0 }}>Reward Points</p>
+                  <strong>{wallet.rewards} pts</strong>
+                </div>
+              </div>
+              <div className="beauty-service">
+                <div>
+                  <p className="beauty-muted" style={{ margin: 0 }}>Membership Tier</p>
+                  <strong>{wallet.tier}</strong>
+                </div>
+              </div>
             </div>
-          )}
+          </aside>
         </div>
       </div>
     </div>
   );
 }
+
+

@@ -8,11 +8,21 @@ const Attendance = require("../models/Attendance");
 const mongoose = require("mongoose");
 
 /* ======================================================
-   HELPER → CHECK IF TODAY IS HOLIDAY
+   HELPER -> CHECK IF TODAY IS HOLIDAY
 ====================================================== */
 function checkIsHoliday(holidays = []) {
     const today = new Date().toISOString().slice(0, 10);
     return holidays.includes(today);
+}
+
+function inferSalonType(record = {}) {
+    const haystack = `${record.name || ""} ${record.email || ""}`.toLowerCase();
+    const spaHints = ["spa", "wellness", "therapy", "retreat", "massage", "ayur"];
+    const hasSpaHint = spaHints.some((hint) => haystack.includes(hint));
+
+    if (record.type === "spa") return "spa";
+    if (record.type === "salon") return hasSpaHint ? "spa" : "salon";
+    return hasSpaHint ? "spa" : "salon";
 }
 
 /* ============================
@@ -46,6 +56,7 @@ exports.addSalon = async (req, res) => {
             logo,
             holidays,
             status,
+            type,
             isPrimary
         } = req.body;
 
@@ -91,7 +102,6 @@ exports.addSalon = async (req, res) => {
             });
         }
 
-        // Only one primary salon
         if (isPrimary === true) {
             await Salon.updateMany(
                 { adminId: req.user.id },
@@ -99,12 +109,15 @@ exports.addSalon = async (req, res) => {
             );
         }
 
-        // Get next order
         const last = await Salon.find({ adminId: req.user.id })
             .sort({ order: -1 })
             .limit(1);
 
         const nextOrder = last.length ? last[0].order + 1 : 0;
+        const normalizedType =
+            type === "spa" || type === "salon"
+                ? type
+                : inferSalonType({ name, email });
 
         const salon = await Salon.create({
             name,
@@ -117,6 +130,7 @@ exports.addSalon = async (req, res) => {
             logo,
             holidays: holidays || [],
             status: status || "open",
+            type: normalizedType,
             isPrimary: isPrimary || false,
             adminId: req.user.id,
             order: nextOrder
@@ -134,13 +148,11 @@ exports.addSalon = async (req, res) => {
 };
 
 /* ======================================================
-   HELPER → CHECK IF OPEN BASED ON TIME
+   HELPER -> CHECK IF OPEN BASED ON TIME
 ====================================================== */
 function checkIsOpenNow(openingTime, closingTime) {
     if (!openingTime || !closingTime) return true;
 
-    // Get current time in local timezone (metadata says +05:30)
-    // To be safe, we use the Date object which uses system time.
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -158,7 +170,6 @@ function checkIsOpenNow(openingTime, closingTime) {
 ============================ */
 exports.getSalons = async (req, res) => {
     try {
-        // 🚫 DISABLE CACHE
         res.set("Cache-Control", "no-store");
 
         let query = {};
@@ -173,13 +184,12 @@ exports.getSalons = async (req, res) => {
             return res.status(403).json({ message: "Unauthorized" });
         }
 
-        let salons = await Salon.find(query)
+        const salons = await Salon.find(query)
             .populate("staff", "-password")
             .sort({ isPrimary: -1, order: 1 })
-            .lean(); // Use lean for performance and to add virtual fields easily
+            .lean();
 
-        // Add holiday and time-based status without mutating DB
-        const processedSalons = salons.map(salon => {
+        const processedSalons = salons.map((salon) => {
             const isHoliday = checkIsHoliday(salon.holidays);
             const isOpenNow = checkIsOpenNow(salon.openingTime, salon.closingTime);
 
@@ -194,7 +204,7 @@ exports.getSalons = async (req, res) => {
                 ...salon,
                 isHolidayToday: isHoliday,
                 isOpenNow: isOpenNow && !isHoliday && salon.status === "open",
-                displayStatus: displayStatus
+                displayStatus
             };
         });
 
@@ -216,7 +226,7 @@ exports.reorderSalons = async (req, res) => {
             return res.status(400).json({ message: "Invalid order data" });
         }
 
-        const bulk = order.map(o => ({
+        const bulk = order.map((o) => ({
             updateOne: {
                 filter: { _id: o.id, adminId: req.user.id },
                 update: { order: o.order, isPrimary: false }
@@ -225,10 +235,6 @@ exports.reorderSalons = async (req, res) => {
 
         await Salon.bulkWrite(bulk);
 
-        // Primary always first (if still exists as primary after bulk update)
-        // Note: the bulk write above sets isPrimary to false for all. 
-        // Usually reorder shouldn't overwrite primary status unless specified.
-        // However, keeping existing logic for consistency with original.
         await Salon.updateMany(
             { adminId: req.user.id, isPrimary: true },
             { order: -1 }
@@ -320,20 +326,65 @@ exports.deleteSalon = async (req, res) => {
 
         const oid = new mongoose.Types.ObjectId(id);
 
-        // Total Cascading Delete
         await Staff.deleteMany({ salonId: oid });
         await Category.deleteMany({ salonId: oid });
         await Service.deleteMany({ salonId: oid });
         await Appointment.deleteMany({ salonId: oid });
         await Attendance.deleteMany({ salonId: oid });
 
-        // Delete the salon itself
         await Salon.deleteOne({ _id: oid, adminId: req.user.id });
 
         res.json({ message: "Salon and all associated records deleted successfully" });
 
     } catch (err) {
         console.error("DELETE SALON ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/* ============================
+   GET PUBLIC SALONS/SPAS
+============================ */
+exports.getPublicSalons = async (req, res) => {
+    try {
+        res.set("Cache-Control", "no-store");
+
+        const { type } = req.query;
+
+        const salons = await Salon.find({})
+            .sort({ isPrimary: -1, order: 1, createdAt: -1 })
+            .lean();
+
+        const processedSalons = salons.map((salon) => {
+            const isHoliday = checkIsHoliday(salon.holidays);
+            const isOpenNow = checkIsOpenNow(salon.openingTime, salon.closingTime);
+
+            let displayStatus = salon.status;
+            if (isHoliday) {
+                displayStatus = "Holiday";
+            } else if (!isOpenNow && salon.status === "open") {
+                displayStatus = "Closed";
+            }
+
+            const inferredType = inferSalonType(salon);
+
+            return {
+                ...salon,
+                type: inferredType,
+                isHolidayToday: isHoliday,
+                isOpenNow: isOpenNow && !isHoliday && salon.status === "open",
+                displayStatus
+            };
+        });
+
+        const filtered =
+            type === "salon" || type === "spa"
+                ? processedSalons.filter((salon) => salon.type === type)
+                : processedSalons;
+
+        res.json(filtered);
+    } catch (err) {
+        console.error("GET PUBLIC SALONS ERROR:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

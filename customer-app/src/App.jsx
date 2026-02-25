@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import React from "react";
 import api from "./api.js";
 
+import "./styles/beautyTheme.css";
 import Navbar from "./components/Navbar.jsx";
 import { FloatingSideBar } from "./components/FloatingSideBar";
 import { ToastProvider } from "./context/ToastContext";
@@ -21,6 +22,12 @@ import { Home } from "./pages/LadingPage/Home/Home.jsx";
 import { LPServices } from "./pages/LadingPage/Services/Services.jsx";
 import { About } from "./pages/LadingPage/About/About.jsx";
 import { Contact } from "./pages/LadingPage/Contacts/Contact.jsx";
+import { SalonsListingPage } from "./pages/Beauty/SalonsListingPage.jsx";
+import { SpaListingPage } from "./pages/Beauty/SpaListingPage.jsx";
+import { ExperienceDetailsPage } from "./pages/Beauty/ExperienceDetailsPage.jsx";
+import { OffersPage } from "./pages/Beauty/OffersPage.jsx";
+import { TrendsPage } from "./pages/Beauty/TrendsPage.jsx";
+import { TrendDetailsPage } from "./pages/Beauty/TrendDetailsPage.jsx";
 
 /* ================= SYSTEM PAGES ================= */
 
@@ -53,7 +60,6 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
   const [activeSalon, setActiveSalon] = useState(localStorage.getItem("activeSalon") || "");
 
-  // Callback function to update activeSalon in parent and localStorage
   const handleSetActiveSalon = (salonId) => {
     setActiveSalon(salonId);
     localStorage.setItem("activeSalon", salonId);
@@ -112,10 +118,6 @@ function App() {
     };
   }, [isLoggedIn, currentUser?.id, currentUser?.role, navigate]);
 
-  /* ============================================
-     RESTORE AUTH ON REFRESH (SAFE VERSION)
-  ============================================ */
-
   useEffect(() => {
 
     const token = localStorage.getItem("token");
@@ -144,10 +146,6 @@ function App() {
 
   if (!authReady) return null;
 
-  /* ============================================
-     SIDEBAR VISIBILITY
-  ============================================ */
-
   const publicRoutes = [
     "/",
     "/login",
@@ -156,17 +154,22 @@ function App() {
     "/customer-signup",
     "/about",
     "/contact",
-    "/lpservices"
+    "/lpservices",
+    "/salons",
+    "/spas",
+    "/offers",
+    "/trends"
   ];
+
+  const isPublicRoute =
+    publicRoutes.includes(location.pathname) ||
+    location.pathname.startsWith("/trends/") ||
+    location.pathname.startsWith("/experiences/");
 
   const showSidebar =
     isLoggedIn &&
     currentUser?.role !== "customer" &&
-    !publicRoutes.includes(location.pathname);
-
-  /* ============================================
-     ROLE HELPERS
-  ============================================ */
+    !isPublicRoute;
 
   const resolveDashboardPath = (user) => {
     if (!user) return "/login";
@@ -191,10 +194,6 @@ function App() {
 
     return children;
   };
-
-  /* ============================================
-     RENDER
-  ============================================ */
 
   return (
     <ToastProvider>
@@ -222,15 +221,17 @@ function App() {
 
           <Routes>
 
-            {/* ================= PUBLIC ================= */}
-
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/lpservices" element={<LPServices />} />
+            <Route path="/salons" element={<SalonsListingPage />} />
+            <Route path="/spas" element={<SpaListingPage />} />
+            <Route path="/offers" element={<OffersPage />} />
+            <Route path="/trends" element={<TrendsPage />} />
+            <Route path="/trends/:slug" element={<TrendDetailsPage />} />
+            <Route path="/experiences/:type/:slug" element={<ExperienceDetailsPage />} />
             <Route path="/book" element={<Navigate to="/customer-login" replace />} />
-
-            {/* ================= AUTH ================= */}
 
             <Route
               path="/login"
@@ -284,8 +285,6 @@ function App() {
               }
             />
 
-            {/* ================= DASHBOARDS ================= */}
-
             <Route
               path="/dashboard"
               element={
@@ -312,8 +311,6 @@ function App() {
                 </RequireRole>
               }
             />
-
-            {/* ================= SYSTEM ROUTES ================= */}
 
             <Route
               path="/services"
@@ -485,7 +482,6 @@ function App() {
                 </RequireRole>
               }
             />
-
 
             <Route
               path="/activity"

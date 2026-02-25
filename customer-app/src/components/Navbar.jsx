@@ -34,9 +34,9 @@ function Navbar({
   };
 
   const menuItemClass =
-    "rounded-md px-3 py-2 text-sm font-semibold tracking-wide text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]";
+    "rounded-md px-3 py-2 text-sm font-semibold tracking-wide text-(--gray-700) transition hover:bg-(--hover-bg) hover:text-(--primary)";
   const textLinkClass =
-    "rounded-md px-2 py-1 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]";
+    "rounded-md px-2 py-1 text-sm font-medium text-(--gray-700) transition hover:bg-(--hover-bg) hover:text-(--primary)";
 
   const handleCreateAppointment = () => {
     if (!isLoggedIn || currentUser?.role !== "customer") {
@@ -49,49 +49,50 @@ function Navbar({
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[var(--border-light)] bg-[var(--background)] text-[var(--text)] shadow-[0_4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-colors duration-300">
-      <div className="mx-auto flex h-[70px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:gap-8">
+    <nav className="sticky top-0 z-50 border-b border-(--border-light) bg-(--background) text-(--text) shadow-[0_4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-colors duration-300">
+      <div className="mx-auto flex h-17.5 w-full max-w-350 items-center justify-between gap-4 px-4 sm:px-6 lg:gap-8">
         <div className="flex min-w-0 items-center gap-4 lg:gap-6">
           <button
             type="button"
             onClick={() => navigate("/")}
             className="flex items-baseline text-lg font-extrabold tracking-tight sm:text-xl"
           >
-            <span className="text-[var(--text)]">Blissful</span>
-            <span className="text-[var(--accent)]">Beauty Salon</span>
+            <span className="text-(--text)">Blissful</span>
+            <span className="text-(--accent)">Beauty Salon</span>
           </button>
 
           <button
             type="button"
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] max-[520px]:hidden"
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-(--gray-700) transition hover:bg-(--hover-bg) max-[520px]:hidden"
           >
-            <span>📍</span>
+            <span aria-hidden="true">Location</span>
             <span>Mumbai</span>
-            <span>▾</span>
+            <span aria-hidden="true">v</span>
           </button>
         </div>
 
-        <div className="flex-1 items-center justify-center gap-2 flex max-[520px]:hidden">
+        <div className="flex flex-1 items-center justify-center gap-2 max-[520px]:hidden">
           <button type="button" onClick={() => navigate("/")} className={menuItemClass}>HOME</button>
-          <button type="button" onClick={() => navigate("/lpservices")} className={menuItemClass}>SERVICES</button>
-          <button type="button" onClick={() => navigate("/about")} className={menuItemClass}>ABOUT</button>
-          <button type="button" onClick={() => navigate("/contact")} className={menuItemClass}>CONTACT</button>
+          <button type="button" onClick={() => navigate("/salons")} className={menuItemClass}>SALONS</button>
+          <button type="button" onClick={() => navigate("/spas")} className={menuItemClass}>SPAS</button>
+          <button type="button" onClick={() => navigate("/offers")} className={menuItemClass}>OFFERS</button>
+          <button type="button" onClick={() => navigate("/trends")} className={menuItemClass}>TRENDS</button>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
           <button
             type="button"
-            className="rounded-md px-2 py-1 text-sm text-[var(--gray-700)] transition hover:bg-[var(--hover-bg)] inline-flex max-[520px]:hidden"
+            className="inline-flex rounded-md px-2 py-1 text-sm text-(--gray-700) transition hover:bg-(--hover-bg) max-[520px]:hidden"
           >
-            🌐 EN
+            EN
           </button>
 
           <button
             type="button"
-            className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--secondary)] inline-flex max-[520px]:hidden"
+            className="inline-flex rounded-lg bg-(--primary) px-3 py-2 text-sm font-semibold text-white transition hover:bg-(--secondary) max-[520px]:hidden"
             onClick={handleCreateAppointment}
           >
-            📅 Create Appointment
+            Appointment
           </button>
 
           {!isLoggedIn && (
@@ -107,7 +108,7 @@ function Navbar({
           {!isLoggedIn && (
             <button
               type="button"
-              className="border-2 bg-[var(--primary)] text-white border-[var(--primary)] rounded-md px-3 py-2 text-sm font-semibold tracking-wide transition hover:bg-[var(--hover-bg)] hover:text-[var(--primary)]"
+              className="rounded-md border-2 border-(--primary) bg-(--primary) px-3 py-2 text-sm font-semibold tracking-wide text-white transition hover:bg-(--hover-bg) hover:text-(--primary)"
               onClick={() => navigate("/signup")}
             >
               Sign Up
@@ -127,7 +128,7 @@ function Navbar({
           {isLoggedIn && (
             <button
               type="button"
-              className="rounded-md border border-[var(--primary)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary)] hover:text-[var(--background)]"
+              className="rounded-md border border-(--primary) px-3 py-2 text-sm font-semibold text-(--primary) transition hover:bg-(--primary) hover:text-(--background)"
               onClick={handleLogout}
             >
               Logout
@@ -136,10 +137,10 @@ function Navbar({
 
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--primary)] text-base text-[var(--primary)] transition hover:bg-[var(--primary)] hover:text-[var(--background)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-(--primary) text-sm font-semibold text-(--primary) transition hover:bg-(--primary) hover:text-(--background)"
             onClick={toggleTheme}
           >
-            {theme === "light" ? "🌙" : "☀️"}
+            {theme === "light" ? "Dark" : "Light"}
           </button>
         </div>
       </div>
